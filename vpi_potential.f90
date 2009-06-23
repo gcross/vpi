@@ -792,7 +792,9 @@ function vpi_Usp_lattice( x, slice, ip, nslice, np, ndim ) result ( Usp )
 
   Usp = 0.0_b8
 
-  Usp = ( x(slice,ip,1)**2 + lam_ho*x(slice,ip,2)**2 + x(slice,ip,3)**2) + p_lattice_vb*cos(x(slice,ip,1)*p_lattice_ax)**2 +  p_lattice_vb*cos(x(slice,ip,3)*p_lattice_az)**2
+  Usp = ( x(slice,ip,1)**2 + lam_ho*x(slice,ip,2)**2 + x(slice,ip,3)**2) &
+       + p_lattice_vb*cos(x(slice,ip,1)*p_lattice_ax)**2 &
+       + p_lattice_vb*cos(x(slice,ip,3)*p_lattice_az)**2
 
 end function vpi_Usp_lattice
 
@@ -998,12 +1000,14 @@ function vpi_Uij_z_polarized_dimer( x, xij2, slice, ip, nslice, np, ndim, acc_fl
   acc_flag = .true.
   t3 = 0.0_b8
   do i=1,ip-1
-    tmp = a_lj*xij2(slice,ip,i)**-6 + xij2(slice,ip,i)**(-1.5)*(1.0_b8-3.0_b8*xij2(slice,ip,i)**(-1)*(x(slice,ip,3)-x(slice,i,3))**2)
+    tmp =  a_lj*xij2(slice,ip,i)**(-6) &
+         + xij2(slice,ip,i)**(-1.5)*(1.0_b8-3.0_b8*xij2(slice,ip,i)**(-1)*(x(slice,ip,3)-x(slice,i,3))**2)
     t3 = t3 + exp(-(xij2(slice,ip,i)/(p_pbc_L*.99))**50)*tmp
   end do
 
   do i=ip+1,np
-    tmp = a_lj*xij2(slice,ip,i)**-6 + xij2(slice,ip,i)**(-1.5)*(1.0_b8-3.0_b8*xij2(slice,ip,i)**(-1)*(x(slice,ip,3)-x(slice,i,3))**2)
+    tmp =  a_lj*xij2(slice,ip,i)**(-6) &
+         + xij2(slice,ip,i)**(-1.5)*(1.0_b8-3.0_b8*xij2(slice,ip,i)**(-1)*(x(slice,ip,3)-x(slice,i,3))**2)
     t3 = t3 + exp(-(xij2(slice,ip,i)/(p_pbc_L*.99))**50)*tmp
   end do
 

@@ -709,7 +709,9 @@ program Test_VPI
         end if
         
         if(use_pbc) then
-          q1(move_start:move_end,:,:) = q1(move_start:move_end,:,:) - p_pbc_L*floor(q1(move_start:move_end,:,:)/p_pbc_L - 0.5_b8) - p_pbc_L
+          q1(move_start:move_end,:,:) = q1(move_start:move_end,:,:) &
+                                       - p_pbc_L*floor(q1(move_start:move_end,:,:)/p_pbc_L - 0.5_b8) &
+                                       - p_pbc_L
         end if
 
 !        if( .not.((part_num .eq. od_pnum) .and. eval_off_diagonal) ) then  
@@ -877,8 +879,10 @@ crepair:    do while ((coll_iter < maxfix_iter) .and. (acc_flag .eqv. .false.))
 
         if( n_slice > 2 ) then 
           if ( use_gfn4 ) then
-            lngfn1 = vpi_gfn4_sp( sl_start, sl_end, part_num, U_1, gradU2_1, U_weight, gU2_weight, N_SLICE, N_PARTICLE, N_DIM, lambda, dtau ) 
-            lngfn0 = vpi_gfn4_sp( sl_start, sl_end, part_num, U_0, gradU2_0, U_weight, gU2_weight, N_SLICE, N_PARTICLE, N_DIM, lambda, dtau ) 
+            lngfn1 = vpi_gfn4_sp( sl_start, sl_end, part_num, U_1, gradU2_1, U_weight, gU2_weight, &
+                                  N_SLICE, N_PARTICLE, N_DIM, lambda, dtau ) 
+            lngfn0 = vpi_gfn4_sp( sl_start, sl_end, part_num, U_0, gradU2_0, U_weight, gU2_weight, &
+                                  N_SLICE, N_PARTICLE, N_DIM, lambda, dtau ) 
           else 
             lngfn1 = vpi_gfn2_sp( sl_start, sl_end, part_num, U_1, N_SLICE, N_PARTICLE, N_DIM, dtau ) 
             lngfn0 = vpi_gfn2_sp( sl_start, sl_end, part_num, U_0, N_SLICE, N_PARTICLE, N_DIM, dtau ) 
@@ -941,7 +945,9 @@ crepair:    do while ((coll_iter < maxfix_iter) .and. (acc_flag .eqv. .false.))
 !          print *, "!!! ACCEPTED !!!"
           q0(move_start:move_end,:,:) = q1(move_start:move_end,:,:)
           if(use_pbc) then
-            qobs(move_start:move_end,:,:) = q0(move_start:move_end,:,:) - p_pbc_L*floor(q0(move_start:move_end,:,:)/p_pbc_L - 0.5_b8) - p_pbc_L
+            qobs(move_start:move_end,:,:) = q0(move_start:move_end,:,:) &
+                                            - p_pbc_L*floor(q0(move_start:move_end,:,:)/p_pbc_L - 0.5_b8) &
+                                            - p_pbc_L
             q0(move_start:move_end,:,:) = qobs(move_start:move_end,:,:)
           else
             qobs(move_start:move_end,:,:) = q0(move_start:move_end,:,:)
@@ -1060,7 +1066,8 @@ crepair:    do while ((coll_iter < maxfix_iter) .and. (acc_flag .eqv. .false.))
 
 
           if( eval_rotation ) then
-            call vpi_eval_gof_rot( gof_rot, gof_rot_xyz, gof_rot_xyz_avg, gofr_rot, qobs, q_rot0, xij2_0, CSLICE, N_BINS_GOFR, dndx_GOFR,  N_BINS_ROT_XYZ, size_x/2, dndx_rot_xyz, N_BINS_ROT, dndx_rot)
+            call vpi_eval_gof_rot( gof_rot, gof_rot_xyz, gof_rot_xyz_avg, gofr_rot, qobs, q_rot0, xij2_0, &
+                                   CSLICE, N_BINS_GOFR, dndx_GOFR,  N_BINS_ROT_XYZ, size_x/2, dndx_rot_xyz, N_BINS_ROT, dndx_rot)
           end if
           if(use_eval_cfn) then
             call vpi_eval_corr_x( corr_x, 1, N_SLICE, q0 )
@@ -1099,11 +1106,15 @@ crepair:    do while ((coll_iter < maxfix_iter) .and. (acc_flag .eqv. .false.))
             call vpi_eval_obdm_cut( obdm_y, qobs(CSLICE,od_pnum,2), qobs(CSLICE+1,od_pnum,2), N_BINS, N_DIM, size_x(2)/2, dndx(2))
             call vpi_eval_obdm_cut( obdm_z, qobs(CSLICE,od_pnum,3), qobs(CSLICE+1,od_pnum,3), N_BINS, N_DIM, size_x(3)/2, dndx(3))
             if(eval_obdm_full) then
-              call vpi_eval_obdm_full( obdm_full, qobs(CSLICE,od_pnum,:), qobs(CSLICE+1,od_pnum,:), N_BINS_full, N_DIM, size_x(:)/2, dndx(:))
+              call vpi_eval_obdm_full( obdm_full, qobs(CSLICE,od_pnum,:), qobs(CSLICE+1,od_pnum,:), &
+                                       N_BINS_full, N_DIM, size_x(:)/2, dndx(:))
             else
               if(eval_obdm_rz) then
                 tx0(1) = qobs(CSLICE,od_pnum,3)
-                tx0(2) = -sqrt( (qobs(CSLICE+1,od_pnum,1)-qobs(CSLICE,od_pnum,1))**2 + (qobs(CSLICE+1,od_pnum,2)-qobs(CSLICE,od_pnum,2))**2)/2
+                tx0(2) = -sqrt( (qobs(CSLICE+1,od_pnum,1) &
+                         -qobs(CSLICE,od_pnum,1))**2 &
+                         + (qobs(CSLICE+1,od_pnum,2) &
+                         -qobs(CSLICE,od_pnum,2))**2)/2
                 tx1(1) = qobs(CSLICE+1,od_pnum,3)
                 tx1(2) =  -tx0(2)
                 tsize(1) = size_x(3) 
@@ -1117,7 +1128,8 @@ crepair:    do while ((coll_iter < maxfix_iter) .and. (acc_flag .eqv. .false.))
               call vpi_eval_obdm_ring( obdm_theta, qobs(CSLICE,od_pnum,:), qobs(CSLICE+1,od_pnum,:), N_BINS, N_DIM)
             endif
             if( eval_rotation ) then
-              call vpi_eval_obdm_cut( obdm_rot_z, q_rot0(CSLICE,od_pnum,2), q_rot0(CSLICE+1,od_pnum,2), N_BINS, N_DIM, 1.0, real(N_BINS)/2.0)
+              call vpi_eval_obdm_cut( obdm_rot_z, q_rot0(CSLICE,od_pnum,2), q_rot0(CSLICE+1,od_pnum,2), &
+                                      N_BINS, N_DIM, 1.0, real(N_BINS)/2.0)
             end if
           end if
           if( eval_nrdm ) then
@@ -1153,7 +1165,8 @@ crepair:    do while ((coll_iter < maxfix_iter) .and. (acc_flag .eqv. .false.))
           open(12, file=my_fname, status="replace")
           do ii = 1, N_BINS
             do jj = 1, N_BINS
-              write(12, *) dxdn(1)*(ii-0.5) - size_x(1)/2.0, dxdn(1)*(jj-0.5) - size_x(1)/2.0, obdm_tmp(ii,jj)/( num_procs*2*n_moves*dxdn(1) )
+              write(12, *) dxdn(1)*(ii-0.5) - size_x(1)/2.0, dxdn(1)*(jj-0.5) - size_x(1)/2.0, &
+                           obdm_tmp(ii,jj)/( num_procs*2*n_moves*dxdn(1) )
             end do
             write(12, *)
           end do
@@ -1166,7 +1179,8 @@ crepair:    do while ((coll_iter < maxfix_iter) .and. (acc_flag .eqv. .false.))
           open(12, file=my_fname, status="replace")
           do ii = 1, N_BINS
             do jj = 1, N_BINS
-              write(12, *) dxdn(2)*(ii-0.5) - size_x(2)/2.0, dxdn(2)*(jj-0.5) - size_x(2)/2.0, obdm_tmp(ii,jj)/( num_procs*2*n_moves*dxdn(2) )
+              write(12, *) dxdn(2)*(ii-0.5) - size_x(2)/2.0, dxdn(2)*(jj-0.5) - size_x(2)/2.0, &
+                           obdm_tmp(ii,jj)/( num_procs*2*n_moves*dxdn(2) )
             end do
             write(12, *)
           end do
@@ -1179,7 +1193,8 @@ crepair:    do while ((coll_iter < maxfix_iter) .and. (acc_flag .eqv. .false.))
           open(12, file=my_fname, status="replace")
           do ii = 1, N_BINS
             do jj = 1, N_BINS
-              write(12, *) dxdn(3)*(ii-0.5) - size_x(3)/2.0, dxdn(3)*(jj-0.5) - size_x(3)/2.0, obdm_tmp(ii,jj)/( num_procs*2*n_moves*dxdn(3) )
+              write(12, *) dxdn(3)*(ii-0.5) - size_x(3)/2.0, dxdn(3)*(jj-0.5) - size_x(3)/2.0, &
+                           obdm_tmp(ii,jj)/( num_procs*2*n_moves*dxdn(3) )
             end do
             write(12, *)
           end do
@@ -1187,13 +1202,15 @@ crepair:    do while ((coll_iter < maxfix_iter) .and. (acc_flag .eqv. .false.))
         end if
 
         if(eval_obdm_full) then
-          call MPI_REDUCE(obdm_full,obdm_ftmp,(n_bins_full**n_dim)*(n_bins_full**n_dim),mpi_double_precision,MPI_SUM,0,MPI_COMM_WORLD,ierr)
+          call MPI_REDUCE(obdm_full,obdm_ftmp,(n_bins_full**n_dim)*(n_bins_full**n_dim), &
+                          mpi_double_precision,MPI_SUM,0,MPI_COMM_WORLD,ierr)
           if(my_rank .eq. 0) then
             write(my_fname,"(a13)")"obdm_full.dat"
             open(12, file=my_fname, status="replace")
             do ii = 1, N_BINS_full**n_dim
               do jj = 1, N_BINS_full**n_dim
-                write(12, *) dxdn(3)*(ii-0.5) - size_x(3)/2.0, dxdn(3)*(jj-0.5) - size_x(3)/2.0, obdm_ftmp(ii,jj)/( num_procs*2*n_moves*dxdn(3) )
+                write(12, *) dxdn(3)*(ii-0.5) - size_x(3)/2.0, dxdn(3)*(jj-0.5) - size_x(3)/2.0, &
+                             obdm_ftmp(ii,jj)/( num_procs*2*n_moves*dxdn(3) )
               end do
               write(12, *)
             end do
@@ -1207,7 +1224,8 @@ crepair:    do while ((coll_iter < maxfix_iter) .and. (acc_flag .eqv. .false.))
               open(12, file=my_fname, status="replace")
               do ii = 1, N_BINS_full**2
                 do jj = 1, N_BINS_full**2
-                  write(12, *) tdxdn(1)*(ii-0.5) - tsize(1)/2.0, tdxdn(1)*(jj-0.5) - tsize(1)/2.0, obdm_ftmp(ii,jj)/( num_procs*2*n_moves*tdxdn(1) )
+                  write(12, *) tdxdn(1)*(ii-0.5) - tsize(1)/2.0, tdxdn(1)*(jj-0.5) - tsize(1)/2.0, &
+                               obdm_ftmp(ii,jj)/( num_procs*2*n_moves*tdxdn(1) )
                 end do
                 write(12, *)
               end do
@@ -1323,10 +1341,17 @@ crepair:    do while ((coll_iter < maxfix_iter) .and. (acc_flag .eqv. .false.))
         do ii = 1,N_BINS_ROT_XYZ
           do jj = 1,N_BINS_ROT_XYZ
             do kk = 1,N_BINS_ROT_XYZ
-              write(13, "(5g12.3)", ADVANCE="NO") dxdn_rot_xyz(1)*(ii-0.5) - size_x(1)/2.0, dxdn_rot_xyz(2)*(jj-0.5) - size_x(2)/2.0, dxdn_rot_xyz(3)*(kk-0.5) - size_x(3)/2.0, gof_rot_xyz_avg(ii,jj,kk)/( n_moves )
+              write(13, "(5g12.3)", ADVANCE="NO") dxdn_rot_xyz(1)*(ii-0.5) - size_x(1)/2.0, &
+                                                  dxdn_rot_xyz(2)*(jj-0.5) - size_x(2)/2.0, &
+                                                  dxdn_rot_xyz(3)*(kk-0.5) - size_x(3)/2.0, &
+                                                  gof_rot_xyz_avg(ii,jj,kk)/( n_moves )
               write(13, *)
               do ll = 1,N_BINS_ROT
-                write(12, "(5g12.3)", ADVANCE="NO") dxdn_rot_xyz(1)*(ii-0.5) - size_x(1)/2.0,  dxdn_rot_xyz(2)*(jj-0.5) - size_x(2)/2.0,  dxdn_rot_xyz(3)*(kk-0.5) - size_x(3)/2.0,  2.0*(ll-1)/(N_BINS_ROT-1) - 1.0, gof_rot_xyz(ii,jj,kk,ll)/( n_moves )
+                write(12, "(5g12.3)", ADVANCE="NO") dxdn_rot_xyz(1)*(ii-0.5) - size_x(1)/2.0, &
+                                                    dxdn_rot_xyz(2)*(jj-0.5) - size_x(2)/2.0, &
+                                                    dxdn_rot_xyz(3)*(kk-0.5) - size_x(3)/2.0, &
+                                                    2.0*(ll-1)/(N_BINS_ROT-1) - 1.0, &
+                                                    gof_rot_xyz(ii,jj,kk,ll)/( n_moves )
                 write(12, *)
               end do
               write(12, *)
@@ -1529,7 +1554,10 @@ crepair:    do while ((coll_iter < maxfix_iter) .and. (acc_flag .eqv. .false.))
         do ii = 1, N_BINS
           do jj = 1, N_BINS
             do kk = 1, N_BINS
-              write(23, *) dxdn(1)*(ii-0.5) - size_x(1)/2.0, dxdn(2)*(jj-0.5) - size_x(2)/2.0, dxdn(3)*(jj-0.5) - size_x(3)/2.0, full_density(ii,jj,kk)/( n_moves*N_PARTICLE*dxdn(1)*dxdn(2)*dxdn(3) )
+              write(23, *) dxdn(1)*(ii-0.5) - size_x(1)/2.0, &
+                           dxdn(2)*(jj-0.5) - size_x(2)/2.0, &
+                           dxdn(3)*(jj-0.5) - size_x(3)/2.0, &
+                           full_density(ii,jj,kk)/( n_moves*N_PARTICLE*dxdn(1)*dxdn(2)*dxdn(3) )
             end do
             write(23, *)
           end do
@@ -2110,7 +2138,8 @@ subroutine vpi_eval_gofzrho( gofr, x, islice, nbins, dndx )
 
 end subroutine vpi_eval_gofzrho
 
-subroutine vpi_eval_gof_rot( gof_rot, gof_rot_xyz, gof_rot_xyz_avg, gofr_rot, q, q_rot, xij2, slice, nbins_rr, dndx_rr, nbins_xyz, xsize, dndx, nbins_rot, dndx_rot )
+subroutine vpi_eval_gof_rot( gof_rot, gof_rot_xyz, gof_rot_xyz_avg, gofr_rot, q, q_rot, xij2, &
+                             slice, nbins_rr, dndx_rr, nbins_xyz, xsize, dndx, nbins_rot, dndx_rot )
   integer :: nbins_xyz, nbins_rot, nbins_rr
   integer :: slice
   real(kind=b8), dimension( : ), intent(inout):: gof_rot 

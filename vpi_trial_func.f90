@@ -793,10 +793,14 @@ function grad_dw_tfun( x, ndim, grad_lntfn ) result( y )
   tx(:) = x(:)
   do k = 1, ndim
     tx(k) = x(k) + ntol_eps
-    fhi(k)  = log( exp( -( p_hox*tx(1)**2 + p_hoy*tx(2)**2 )/2.0 ) * ( p_dw_f0*exp(-p_dw_f1*(tx(3)-p_dw_f2)**2) + p_dw_f0*exp(-p_dw_f1*(tx(3)+p_dw_f2)**2) + p_dw_f3*exp(-p_dw_f4*tx(3)**2)))
+    fhi(k)  = log( exp( -( p_hox*tx(1)**2 + p_hoy*tx(2)**2 )/2.0 ) * ( p_dw_f0*exp(-p_dw_f1*(tx(3)-p_dw_f2)**2) &
+             + p_dw_f0*exp(-p_dw_f1*(tx(3)+p_dw_f2)**2) &
+             + p_dw_f3*exp(-p_dw_f4*tx(3)**2)))
   
     tx(k) = x(k) - ntol_eps
-    flo(k)  = log( exp( -( p_hox*tx(1)**2 + p_hoy*tx(2)**2 )/2.0 ) * ( p_dw_f0*exp(-p_dw_f1*(tx(3)-p_dw_f2)**2) + p_dw_f0*exp(-p_dw_f1*(tx(3)+p_dw_f2)**2) + p_dw_f3*exp(-p_dw_f4*tx(3)**2)))
+    flo(k)  = log( exp( -( p_hox*tx(1)**2 + p_hoy*tx(2)**2 )/2.0 ) * ( p_dw_f0*exp(-p_dw_f1*(tx(3)-p_dw_f2)**2) &
+              + p_dw_f0*exp(-p_dw_f1*(tx(3)+p_dw_f2)**2) &
+              + p_dw_f3*exp(-p_dw_f4*tx(3)**2)))
 
     tx(k) = x(k)
   end do

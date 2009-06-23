@@ -35,7 +35,8 @@ function vpi_gfn4_sp( sl_start, sl_end, ip, U, gradU2, U_weight, gU2_weight, nsl
 
   integer :: ii,ioffset
 
-  ln_gfn = -2.0_b8*dt*sum( U(sl_start:sl_end,ip)*U_weight(sl_start:sl_end) )/3.0_b8 - 2.0_b8*lambda*(dt**3)*sum( gradU2(sl_start:sl_end)*gU2_weight(sl_start:sl_end) )/(9.0_b8)  
+  ln_gfn = -2.0_b8*dt*sum( U(sl_start:sl_end,ip)*U_weight(sl_start:sl_end) )/3.0_b8 &
+           -2.0_b8*lambda*(dt**3)*sum( gradU2(sl_start:sl_end)*gU2_weight(sl_start:sl_end) )/(9.0_b8)  
 
 !  print *,ln_gfn
 end function vpi_gfn4_sp
