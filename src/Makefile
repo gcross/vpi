@@ -1,3 +1,5 @@
+all: vpi
+
 ################################################################################
 # AIX
 
@@ -51,14 +53,15 @@
 #MYLIBS = 
 
 #ifort
-FC = mpiifort
-F90FLAGS = -cpp 
+FC = mpif90
+F90FLAGS = -cpp
 #MYFFLAGS =  -O3 -funroll-loops -fomit-frame-pointer -finline-functions -D USE_MPI  -D USE_IMAGE_HSGFN -D EXPERIMENTAL
 #MYFFLAGS =  -p -O3 -funroll-loops -fomit-frame-pointer -finline-functions -D USE_MPI  -D USE_IMAGE_HSGFN -prof-genx 
 MYFFLAGS =  -O3 -funroll-loops -fomit-frame-pointer -finline-functions -D USE_MPI -D USE_IMAGE_HSGFN
 #MYFFLAGS =  -g -D USE_MPI -D USE_IMAGE_HSGFN
 #zeus
-MYLIBS =  -Wl,-rpath=/usr/local/tools/mkl/lib/ -L/usr/local/tools/mkl/lib/ -lmkl -lmkl_lapack64 -lguide -lpthread
+#MYLIBS =  -Wl,-rpath=/usr/local/tools/mkl/lib/ -L/usr/local/tools/mkl/lib/ -lmkl -lmkl_lapack64 -lguide -lpthread
+MYLIBS =  -Wl -llapack -lpthread
 #MYLIBS = -p -L/usr/local/intel/mkl/lib/em64t -lmkl -lmkl_lapack64 -lguide -lpthread
 
 #pathscale
