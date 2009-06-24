@@ -1,19 +1,33 @@
-MODULe vpi_sample
+!@+leo-ver=4-thin
+!@+node:gcross.20090623152316.73:@thin vpi_sample.f90
+!@@language fortran90
+module vpi_sample
 
+ !@ << Imported modules >>
+ !@+node:gcross.20090623152316.74:<< Imported modules >>
  use vpi_rand_utils
  use vpi_bbridge
  use vpi_bisect
  use vpi_defines
+ !@-node:gcross.20090623152316.74:<< Imported modules >>
+ !@nl
 
  implicit none
 
-
+ !@ << Move type constants >>
+ !@+node:gcross.20090623152316.75:<< Move type constants >>
  integer, parameter :: MT_BBRIDGE = 0
  integer, parameter :: MT_RIGID = 1
  integer, parameter :: MT_SWAP = 2
+ !@nonl
+ !@-node:gcross.20090623152316.75:<< Move type constants >>
+ !@nl
 
  contains
 
+!@+others
+!@+node:gcross.20090623152316.76:Sampling subroutines
+!@+node:gcross.20090623152316.77:scheme 1
 subroutine sample_scheme1(q0, q1, move_start, move_end, part_num, mtype)
   real(kind=b8), dimension ( N_SLICE , N_PARTICLE, N_DIM ), intent(in) :: q0
   real(kind=b8), dimension ( N_SLICE , N_PARTICLE, N_DIM ), intent(inout) :: q1
@@ -99,149 +113,8 @@ subroutine sample_scheme1(q0, q1, move_start, move_end, part_num, mtype)
 
 !  print *, "move_start, move_end ",move_start, move_end,part_num
 end subroutine sample_scheme1
-
-subroutine rigid_move(qin, qout, part_num, low_dim, high_dim, i0, i1, dnu)
-  real(kind=b8), dimension ( N_SLICE , N_PARTICLE, N_DIM ) :: qin
-  real(kind=b8), dimension ( N_SLICE , N_PARTICLE, N_DIM ) :: qout
-  integer :: part_num, low_dim, high_dim, i0, i1
-  real(kind=b8) :: dnu
-
-  real, dimension( N_DIM )  :: nu
-  integer :: j
-
-  call random_number( nu )
-  nu = ( nu - 0.5 ) * dnu
-
-  do j = low_dim, high_dim
-    qout(i0:i1,part_num,j) = qin(i0:i1,part_num,j) + nu(j)
-  end do
-end subroutine rigid_move!}}}
-
-subroutine swap_move(qin, qout, part_num, low_dim, high_dim, i0, i1, dnu)
-  real(kind=b8), dimension ( N_SLICE , N_PARTICLE, N_DIM ) :: qin
-  real(kind=b8), dimension ( N_SLICE , N_PARTICLE, N_DIM ) :: qout
-  integer :: part_num, low_dim, high_dim, i0, i1
-  real(kind=b8) :: dnu
-
-  real(kind=b8), dimension( N_DIM )  :: nu
-  integer :: j
-
-  call random_number( nu )
-  nu = ( nu - 0.5 ) * dnu
-
-  do j = low_dim, high_dim
-    qout(i0:i1,part_num,j) = -qin(i0:i1,part_num,j) + nu(j)
-  end do
-end subroutine swap_move!}}}
-
-subroutine ipush(list,val,ip)
-  integer, dimension(:),intent(inout) :: list
-  integer, intent(in) :: val
-  integer,intent(inout) :: ip
-  
-  if(ip < size(list)) then
-    ip = ip + 1
-    list(ip) = val 
-  end if
-end subroutine ipush!}}}
-
-subroutine ipop(list,val,ip)
-  integer, dimension(:),intent(inout) :: list
-  integer, intent(inout) :: val,ip
-
-  if(ip > 0) then
-    val = list(ip)
-    ip = ip -1 
-  else
-    val = -1
-    ip = 0
-  end if
-end subroutine ipop!}}}
-
-subroutine get_collisions(q,ip,clist,n_coll)
-  real(kind=b8), dimension ( N_SLICE , N_PARTICLE, N_DIM ) :: q
-  integer, dimension ( N_PARTICLE ) :: clist
-  integer :: ip,n_coll
-  integer :: i,j,cflag
-  real(kind=b8) :: xij
-
-  n_coll = 0
-  do j = 1, n_particle
-    if(j .ne. ip) then
-      cflag = 0
-      do i = 1, n_slice
-        xij = sum((q(i,j,:) - q(i,ip,:))**2) 
-        if(xij < a_hs2) then
-          cflag = 1
-          exit
-        end if
-      end do
-      if(cflag == 1) call ipush(clist,j,n_coll)
-    end if
-  end do
-  
-end subroutine get_collisions!}}}
-  
-
-subroutine cascading_swap_move(qin, qout, part_num, swap_dim)
-  implicit none
-  real(kind=b8), dimension ( N_SLICE , N_PARTICLE, N_DIM ) :: qin
-  real(kind=b8), dimension ( N_SLICE , N_PARTICLE, N_DIM ) :: qout
-  integer :: part_num, swap_dim
-  integer, dimension(N_PARTICLE) :: plist,alist,clist
-  integer :: pcnt,acnt,t_acnt,ccnt
-  integer :: j,k,tmp
-  integer :: ip_swap
-  real(kind=b8) :: rnd
-
-  call random_number( rnd )
-#ifdef DEBUG_CASCADE_SWAP
-  print *, "** starting cascading swap"
-#endif
-  pcnt = 0
-  acnt = 0
-  call ipush(plist,part_num,pcnt)
-  do j = 1, n_particle
-    if(j .ne. part_num) then
-      call ipush(alist,j,acnt)
-#ifdef DEBUG_CASCADE_SWAP
-      print *, "alist = ",j," acnt = ",acnt
-#endif
-    end if
-  end do
-  ip_swap = part_num
-  do while(pcnt > 0)
-#ifdef DEBUG_CASCADE_SWAP
-    print *, "p_swap = ",ip_swap," pcnt = ",pcnt
-#endif
-    if(use_pbc) then
-      qout(:,ip_swap,swap_dim) = -qin(:,ip_swap,swap_dim)+ rnd*p_pbc_l
-    else
-      qout(:,ip_swap,swap_dim) = -qin(:,ip_swap,swap_dim)
-    end if
-    ccnt = 0
-    call get_collisions(qout,ip_swap,clist,ccnt)
-#ifdef DEBUG_CASCADE_SWAP
-    print *, "n_coll = ",ccnt
-#endif
-    do j=1,ccnt
-      t_acnt = acnt
-      do k = t_acnt,1,-1
-        if(clist(j) == alist(k)) then
-          alist(k) = alist(acnt)
-          call ipop(alist,tmp,acnt)
-          call ipush(plist,clist(j),pcnt)
-#ifdef DEBUG_CASCADE_SWAP
-          print *, j,k,tmp,acnt
-          print *, j,k,clist(j),pcnt
-#endif
-        end if
-      end do
-    end do
-    call ipop(plist,ip_swap,pcnt)
-  end do
-end subroutine cascading_swap_move!}}}
-
+!@-node:gcross.20090623152316.77:scheme 1
+!@+node:gcross.20090623152316.78:rotation
 subroutine sample_rotation(q_rot0, q_rot1, move_start, move_end, part_num)
   real(kind=b8), dimension ( N_SLICE , N_PARTICLE, N_DIM_ROT ), intent(in) :: q_rot0
   real(kind=b8), dimension ( N_SLICE , N_PARTICLE, N_DIM_ROT ), intent(inout) :: q_rot1
@@ -290,7 +163,8 @@ endif
   end if
 
 end subroutine sample_rotation!}}}
-
+!@-node:gcross.20090623152316.78:rotation
+!@+node:gcross.20090623152316.79:rotation xx (?)
 subroutine xxsample_rotation(q_rot0, q_rot1, move_start, move_end, part_num)
   real(kind=b8), dimension ( N_SLICE , N_PARTICLE, N_DIM_ROT ), intent(in) :: q_rot0
   real(kind=b8), dimension ( N_SLICE , N_PARTICLE, N_DIM_ROT ), intent(inout) :: q_rot1
@@ -317,5 +191,180 @@ subroutine xxsample_rotation(q_rot0, q_rot1, move_start, move_end, part_num)
   end if
 
 end subroutine xxsample_rotation!}}}
+!@-node:gcross.20090623152316.79:rotation xx (?)
+!@-node:gcross.20090623152316.76:Sampling subroutines
+!@+node:gcross.20090623152316.84:Utility subroutines
+!@+node:gcross.20090623152316.85:ipush / ipop
+subroutine ipush(list,val,ip)
+  integer, dimension(:),intent(inout) :: list
+  integer, intent(in) :: val
+  integer,intent(inout) :: ip
+
+  if(ip < size(list)) then
+    ip = ip + 1
+    list(ip) = val 
+  end if
+end subroutine ipush!}}}
+
+subroutine ipop(list,val,ip)
+  integer, dimension(:),intent(inout) :: list
+  integer, intent(inout) :: val,ip
+
+  if(ip > 0) then
+    val = list(ip)
+    ip = ip -1 
+  else
+    val = -1
+    ip = 0
+  end if
+end subroutine ipop!}}}
+!@-node:gcross.20090623152316.85:ipush / ipop
+!@+node:gcross.20090623152316.88:get_collisions
+subroutine get_collisions(q,ip,clist,n_coll)
+  real(kind=b8), dimension ( N_SLICE , N_PARTICLE, N_DIM ) :: q
+  integer, dimension ( N_PARTICLE ) :: clist
+  integer :: ip,n_coll
+  integer :: i,j,cflag
+  real(kind=b8) :: xij
+
+  n_coll = 0
+  do j = 1, n_particle
+    if(j .ne. ip) then
+      cflag = 0
+      do i = 1, n_slice
+        xij = sum((q(i,j,:) - q(i,ip,:))**2) 
+        if(xij < a_hs2) then
+          cflag = 1
+          exit
+        end if
+      end do
+      if(cflag == 1) call ipush(clist,j,n_coll)
+    end if
+  end do
+
+end subroutine get_collisions!}}}
+!@-node:gcross.20090623152316.88:get_collisions
+!@-node:gcross.20090623152316.84:Utility subroutines
+!@+node:gcross.20090623152316.80:Move subroutines
+!@+node:gcross.20090623152316.81:rigid
+subroutine rigid_move(qin, qout, part_num, low_dim, high_dim, i0, i1, dnu)
+  real(kind=b8), dimension ( N_SLICE , N_PARTICLE, N_DIM ) :: qin
+  real(kind=b8), dimension ( N_SLICE , N_PARTICLE, N_DIM ) :: qout
+  integer :: part_num, low_dim, high_dim, i0, i1
+  real(kind=b8) :: dnu
+
+  real, dimension( N_DIM )  :: nu
+  integer :: j
+
+  call random_number( nu )
+  nu = ( nu - 0.5 ) * dnu
+
+  do j = low_dim, high_dim
+    qout(i0:i1,part_num,j) = qin(i0:i1,part_num,j) + nu(j)
+  end do
+end subroutine rigid_move!}}}
+!@-node:gcross.20090623152316.81:rigid
+!@+node:gcross.20090623152316.82:swap
+subroutine swap_move(qin, qout, part_num, low_dim, high_dim, i0, i1, dnu)
+  real(kind=b8), dimension ( N_SLICE , N_PARTICLE, N_DIM ) :: qin
+  real(kind=b8), dimension ( N_SLICE , N_PARTICLE, N_DIM ) :: qout
+  integer :: part_num, low_dim, high_dim, i0, i1
+  real(kind=b8) :: dnu
+
+  real(kind=b8), dimension( N_DIM )  :: nu
+  integer :: j
+
+  call random_number( nu )
+  nu = ( nu - 0.5 ) * dnu
+
+  do j = low_dim, high_dim
+    qout(i0:i1,part_num,j) = -qin(i0:i1,part_num,j) + nu(j)
+  end do
+end subroutine swap_move!}}}
+!@-node:gcross.20090623152316.82:swap
+!@+node:gcross.20090623152316.83:cascading swap
+subroutine cascading_swap_move(qin, qout, part_num, swap_dim)
+  implicit none
+  real(kind=b8), dimension ( N_SLICE , N_PARTICLE, N_DIM ) :: qin
+  real(kind=b8), dimension ( N_SLICE , N_PARTICLE, N_DIM ) :: qout
+  integer :: part_num, swap_dim
+  integer, dimension(N_PARTICLE) :: plist,alist,clist
+  integer :: pcnt,acnt,t_acnt,ccnt
+  integer :: j,k,tmp
+  integer :: ip_swap
+  real(kind=b8) :: rnd
+
+  call random_number( rnd )
+!@@raw
+#ifdef DEBUG_CASCADE_SWAP
+!@@end_raw
+  print *, "** starting cascading swap"
+!@@raw
+#endif
+!@@end_raw
+  pcnt = 0
+  acnt = 0
+  call ipush(plist,part_num,pcnt)
+  do j = 1, n_particle
+    if(j .ne. part_num) then
+      call ipush(alist,j,acnt)
+!@@raw
+#ifdef DEBUG_CASCADE_SWAP
+!@@end_raw
+      print *, "alist = ",j," acnt = ",acnt
+!@@raw
+#endif
+!@@end_raw
+    end if
+  end do
+  ip_swap = part_num
+  do while(pcnt > 0)
+!@@raw
+#ifdef DEBUG_CASCADE_SWAP
+!@@end_raw
+    print *, "p_swap = ",ip_swap," pcnt = ",pcnt
+!@@raw
+#endif
+!@@end_raw
+    if(use_pbc) then
+      qout(:,ip_swap,swap_dim) = -qin(:,ip_swap,swap_dim)+ rnd*p_pbc_l
+    else
+      qout(:,ip_swap,swap_dim) = -qin(:,ip_swap,swap_dim)
+    end if
+    ccnt = 0
+    call get_collisions(qout,ip_swap,clist,ccnt)
+!@@raw
+#ifdef DEBUG_CASCADE_SWAP
+!@@end_raw
+    print *, "n_coll = ",ccnt
+!@@raw
+#endif
+!@@end_raw
+    do j=1,ccnt
+      t_acnt = acnt
+      do k = t_acnt,1,-1
+        if(clist(j) == alist(k)) then
+          alist(k) = alist(acnt)
+          call ipop(alist,tmp,acnt)
+          call ipush(plist,clist(j),pcnt)
+!@@raw
+#ifdef DEBUG_CASCADE_SWAP
+!@@end_raw
+          print *, j,k,tmp,acnt
+          print *, j,k,clist(j),pcnt
+!@@raw
+#endif
+!@@end_raw
+        end if
+      end do
+    end do
+    call ipop(plist,ip_swap,pcnt)
+  end do
+end subroutine cascading_swap_move!}}}
+!@-node:gcross.20090623152316.83:cascading swap
+!@-node:gcross.20090623152316.80:Move subroutines
+!@-others
 
 end module vpi_sample
+!@-node:gcross.20090623152316.73:@thin vpi_sample.f90
+!@-leo

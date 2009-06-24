@@ -1,41 +1,116 @@
-module vpi_trial_func 
+!@+leo-ver=4-thin
+!@+node:gcross.20090623152316.91:@thin vpi_trial_func.f90
+!@@language fortran90
+module vpi_trial_func
 
-  use vpi_defines
-  use vpi_xij
-  use vpi_potential
+  !@  << Import modules >>
+  !@+node:gcross.20090623152316.128:<< Import modules >>
+    use vpi_defines
+    use vpi_xij
+    use vpi_potential
+  !@nonl
+  !@-node:gcross.20090623152316.128:<< Import modules >>
+  !@nl
+
   implicit none
 
   contains
 
+!@+others
+!@+node:gcross.20090623152316.115:eval_E_local
+subroutine eval_E_local(np,ndim,grad_lnspf, lap_lnspf, grad_lnjas, lap_lnjas, U, E_l)
+  integer, intent(in) :: np, ndim
+  real(kind=b8), dimension( np , ndim ), intent(in) :: grad_lnjas 
+  real(kind=b8), dimension( np , ndim ), intent(in) :: grad_lnspf 
+  real(kind=b8), intent(in) :: lap_lnspf
+  real(kind=b8), intent(in) :: lap_lnjas 
+  real(kind=b8), intent(in) :: U
+  real(kind=b8), intent(out) :: E_l
 
-function hs_tfun( x, xij2, params, sl, nslice, np, ndim ) result( y )
-  use kinds
-  implicit none
-  integer :: sl, nslice, np, ndim
-  real(kind=b8), dimension( nslice , np, ndim ), intent(in) :: x
-  real(kind=b8), dimension( nslice , np, np ), intent(in) :: xij2
-  real(kind=b8), dimension(:) :: params
-  real(kind=b8)  :: r2
-  real(kind=b8)  :: y
+  real(kind=b8) :: t0,t1,T
 
-  integer :: i, j
+  integer i,j
 
-  a_hs = params(1)
-  a_hs2 = params(2)
-  y = 0.0_b8
+  t0 = 0.0_b8
+!  do i = 1, np
+!    do j = 1, ndim
+!      t1  = grad_lnspf(i,j) +  grad_lnjas(i,j) 
+!      t0 = t0 + t1*t1
+!    end do
+!  end do
+
+  t0 = sum((grad_lnspf(:,:) +  grad_lnjas(:,:))**2)
+
+  T = t0 + lap_lnspf + lap_lnjas
+!  do i = 1, np
+!    do j = 1, ndim
+!      write(111,"(1a,2g18.6)") "#",grad_lnspf(i,j), grad_lnjas(i,j) 
+!    end do
+!  end do
+
+!  write (111,"(7a18)") "#grad^2","lap_lnspf","lap_lnjas","T","U","E_l","lambda"
+!  write (111,"(7g18.6)") t0,lap_lnspf,lap_lnjas,T,U,E_l,lambda
+  E_l = U - lambda*T
+
+
+end subroutine  eval_E_local
+!@-node:gcross.20090623152316.115:eval_E_local
+!@+node:gcross.20090623152316.100:numeric differentiation
+!@+node:gcross.20090623152316.101:single partice function
+function numeric_grad_lap_spf( x, sl, np, ndim, nslice, grad_lntfn, lap_lntfn, sp_param, spf_func ) result( y )
+  real(kind=b8), dimension( nslice , np , ndim ), intent(in) :: x
+  real(kind=b8), dimension( np , ndim ), intent(out) :: grad_lntfn 
+  real(kind=b8), dimension( : ) :: sp_param
+  real(kind=b8),intent(out) :: lap_lntfn 
+  integer, intent(in) :: np, ndim, nslice, sl
+
+  interface
+    function spf_func( x, sl, param, nslice, np, ndim ) result( y )
+      use kinds
+      implicit none
+      integer :: sl, nslice, np, ndim
+      real(kind=b8), dimension( nslice, np , ndim ) :: x
+      real(kind=b8), dimension( : ) :: param
+      real(kind=b8) :: y
+    end function spf_func
+  end interface
+  integer :: y
+
+  real(kind=b8), dimension( nslice, np, ndim ) :: tx
+  real(kind=b8), dimension( ndim ) :: fhi,flo,f
+  integer :: i, k
+
+  y = 0
+  tx(sl,:,:) = x(sl,:,:)
+
+  grad_lntfn = 0
+  lap_lntfn = 0
   do i = 1, np
-    do j = i + 1, np
-      r2 = xij2(sl,i,j)
-      if ( r2 .gt. a_hs2 ) then
-        y = y + log(1.0_b8 - a_hs/sqrt(r2))
-      else
-        y = -realbignumber
-      end if
+    do k = 1, ndim
+      f(k) = spf_func( x, sl, sp_param, nslice, np, ndim )
+      tx(sl,i,k) = x(sl,i,k) + ntol_eps
+      fhi(k) = spf_func( tx, sl, sp_param, nslice, np, ndim )
+      tx(sl,i,k) = x(sl,i,k) - ntol_eps
+      flo(k) = spf_func( tx, sl, sp_param, nslice, np, ndim )
+      tx(sl,i,k) = x(sl,i,k)
     end do
+#ifdef DEBUG
+    write(1000,*) fhi
+    write(1000,*) f
+    write(1000,*) flo
+#endif
+    grad_lntfn(i,:) = (fhi(:)-flo(:))/(2.0_b8*ntol_eps)
+    lap_lntfn = lap_lntfn + sum((fhi(:)-2.0_b8*f(:)+flo(:)))/ntol_eps**2
   end do
 
-end function hs_tfun
+!  write(1000,*) grad_lntfn
+!  write(1000,*) lap_lntfn
 
+  y = 1
+
+end function numeric_grad_lap_spf
+!@-node:gcross.20090623152316.101:single partice function
+!@+node:gcross.20090623152316.102:Jastrow function
 function numeric_grad_lap_jas( x, xij2, sl, np, ndim, nslice, grad_lntfn, lap_lntfn, jfunc_params, jfunc ) result (y)
   integer, intent(in) :: sl, np, ndim, nslice
   real(kind=b8), dimension( nslice, np, ndim ) :: x
@@ -114,281 +189,42 @@ function numeric_grad_lap_jas( x, xij2, sl, np, ndim, nslice, grad_lntfn, lap_ln
 
 
 end function numeric_grad_lap_jas
-
-function numeric_grad_lap_spf( x, sl, np, ndim, nslice, grad_lntfn, lap_lntfn, sp_param, spf_func ) result( y )
-  real(kind=b8), dimension( nslice , np , ndim ), intent(in) :: x
-  real(kind=b8), dimension( np , ndim ), intent(out) :: grad_lntfn 
-  real(kind=b8), dimension( : ) :: sp_param
-  real(kind=b8),intent(out) :: lap_lntfn 
-  integer, intent(in) :: np, ndim, nslice, sl
-
-  interface
-    function spf_func( x, sl, param, nslice, np, ndim ) result( y )
-      use kinds
-      implicit none
-      integer :: sl, nslice, np, ndim
-      real(kind=b8), dimension( nslice, np , ndim ) :: x
-      real(kind=b8), dimension( : ) :: param
-      real(kind=b8) :: y
-    end function spf_func
-  end interface
-  integer :: y
-
-  real(kind=b8), dimension( nslice, np, ndim ) :: tx
-  real(kind=b8), dimension( ndim ) :: fhi,flo,f
-  integer :: i, k
-
-  y = 0
-  tx(sl,:,:) = x(sl,:,:)
-
-  grad_lntfn = 0
-  lap_lntfn = 0
-  do i = 1, np
-    do k = 1, ndim
-      f(k) = spf_func( x, sl, sp_param, nslice, np, ndim )
-      tx(sl,i,k) = x(sl,i,k) + ntol_eps
-      fhi(k) = spf_func( tx, sl, sp_param, nslice, np, ndim )
-      tx(sl,i,k) = x(sl,i,k) - ntol_eps
-      flo(k) = spf_func( tx, sl, sp_param, nslice, np, ndim )
-      tx(sl,i,k) = x(sl,i,k)
-    end do
-#ifdef DEBUG
-    write(1000,*) fhi
-    write(1000,*) f
-    write(1000,*) flo
-#endif
-    grad_lntfn(i,:) = (fhi(:)-flo(:))/(2.0_b8*ntol_eps)
-    lap_lntfn = lap_lntfn + sum((fhi(:)-2.0_b8*f(:)+flo(:)))/ntol_eps**2
-  end do
-
-!  write(1000,*) grad_lntfn
-!  write(1000,*) lap_lntfn
-
-  y = 1
-
-end function numeric_grad_lap_spf
-
-function grad_lap_hs_tfun( x, xij2, sl, np, ndim, nslice, grad_lntfn, lap_lntfn, jfunc_params, jfunc ) result (y)
-  integer :: sl, np, ndim, nslice
-  real(kind=b8), dimension( nslice, np, ndim ) :: x
-  real(kind=b8), dimension( nslice, np, np ) :: xij2
-  real(kind=b8), dimension( np, ndim ), intent(out) :: grad_lntfn 
-  real(kind=b8), intent(out) :: lap_lntfn 
-  real(kind=b8), dimension(:) :: jfunc_params
-  interface
-    function jfunc( x, xij2, params, sl, nslice, np, ndim) result(y)
-      use kinds
-      implicit none
-      integer :: sl, nslice, np, ndim
-      real(kind=b8), dimension(:) :: params
-      real(kind=b8), dimension( nslice, np, ndim ), intent(in) :: x
-      real(kind=b8), dimension( nslice, np, np ), intent(in) :: xij2
-      real(kind=b8)  :: y
-    end function jfunc
-  end interface
-  integer :: y
-
-
-  real(kind=b8)  :: fi,fi2,ri,ri2,ri3,ri4
-  real(kind=b8), dimension( ndim ) :: gtmp
-  integer :: i, j
-
-  grad_lntfn = 0.0_b8
-  lap_lntfn = 0.0_b8
-  do i = 1, np
-    do j = i + 1, np
-      if ( xij2(sl,i,j) .gt. a_hs2 ) then
-        ri2 = 1.0_b8/xij2(sl,i,j)
-        ri = sqrt(ri2)
-        ri3 = ri*ri2
-        ri4 = ri2*ri2
-        fi = 1.0_b8/(1.0_b8 - a_hs*ri)
-        fi2 = fi*fi
-        gtmp(:) = ri3*fi*(x(sl,i,:) - x(sl,j,:))
-!        write (222,"(3g18.6)") gtmp(1),gtmp(2),gtmp(3)
-        grad_lntfn(i,:) = grad_lntfn(i,:) + gtmp(:)
-        grad_lntfn(j,:) = grad_lntfn(j,:) - gtmp(:)
-        lap_lntfn = lap_lntfn - fi2*ri4 
-      else
-        y = -1
-        return
-      end if
-    end do
-  end do
-  lap_lntfn = 2.0_b8*a_hs2*lap_lntfn
-  grad_lntfn(:,:) = a_hs*grad_lntfn(:,:)
-  y = 1
-end function grad_lap_hs_tfun
-
+!@-node:gcross.20090623152316.102:Jastrow function
+!@+node:gcross.20090623152316.106:???
 !function numeric_grad_lap(np,ndim,func,x,xij2,eps) result(grad_f)
 !  integer :: np, ndim
 !  real(kind=b8), dimension( np , ndim ) :: x
 !end function
-
-function test_tfun( xij2, p, sl, nslice, np ) result( y )
-  integer :: sl, nslice, np
-  real(kind=b8) , dimension( nslice , np, np ) :: xij2
-  real(kind=b8) , dimension(:) :: p
-  real(kind=b8)  :: y
-  real(kind=b8)  :: r5, r1
-
-  integer :: i, j
-
-  y = 0.0_b8
-  do i = 1, np
-    do j = i + 1, np
-      r1 = xij2(sl,i,j)
-      y = y - xij2(sl,i,j)
-    end do
-  end do
-
-end function test_tfun
-
-function dimer_tfun( x, xij2, p, sl, nslice, np, ndim ) result( y )
-  integer :: sl, nslice, np, ndim
-  real(kind=b8) , dimension( nslice , np, ndim ), intent(in) :: x
-  real(kind=b8) , dimension( nslice , np, np ), intent(in) :: xij2
-  real(kind=b8) , dimension(:) :: p
-  real(kind=b8)  :: y
-
-  integer :: i
-  logical :: acc_flag
-
-  y = 0.0
-  do i = 1, np
-    y = y - p(1)*vpi_Uij_z_polarized_dimer( x, xij2, sl, i, nslice, np, ndim, acc_flag )
-  end do
-
-end function dimer_tfun
-
-
-function lj_tfun( x, xij2, p, sl, nslice, np, ndim ) result( y )
-  integer :: sl, nslice, np, ndim
-  real(kind=b8) , dimension( nslice , np, ndim ), intent(in) :: x
-  real(kind=b8) , dimension( nslice , np, np ), intent(in) :: xij2
-  real(kind=b8) , dimension(:) :: p
-  real(kind=b8)  :: y
-  real(kind=b8)  :: r5, r1
-
-  integer :: i, j
-
-  y = 0.0
-  do i = 1, np
-    do j = i + 1, np
-      r1 = xij2(sl,i,j)**(-0.5_b8)
-      r5 = r1*xij2(sl,i,j)**(-2)
-      y = y - p_ljc5*r5 - p_ljc1*r1
-    end do
-  end do
-
-end function lj_tfun
-
-
-
-function grad_lap_lj_tfun( x, xij2, sl, np, ndim, nslice, grad_lntfn, lap_lntfn, jfunc_params, jfunc ) result (y)
-  integer, intent(in) :: sl, np, ndim, nslice
-  real(kind=b8), dimension( nslice, np, ndim ) :: x
-  real(kind=b8), dimension( nslice, np, np ) :: xij2
-  real(kind=b8), dimension( np, ndim ), intent(out) :: grad_lntfn
-  real(kind=b8), intent(out) :: lap_lntfn
-  real(kind=b8) , dimension(:) :: jfunc_params
-
-  interface
-    function jfunc( xij2, params, sl, nslice, np) result(y)
-      use kinds
-      implicit none
-      integer :: sl, nslice, np
-      real(kind=b8), dimension(:) :: params
-      real(kind=b8), dimension( nslice, np, np ) :: xij2
-      real(kind=b8)  :: y
-    end function jfunc
-  end interface
-
-  real(kind=b8)  :: r,ri,ri2,ri3,ri4,ri6,ri7,ri8,ri12
-  real(kind=b8), dimension( ndim ) :: gtmp
-  real(kind=b8) :: p5sq,p1sq,tmp
-  integer :: y
-  integer :: i, j
-
-  p5sq = p_ljc5*p_ljc5
-  p1sq = p_ljc1*p_ljc1
-
-  grad_lntfn = 0
-  lap_lntfn = 0
-  do i = 1, np
-    do j = i + 1, np
-      r = sqrt(xij2(sl,i,j))
-      ri2 = 1.0_b8/xij2(sl,i,j)
-      ri = 1.0/r
-      ri3 = ri*ri2
-      ri4 = ri2*ri2
-      ri6 = ri3*ri3
-      ri8 = ri4*ri4
-      ri7 = ri*ri6
-      ri12 = ri6*ri6
-
-      gtmp(:) =  (5.0*p_ljc5*ri7 + p_ljc1*ri3)*(x(sl,i,:) - x(sl,j,:))
-      grad_lntfn(i,:) = grad_lntfn(i,:) + gtmp(:)
-      grad_lntfn(j,:) = grad_lntfn(j,:) - gtmp(:)
-      tmp = 25.0*p5sq*ri12 + 10.0*p_ljc5*(p_ljc1 - 2*r)*ri8 + p1sq*ri4 
-      lap_lntfn = lap_lntfn + tmp
-    end do
-  end do
-  y = 1
-end function grad_lap_lj_tfun
-
-
-
-
-function aziz_tfun( xij2, sl, nslice, np ) result( y )
-  integer :: sl, nslice, np
-  real(kind=b8) , dimension( nslice , np, np ) :: xij2
-  real(kind=b8)  :: y
-  real(kind=b8)  :: r5, r1
-
-  real(kind=b8)  :: alpha, beta
-
-  integer :: i, j
-
-  alpha = 19.0_b8
-  beta = 0.12_b8
-
-  y = 0.0
-  do i = 1, np
-    do j = i + 1, np
-      r1 = sqrt(xij2(sl,i,j))
-      r5 = r1*xij2(sl,i,j)**2
-      y = y - alpha/(1.0_b8+beta*r5)
-    end do
-  end do
-  y = y*0.5_b8
-
-end function aziz_tfun
-
-function charge_tfun( xij2, sl, nslice, np ) result( y )
-  integer :: sl, nslice, np
-  real(kind=b8) , dimension( nslice , np, np ) :: xij2
-  real(kind=b8)  :: y
-
-  real(kind=b8)  :: r2,r1
-
-  integer :: i, j
-
-  y = 0.0
-  do i = 1, np
-    do j = i + 1, np
-      r2 = xij2(sl,i,j)
-      r1 = sqrt(r2)
-      y = y - ( p_cc0*r1 + p_cc1*r2 )/( 1 + p_cc2*r1 )
-    end do
-  end do
-
-end function charge_tfun
-
+!@-node:gcross.20090623152316.106:???
+!@-node:gcross.20090623152316.100:numeric differentiation
+!@+node:gcross.20090623152316.103:Trial functions
+!@+node:gcross.20090623152316.123:??? derivation ???
+!> f := (f0*exp(-f1*(z-f2)**2) + f0*exp(-f1*(z+f2)**2))*exp(-f3*(x**2+y**2));
+!                             2                       2             2    2
+!    f := (f0 exp(-f1 (z - f2) ) + f0 exp(-f1 (z + f2) )) exp(-f3 (x  + y ))
+!
+!> simplify(laplacian(f,v));
+!                               2  2          2  2          2  2
+!2 f0 (-2 f3 %2 - 2 f3 %1 + 2 f3  x  %2 + 2 f3  x  %1 + 2 f3  y  %2
+!
+!           2  2                     2  2          2               2   2
+!     + 2 f3  y  %1 - %2 f1 + 2 %2 f1  z  - 4 %2 f1  z f2 + 2 %2 f1  f2
+!
+!                      2  2          2               2   2
+!     - %1 f1 + 2 %1 f1  z  + 4 %1 f1  z f2 + 2 %1 f1  f2 )
+!
+!               2       2       2                    2
+!%1 := exp(-f3 x  - f3 y  - f1 z  - 2 f1 z f2 - f1 f2 )
+!
+!               2       2       2                    2
+!%2 := exp(-f3 x  - f3 y  - f1 z  + 2 f1 z f2 - f1 f2 )
+!@-node:gcross.20090623152316.123:??? derivation ???
+!@+node:gcross.20090623152316.104:Single particle functions
+!@+node:gcross.20090623152316.99:atomic (w/ optimized differentiator)
 function atom_tfun( x, sl, nslice, np, ndim ) result( y )
   integer :: sl, nslice, np, ndim
   real(kind=b8), dimension( nslice, np , ndim ) :: x
-  
+
   real(kind=b8) :: y
 
   real(kind=b8)  :: r2,r1
@@ -429,12 +265,12 @@ function grad_lap_atom_tfun( x, slice, np, ndim, nslice, grad_lntfn, lap_lntfn )
   y = 1
 
 end function grad_lap_atom_tfun
-
-
+!@-node:gcross.20090623152316.99:atomic (w/ optimized differentiator)
+!@+node:gcross.20090623152316.105:He3+ (w/ optimized differentiator)
 function He3_fn_plus_tfun( x, islice, nslice, np, ndim ) result( y )
   integer :: islice, nslice, np, ndim
   real(kind=b8), dimension( : , : , : ) :: x
-  
+
   real(kind=b8) :: y
   real(kind=b8)  :: r1,r1_sq,r2,r2_sq
   real(kind=b8)  :: rc
@@ -455,7 +291,6 @@ function He3_fn_plus_tfun( x, islice, nslice, np, ndim ) result( y )
 
 end function He3_fn_plus_tfun
 
-
 function grad_lap_He3_plus_tfun( x, slice, grad_lntfn, lap_lntfn, np, ndim ) result( y )
   real(kind=b8), dimension( : , : , : ), intent(in) :: x
   real(kind=b8), dimension( np , ndim ), intent(out) :: grad_lntfn 
@@ -474,10 +309,12 @@ function grad_lap_He3_plus_tfun( x, slice, grad_lntfn, lap_lntfn, np, ndim ) res
 
 end function grad_lap_He3_plus_tfun
 
+!@-node:gcross.20090623152316.105:He3+ (w/ optimized differentiator)
+!@+node:gcross.20090623152316.107:He3-
 function He3_fn_neg_tfun( x, islice, nslice, np, ndim ) result( y )
   integer :: islice, nslice, np, ndim
   real(kind=b8), dimension( :,:,: ) :: x
-  
+
   real(kind=b8) :: y
   real(kind=b8)  :: r1,r1_sq,r2,r2_sq
   real(kind=b8)  :: rc
@@ -497,7 +334,9 @@ function He3_fn_neg_tfun( x, islice, nslice, np, ndim ) result( y )
   end if
 
 end function He3_fn_neg_tfun
-
+!@-node:gcross.20090623152316.107:He3-
+!@+node:gcross.20090623152316.108:harmonic oscillator
+!@+node:gcross.20090623152316.109:3D (all axes) (w/ optimized differentiator)
 function ho_tfun( x, sl, param, nslice, np, ndim ) result( y )
   integer :: sl, nslice, np, ndim
   real(kind=b8), dimension( : ) :: param
@@ -511,6 +350,23 @@ function ho_tfun( x, sl, param, nslice, np, ndim ) result( y )
 
 end function ho_tfun
 
+function grad_lap_ho_tfun( x, slice, np, ndim, nslice, grad_lntfn, lap_lntfn ) result( y )
+  real(kind=b8), dimension( nslice , np , ndim ), intent(in) :: x
+  real(kind=b8), dimension( np , ndim ), intent(out) :: grad_lntfn 
+  real(kind=b8),intent(out) :: lap_lntfn 
+  integer, intent(in) :: np, ndim, nslice, slice
+  integer :: y
+
+  grad_lntfn(:,1) = -p_hox*x(slice,:,1)
+  grad_lntfn(:,2) = -p_hoy*x(slice,:,2)
+  grad_lntfn(:,3) = -p_hoz*x(slice,:,3)
+
+  lap_lntfn = -(p_hox+p_hoy+p_hoz)*dble(np) 
+  y = 1
+
+end function grad_lap_ho_tfun
+!@-node:gcross.20090623152316.109:3D (all axes) (w/ optimized differentiator)
+!@+node:gcross.20090623152316.110:1D (Z axis)
 function hoz_tfun( x, sl, param, nslice, np, ndim ) result( y )
   integer :: sl, nslice, np, ndim
   real(kind=b8), dimension( : ) :: param
@@ -523,7 +379,9 @@ function hoz_tfun( x, sl, param, nslice, np, ndim ) result( y )
   y = sum(psi_t)
 
 end function hoz_tfun
-
+!@-node:gcross.20090623152316.110:1D (Z axis)
+!@-node:gcross.20090623152316.108:harmonic oscillator
+!@+node:gcross.20090623152316.111:box (w/ optimized differentiator)
 function box_tfun( x, np, ndim ) result( y )
   integer :: np, ndim
   real(kind=b8), dimension( np , ndim ) :: x
@@ -554,74 +412,9 @@ function grad_lap_box_tfun( x, slice, np, ndim, nslice, grad_lntfn, lap_lntfn ) 
   y = 1
 
 end function grad_lap_box_tfun
-
-function grad_lap_ho_tfun( x, slice, np, ndim, nslice, grad_lntfn, lap_lntfn ) result( y )
-  real(kind=b8), dimension( nslice , np , ndim ), intent(in) :: x
-  real(kind=b8), dimension( np , ndim ), intent(out) :: grad_lntfn 
-  real(kind=b8),intent(out) :: lap_lntfn 
-  integer, intent(in) :: np, ndim, nslice, slice
-  integer :: y
-
-  grad_lntfn(:,1) = -p_hox*x(slice,:,1)
-  grad_lntfn(:,2) = -p_hoy*x(slice,:,2)
-  grad_lntfn(:,3) = -p_hoz*x(slice,:,3)
-
-  lap_lntfn = -(p_hox+p_hoy+p_hoz)*dble(np) 
-  y = 1
-
-end function grad_lap_ho_tfun
-
-function morse_tfun2( x, np, ndim ) result( y )
-  integer :: np, ndim
-  real(kind=b8), dimension( np , ndim ) :: x
-  real(kind=b8) :: y
-  real, dimension( np ) :: psi_t
-
-  real(kind=b8), dimension( np ) :: r
-
-  integer :: i, j
-
-
-  r(:) = sqrt(x(:,1)**2 + x(:,2)**2 + x(:,3)**2)
-  psi_t(:)  = -p_MO_vpa*(r-p_MO_vpb)**2
-  y = sum(psi_t)
-end function morse_tfun2
-
-! 
-!> q := -a*(x-x0)**2;                                        
-!                                                                      2
-!                                                      q := -a (r - x0)
-!
-!>  simplify((grad(q,[r,theta,phi],coords=spherical)[1]));   
-!                                                        -2 a (r - x0)
-!
-!>  simplify((laplacian(q,[r,theta,phi],coords=spherical))); 
-!                                                         a (3 r - 2 x0)
-!                                                      -2 --------------
-!                                                               r
-!
-function grad_lap_morse_tfun2( x, slice, np, ndim, nslice, grad_lntfn, lap_lntfn ) result (y)
-  real(kind=b8), dimension( : , : , : ), intent(in) :: x
-  real(kind=b8), dimension( np , ndim ), intent(out) :: grad_lntfn 
-  real(kind=b8),intent(out) :: lap_lntfn 
-  integer, intent(in) :: np, ndim, nslice, slice
-  integer :: y 
-
-  real, dimension( np ) :: t_grad
-  real(kind=b8), dimension( np ) :: r
-
-  r(:) = sqrt(x(slice,:,1)**2 + x(slice,:,2)**2 + x(slice,:,3)**2)
-  t_grad(:) = -2.0_b8*p_MO_vpa*(1 - p_MO_vpb/r(:))
-  grad_lntfn(:,1) = x(slice,:,1)*t_grad(:)
-  grad_lntfn(:,2) = x(slice,:,2)*t_grad(:)
-  grad_lntfn(:,3) = x(slice,:,3)*t_grad(:)
-
-  lap_lntfn = -2.0_b8*p_MO_vpa*sum(3.0_b8 - 2.0_b8*p_MO_vpb/r(:))
-
-  y = 1
-
-end function grad_lap_morse_tfun2
-
+!@-node:gcross.20090623152316.111:box (w/ optimized differentiator)
+!@+node:gcross.20090623152316.112:Morse
+!@+node:gcross.20090623152316.113:version 1 (w/ optimized differentiator)
 function morse_tfun( x, sl,nslice,np, ndim ) result( y )
   integer :: np, ndim, nslice,sl
   real(kind=b8), dimension( nslice, np , ndim ) :: x
@@ -690,77 +483,62 @@ function grad_lap_morse_tfun( x, slice, np, ndim, nslice, grad_lntfn, lap_lntfn 
   y = 1
 
 end function grad_lap_morse_tfun
-
-subroutine eval_E_local(np,ndim,grad_lnspf, lap_lnspf, grad_lnjas, lap_lnjas, U, E_l)
-  integer, intent(in) :: np, ndim
-  real(kind=b8), dimension( np , ndim ), intent(in) :: grad_lnjas 
-  real(kind=b8), dimension( np , ndim ), intent(in) :: grad_lnspf 
-  real(kind=b8), intent(in) :: lap_lnspf
-  real(kind=b8), intent(in) :: lap_lnjas 
-  real(kind=b8), intent(in) :: U
-  real(kind=b8), intent(out) :: E_l
-
-  real(kind=b8) :: t0,t1,T
-
-  integer i,j
-
-  t0 = 0.0_b8
-!  do i = 1, np
-!    do j = 1, ndim
-!      t1  = grad_lnspf(i,j) +  grad_lnjas(i,j) 
-!      t0 = t0 + t1*t1
-!    end do
-!  end do
-
-  t0 = sum((grad_lnspf(:,:) +  grad_lnjas(:,:))**2)
-
-  T = t0 + lap_lnspf + lap_lnjas
-!  do i = 1, np
-!    do j = 1, ndim
-!      write(111,"(1a,2g18.6)") "#",grad_lnspf(i,j), grad_lnjas(i,j) 
-!    end do
-!  end do
-
-!  write (111,"(7a18)") "#grad^2","lap_lnspf","lap_lnjas","T","U","E_l","lambda"
-!  write (111,"(7g18.6)") t0,lap_lnspf,lap_lnjas,T,U,E_l,lambda
-  E_l = U - lambda*T
-
-
-end subroutine  eval_E_local
-
-function annulus_tfun( x, np, ndim ) result( y )
+!@-node:gcross.20090623152316.113:version 1 (w/ optimized differentiator)
+!@+node:gcross.20090623152316.114:version 2 (w/ optimized differentiator)
+function morse_tfun2( x, np, ndim ) result( y )
   integer :: np, ndim
   real(kind=b8), dimension( np , ndim ) :: x
   real(kind=b8) :: y
   real, dimension( np ) :: psi_t
 
-  psi_t(:)  = -( p_hox*x(:,1)**2 + p_hoy*x(:,2)**2 + p_hoz*x(:,3)**2 )/2.0 -&
-              p_aw/( x(:,1)**2 + x(:,3)**2 )
-  y = sum(psi_t)
+  real(kind=b8), dimension( np ) :: r
 
-end function annulus_tfun
-
-function tfunc_3D_dwell( x ) result( y )
-  real(kind=b8), dimension( : , : ) :: x
-  real(kind=b8) :: y
-
-  real :: f0, f1, f2
   integer :: i, j
-  integer :: np
 
-  f0 = 0.758993
-  f1 = 2.31308
-  f2 = 0.807643   
-  y = 1.0
-  np = size(x,1)
 
-  do i = 1, np
-    y =  y * (f0*exp(-f1*(x(i,3)-f2)**2) + f0*exp(-f1*(x(i,3)+f2)**2))
-    y =  y * exp( -( x(i,1)**2 + x(i,2)**2 ) )
-  end do
+  r(:) = sqrt(x(:,1)**2 + x(:,2)**2 + x(:,3)**2)
+  psi_t(:)  = -p_MO_vpa*(r-p_MO_vpb)**2
+  y = sum(psi_t)
+end function morse_tfun2
 
-end function tfunc_3D_dwell
+! 
+!> q := -a*(x-x0)**2;                                        
+!                                                                      2
+!                                                      q := -a (r - x0)
+!
+!>  simplify((grad(q,[r,theta,phi],coords=spherical)[1]));   
+!                                                        -2 a (r - x0)
+!
+!>  simplify((laplacian(q,[r,theta,phi],coords=spherical))); 
+!                                                         a (3 r - 2 x0)
+!                                                      -2 --------------
+!                                                               r
+!
+function grad_lap_morse_tfun2( x, slice, np, ndim, nslice, grad_lntfn, lap_lntfn ) result (y)
+  real(kind=b8), dimension( : , : , : ), intent(in) :: x
+  real(kind=b8), dimension( np , ndim ), intent(out) :: grad_lntfn 
+  real(kind=b8),intent(out) :: lap_lntfn 
+  integer, intent(in) :: np, ndim, nslice, slice
+  integer :: y 
 
+  real, dimension( np ) :: t_grad
+  real(kind=b8), dimension( np ) :: r
+
+  r(:) = sqrt(x(slice,:,1)**2 + x(slice,:,2)**2 + x(slice,:,3)**2)
+  t_grad(:) = -2.0_b8*p_MO_vpa*(1 - p_MO_vpb/r(:))
+  grad_lntfn(:,1) = x(slice,:,1)*t_grad(:)
+  grad_lntfn(:,2) = x(slice,:,2)*t_grad(:)
+  grad_lntfn(:,3) = x(slice,:,3)*t_grad(:)
+
+  lap_lntfn = -2.0_b8*p_MO_vpa*sum(3.0_b8 - 2.0_b8*p_MO_vpb/r(:))
+
+  y = 1
+
+end function grad_lap_morse_tfun2
+!@-node:gcross.20090623152316.114:version 2 (w/ optimized differentiator)
+!@-node:gcross.20090623152316.112:Morse
+!@+node:gcross.20090623152316.116:wells (?)
+!@+node:gcross.20090623152316.117:d version 1 (?) (w/ optimized differentiator)
 function dw_tfun( x, sl, nslice, np, ndim ) result( y )
   integer :: sl, nslice, np, ndim
   real(kind=b8), dimension( nslice, np , ndim ) :: x
@@ -796,7 +574,7 @@ function grad_dw_tfun( x, ndim, grad_lntfn ) result( y )
     fhi(k)  = log( exp( -( p_hox*tx(1)**2 + p_hoy*tx(2)**2 )/2.0 ) * ( p_dw_f0*exp(-p_dw_f1*(tx(3)-p_dw_f2)**2) &
              + p_dw_f0*exp(-p_dw_f1*(tx(3)+p_dw_f2)**2) &
              + p_dw_f3*exp(-p_dw_f4*tx(3)**2)))
-  
+
     tx(k) = x(k) - ntol_eps
     flo(k)  = log( exp( -( p_hox*tx(1)**2 + p_hoy*tx(2)**2 )/2.0 ) * ( p_dw_f0*exp(-p_dw_f1*(tx(3)-p_dw_f2)**2) &
               + p_dw_f0*exp(-p_dw_f1*(tx(3)+p_dw_f2)**2) &
@@ -842,50 +620,19 @@ function grad_lap_dw_tfun( x, sl, np, ndim, nslice, grad_lntfn, lap_lntfn ) resu
   end do
 
 end function grad_lap_dw_tfun
-
-function nw_tfun( x, np, ndim ) result( y )
-  integer :: np, ndim
-  real(kind=b8), dimension( np , ndim ) :: x
+!@nonl
+!@-node:gcross.20090623152316.117:d version 1 (?) (w/ optimized differentiator)
+!@+node:gcross.20090623152316.118:d version 2 (?) (w/ optimized differentiator)
+function dw_tfun2( x, sl, param, nslice, np, ndim ) result( y )
+  use kinds
+  implicit none
+  integer :: sl, nslice, np, ndim
+  real(kind=b8), dimension( nslice, np , ndim ) :: x
+  real(kind=b8), dimension(:) :: param
   real(kind=b8) :: y
-  real(kind=b8), dimension( np ) :: psi_t
-  real(kind=b8) :: lam_nw = 1./10
 
-  integer :: i, j
-
-  psi_t(:)  = -( x(:,1)**2 + x(:,2)**2 + x(:,3)**2 )/2.0
-  y = sum(psi_t)
-
-end function nw_tfun
-
-!> f := (f0*exp(-f1*(z-f2)**2) + f0*exp(-f1*(z+f2)**2))*exp(-f3*(x**2+y**2));
-!                             2                       2             2    2
-!    f := (f0 exp(-f1 (z - f2) ) + f0 exp(-f1 (z + f2) )) exp(-f3 (x  + y ))
-!
-!> simplify(laplacian(f,v));
-!                               2  2          2  2          2  2
-!2 f0 (-2 f3 %2 - 2 f3 %1 + 2 f3  x  %2 + 2 f3  x  %1 + 2 f3  y  %2
-!
-!           2  2                     2  2          2               2   2
-!     + 2 f3  y  %1 - %2 f1 + 2 %2 f1  z  - 4 %2 f1  z f2 + 2 %2 f1  f2
-!
-!                      2  2          2               2   2
-!     - %1 f1 + 2 %1 f1  z  + 4 %1 f1  z f2 + 2 %1 f1  f2 )
-!
-!               2       2       2                    2
-!%1 := exp(-f3 x  - f3 y  - f1 z  - 2 f1 z f2 - f1 f2 )
-!
-!               2       2       2                    2
-!%2 := exp(-f3 x  - f3 y  - f1 z  + 2 f1 z f2 - f1 f2 )
-
-function dw_tfun_lap( x, np, ndim ) result( y )
-  integer :: np, ndim
-  real, dimension( np , ndim ) :: x
-  real :: y
-
-  y = 0
-
-
-end function dw_tfun_lap
+  y =  sum(-(p_hox*x(sl,:,1)**2 + p_hoy*x(sl,:,2)**2)/2.0_b8 - p_dw_f0*((x(sl,:,3)/p_dw_f1)**2-1.0_b8)**2)
+end function dw_tfun2
 
 function grad_lap_dw_tfun2( x, sl, np, ndim, nslice, grad_lntfn, lap_lntfn, sp_param, spf_func ) result( y )
   real(kind=b8), dimension( nslice , np , ndim ), intent(in) :: x
@@ -914,18 +661,90 @@ function grad_lap_dw_tfun2( x, sl, np, ndim, nslice, grad_lntfn, lap_lntfn, sp_p
   lap_lntfn = lap_lntfn -np*(p_hox+p_hoy)
 
 end function grad_lap_dw_tfun2
+!@nonl
+!@-node:gcross.20090623152316.118:d version 2 (?) (w/ optimized differentiator)
+!@+node:gcross.20090623152316.119:n (?) (w/
+function nw_tfun( x, np, ndim ) result( y )
+  integer :: np, ndim
+  real(kind=b8), dimension( np , ndim ) :: x
+  real(kind=b8) :: y
+  real(kind=b8), dimension( np ) :: psi_t
+  real(kind=b8) :: lam_nw = 1./10
 
-function dw_tfun2( x, sl, param, nslice, np, ndim ) result( y )
-  use kinds
-  implicit none
+  integer :: i, j
+
+  psi_t(:)  = -( x(:,1)**2 + x(:,2)**2 + x(:,3)**2 )/2.0
+  y = sum(psi_t)
+
+end function nw_tfun
+!@nonl
+!@-node:gcross.20090623152316.119:n (?) (w/
+!@-node:gcross.20090623152316.116:wells (?)
+!@+node:gcross.20090623152316.124:lattice
+function lattice_tfun( x, sl, nslice, np, ndim ) result( y )
   integer :: sl, nslice, np, ndim
   real(kind=b8), dimension( nslice, np , ndim ) :: x
-  real(kind=b8), dimension(:) :: param
+  real(kind=b8) :: y
+  real, dimension( np ) :: psi_t
+
+  psi_t(:)  = -( p_hox*x(sl,:,1)**2 + p_hoy*x(sl,:,2)**2 + p_hoz*x(sl,:,3)**2 )/2.0 + &
+              p_lat_w*sin(x(sl,:,1)*p_lattice_ax+p_lattice_phase_x)**2 + &
+              p_lat_w*sin(x(sl,:,2)*p_lattice_ay+p_lattice_phase_y)**2 + &
+              p_lat_w*sin(x(sl,:,3)*p_lattice_az+p_lattice_phase_z)**2
+  y = sum(psi_t)
+
+end function lattice_tfun
+!@-node:gcross.20090623152316.124:lattice
+!@+node:gcross.20090623152316.127:fcc (?)
+function fcc_tfun( x, sl, nslice, np, ndim ) result( y )
+  integer :: sl, nslice, np, ndim
+  real(kind=b8), dimension( nslice, np , ndim ) :: x
+  real(kind=b8) :: y
+  real, dimension( np, ndim ) :: psi_t
+
+  psi_t(:,:)  = (x(sl,:,:)-p_lat_r0(:,:))**2
+  y = -p_lat_w*sum(psi_t)/2.0_b8
+
+end function fcc_tfun
+!@-node:gcross.20090623152316.127:fcc (?)
+!@+node:gcross.20090623152316.120:(functions w/ incomplete interfaces)
+!@+node:gcross.20090623152316.121:annulus
+function annulus_tfun( x, np, ndim ) result( y )
+  integer :: np, ndim
+  real(kind=b8), dimension( np , ndim ) :: x
+  real(kind=b8) :: y
+  real, dimension( np ) :: psi_t
+
+  psi_t(:)  = -( p_hox*x(:,1)**2 + p_hoy*x(:,2)**2 + p_hoz*x(:,3)**2 )/2.0 -&
+              p_aw/( x(:,1)**2 + x(:,3)**2 )
+  y = sum(psi_t)
+
+end function annulus_tfun
+!@-node:gcross.20090623152316.121:annulus
+!@+node:gcross.20090623152316.122:3D dwell
+function tfunc_3D_dwell( x ) result( y )
+  real(kind=b8), dimension( : , : ) :: x
   real(kind=b8) :: y
 
-  y =  sum(-(p_hox*x(sl,:,1)**2 + p_hoy*x(sl,:,2)**2)/2.0_b8 - p_dw_f0*((x(sl,:,3)/p_dw_f1)**2-1.0_b8)**2)
-end function dw_tfun2
+  real :: f0, f1, f2
+  integer :: i, j
+  integer :: np
 
+  f0 = 0.758993
+  f1 = 2.31308
+  f2 = 0.807643   
+  y = 1.0
+  np = size(x,1)
+
+  do i = 1, np
+    y =  y * (f0*exp(-f1*(x(i,3)-f2)**2) + f0*exp(-f1*(x(i,3)+f2)**2))
+    y =  y * exp( -( x(i,1)**2 + x(i,2)**2 ) )
+  end do
+
+end function tfunc_3D_dwell
+!@nonl
+!@-node:gcross.20090623152316.122:3D dwell
+!@+node:gcross.20090623152316.125:poor
 function tfunc_poor( x ) result( y )
   real(kind=b8), dimension( : , : ) :: x
   real(kind=b8) :: y
@@ -940,7 +759,8 @@ function tfunc_poor( x ) result( y )
     end do
   end do
 end function tfunc_poor
-
+!@-node:gcross.20090623152316.125:poor
+!@+node:gcross.20090623152316.126:lattice, old version
 function lattice_tfun0( x, np, ndim ) result( y )
   integer :: np, ndim
   real(kind=b8), dimension( np , ndim ) :: x
@@ -953,30 +773,303 @@ function lattice_tfun0( x, np, ndim ) result( y )
   y = sum(psi_t)
 
 end function lattice_tfun0
-
-function lattice_tfun( x, sl, nslice, np, ndim ) result( y )
+!@nonl
+!@-node:gcross.20090623152316.126:lattice, old version
+!@-node:gcross.20090623152316.120:(functions w/ incomplete interfaces)
+!@-node:gcross.20090623152316.104:Single particle functions
+!@+node:gcross.20090623152316.92:Jastrow functions
+!@+node:gcross.20090623152316.129:independent (w/ optimized differentiator)
+function independent_tfun( x, xij2, params, sl, nslice, np, ndim ) result( y )
+  use kinds
+  implicit none
   integer :: sl, nslice, np, ndim
-  real(kind=b8), dimension( nslice, np , ndim ) :: x
-  real(kind=b8) :: y
-  real, dimension( np ) :: psi_t
+  real(kind=b8), dimension( nslice , np, ndim ), intent(in) :: x
+  real(kind=b8), dimension( nslice , np, np ), intent(in) :: xij2
+  real(kind=b8), dimension(:) :: params
+  real(kind=b8)  :: r2
+  real(kind=b8)  :: y
 
-  psi_t(:)  = -( p_hox*x(sl,:,1)**2 + p_hoy*x(sl,:,2)**2 + p_hoz*x(sl,:,3)**2 )/2.0 + &
-              p_lat_w*sin(x(sl,:,1)*p_lattice_ax+p_lattice_phase_x)**2 + &
-              p_lat_w*sin(x(sl,:,2)*p_lattice_ay+p_lattice_phase_y)**2 + &
-              p_lat_w*sin(x(sl,:,3)*p_lattice_az+p_lattice_phase_z)**2
-  y = sum(psi_t)
+  y = 0
 
-end function lattice_tfun
+end function independent_tfun
 
-function fcc_tfun( x, sl, nslice, np, ndim ) result( y )
+function grad_lap_independent_tfun( x, xij2, sl, np, ndim, nslice, grad_lntfn, lap_lntfn, jfunc_params, jfunc ) result (y)
+  integer :: sl, np, ndim, nslice
+  real(kind=b8), dimension( nslice, np, ndim ) :: x
+  real(kind=b8), dimension( nslice, np, np ) :: xij2
+  real(kind=b8), dimension( np, ndim ), intent(out) :: grad_lntfn 
+  real(kind=b8), intent(out) :: lap_lntfn 
+  real(kind=b8), dimension(:) :: jfunc_params
+  interface
+    function jfunc( x, xij2, params, sl, nslice, np, ndim) result(y)
+      use kinds
+      implicit none
+      integer :: sl, nslice, np, ndim
+      real(kind=b8), dimension(:) :: params
+      real(kind=b8), dimension( nslice, np, ndim ), intent(in) :: x
+      real(kind=b8), dimension( nslice, np, np ), intent(in) :: xij2
+      real(kind=b8)  :: y
+    end function jfunc
+  end interface
+  integer :: y
+
+
+  real(kind=b8)  :: fi,fi2,ri,ri2,ri3,ri4
+  real(kind=b8), dimension( ndim ) :: gtmp
+  integer :: i, j
+
+  grad_lntfn = 0.0_b8
+  lap_lntfn = 0.0_b8
+  y = 1
+end function grad_lap_independent_tfun
+!@-node:gcross.20090623152316.129:independent (w/ optimized differentiator)
+!@+node:gcross.20090623152316.93:hard sphere (w/ optimized differentiator)
+function hs_tfun( x, xij2, params, sl, nslice, np, ndim ) result( y )
+  use kinds
+  implicit none
   integer :: sl, nslice, np, ndim
-  real(kind=b8), dimension( nslice, np , ndim ) :: x
-  real(kind=b8) :: y
-  real, dimension( np, ndim ) :: psi_t
+  real(kind=b8), dimension( nslice , np, ndim ), intent(in) :: x
+  real(kind=b8), dimension( nslice , np, np ), intent(in) :: xij2
+  real(kind=b8), dimension(:) :: params
+  real(kind=b8)  :: r2
+  real(kind=b8)  :: y
 
-  psi_t(:,:)  = (x(sl,:,:)-p_lat_r0(:,:))**2
-  y = -p_lat_w*sum(psi_t)/2.0_b8
+  integer :: i, j
 
-end function fcc_tfun
+  a_hs = params(1)
+  a_hs2 = params(2)
+  y = 0.0_b8
+  do i = 1, np
+    do j = i + 1, np
+      r2 = xij2(sl,i,j)
+      if ( r2 .gt. a_hs2 ) then
+        y = y + log(1.0_b8 - a_hs/sqrt(r2))
+      else
+        y = -realbignumber
+      end if
+    end do
+  end do
+
+end function hs_tfun
+
+function grad_lap_hs_tfun( x, xij2, sl, np, ndim, nslice, grad_lntfn, lap_lntfn, jfunc_params, jfunc ) result (y)
+  integer :: sl, np, ndim, nslice
+  real(kind=b8), dimension( nslice, np, ndim ) :: x
+  real(kind=b8), dimension( nslice, np, np ) :: xij2
+  real(kind=b8), dimension( np, ndim ), intent(out) :: grad_lntfn 
+  real(kind=b8), intent(out) :: lap_lntfn 
+  real(kind=b8), dimension(:) :: jfunc_params
+  interface
+    function jfunc( x, xij2, params, sl, nslice, np, ndim) result(y)
+      use kinds
+      implicit none
+      integer :: sl, nslice, np, ndim
+      real(kind=b8), dimension(:) :: params
+      real(kind=b8), dimension( nslice, np, ndim ), intent(in) :: x
+      real(kind=b8), dimension( nslice, np, np ), intent(in) :: xij2
+      real(kind=b8)  :: y
+    end function jfunc
+  end interface
+  integer :: y
+
+
+  real(kind=b8)  :: fi,fi2,ri,ri2,ri3,ri4
+  real(kind=b8), dimension( ndim ) :: gtmp
+  integer :: i, j
+
+  grad_lntfn = 0.0_b8
+  lap_lntfn = 0.0_b8
+  do i = 1, np
+    do j = i + 1, np
+      if ( xij2(sl,i,j) .gt. a_hs2 ) then
+        ri2 = 1.0_b8/xij2(sl,i,j)
+        ri = sqrt(ri2)
+        ri3 = ri*ri2
+        ri4 = ri2*ri2
+        fi = 1.0_b8/(1.0_b8 - a_hs*ri)
+        fi2 = fi*fi
+        gtmp(:) = ri3*fi*(x(sl,i,:) - x(sl,j,:))
+!        write (222,"(3g18.6)") gtmp(1),gtmp(2),gtmp(3)
+        grad_lntfn(i,:) = grad_lntfn(i,:) + gtmp(:)
+        grad_lntfn(j,:) = grad_lntfn(j,:) - gtmp(:)
+        lap_lntfn = lap_lntfn - fi2*ri4 
+      else
+        y = -1
+        return
+      end if
+    end do
+  end do
+  lap_lntfn = 2.0_b8*a_hs2*lap_lntfn
+  grad_lntfn(:,:) = a_hs*grad_lntfn(:,:)
+  y = 1
+end function grad_lap_hs_tfun
+!@-node:gcross.20090623152316.93:hard sphere (w/ optimized differentiator)
+!@+node:gcross.20090623152316.94:test
+function test_tfun( x, xij2, p, sl, nslice, np, ndim ) result( y )
+  integer :: sl, nslice, np, ndim
+  real(kind=b8) , dimension( nslice , np, ndim ), intent(in) :: x
+  real(kind=b8) , dimension( nslice , np, np ), intent(in) :: xij2
+  real(kind=b8) , dimension(:) :: p
+  real(kind=b8)  :: y
+  real(kind=b8)  :: r5, r1
+
+  integer :: i, j
+
+  y = 0.0_b8
+  do i = 1, np
+    do j = i + 1, np
+      r1 = xij2(sl,i,j)
+      y = y - xij2(sl,i,j)
+    end do
+  end do
+
+end function test_tfun
+!@-node:gcross.20090623152316.94:test
+!@+node:gcross.20090623152316.95:dimer
+function dimer_tfun( x, xij2, p, sl, nslice, np, ndim ) result( y )
+  integer :: sl, nslice, np, ndim
+  real(kind=b8) , dimension( nslice , np, ndim ), intent(in) :: x
+  real(kind=b8) , dimension( nslice , np, np ), intent(in) :: xij2
+  real(kind=b8) , dimension(:) :: p
+  real(kind=b8)  :: y
+
+  integer :: i
+  logical :: acc_flag
+
+  y = 0.0
+  do i = 1, np
+    y = y - p(1)*vpi_Uij_z_polarized_dimer( x, xij2, sl, i, nslice, np, ndim, acc_flag )
+  end do
+
+end function dimer_tfun
+!@-node:gcross.20090623152316.95:dimer
+!@+node:gcross.20090623152316.96:lj (w/ optimized differentiator)
+function lj_tfun( x, xij2, p, sl, nslice, np, ndim ) result( y )
+  integer :: sl, nslice, np, ndim
+  real(kind=b8) , dimension( nslice , np, ndim ), intent(in) :: x
+  real(kind=b8) , dimension( nslice , np, np ), intent(in) :: xij2
+  real(kind=b8) , dimension(:) :: p
+  real(kind=b8)  :: y
+  real(kind=b8)  :: r5, r1
+
+  integer :: i, j
+
+  y = 0.0
+  do i = 1, np
+    do j = i + 1, np
+      r1 = xij2(sl,i,j)**(-0.5_b8)
+      r5 = r1*xij2(sl,i,j)**(-2)
+      y = y - p_ljc5*r5 - p_ljc1*r1
+    end do
+  end do
+
+end function lj_tfun
+
+function grad_lap_lj_tfun( x, xij2, sl, np, ndim, nslice, grad_lntfn, lap_lntfn, jfunc_params, jfunc ) result (y)
+  integer, intent(in) :: sl, np, ndim, nslice
+  real(kind=b8), dimension( nslice, np, ndim ) :: x
+  real(kind=b8), dimension( nslice, np, np ) :: xij2
+  real(kind=b8), dimension( np, ndim ), intent(out) :: grad_lntfn
+  real(kind=b8), intent(out) :: lap_lntfn
+  real(kind=b8) , dimension(:) :: jfunc_params
+
+  interface
+    function jfunc( xij2, params, sl, nslice, np) result(y)
+      use kinds
+      implicit none
+      integer :: sl, nslice, np
+      real(kind=b8), dimension(:) :: params
+      real(kind=b8), dimension( nslice, np, np ) :: xij2
+      real(kind=b8)  :: y
+    end function jfunc
+  end interface
+
+  real(kind=b8)  :: r,ri,ri2,ri3,ri4,ri6,ri7,ri8,ri12
+  real(kind=b8), dimension( ndim ) :: gtmp
+  real(kind=b8) :: p5sq,p1sq,tmp
+  integer :: y
+  integer :: i, j
+
+  p5sq = p_ljc5*p_ljc5
+  p1sq = p_ljc1*p_ljc1
+
+  grad_lntfn = 0
+  lap_lntfn = 0
+  do i = 1, np
+    do j = i + 1, np
+      r = sqrt(xij2(sl,i,j))
+      ri2 = 1.0_b8/xij2(sl,i,j)
+      ri = 1.0/r
+      ri3 = ri*ri2
+      ri4 = ri2*ri2
+      ri6 = ri3*ri3
+      ri8 = ri4*ri4
+      ri7 = ri*ri6
+      ri12 = ri6*ri6
+
+      gtmp(:) =  (5.0*p_ljc5*ri7 + p_ljc1*ri3)*(x(sl,i,:) - x(sl,j,:))
+      grad_lntfn(i,:) = grad_lntfn(i,:) + gtmp(:)
+      grad_lntfn(j,:) = grad_lntfn(j,:) - gtmp(:)
+      tmp = 25.0*p5sq*ri12 + 10.0*p_ljc5*(p_ljc1 - 2*r)*ri8 + p1sq*ri4 
+      lap_lntfn = lap_lntfn + tmp
+    end do
+  end do
+  y = 1
+end function grad_lap_lj_tfun
+!@-node:gcross.20090623152316.96:lj (w/ optimized differentiator)
+!@+node:gcross.20090623152316.97:aziz
+function aziz_tfun( x, xij2, sl, nslice, np, ndim ) result( y )
+  integer :: sl, nslice, np, ndim
+  real(kind=b8) , dimension( nslice , np, ndim ), intent(in) :: x
+  real(kind=b8) , dimension( nslice , np, np ), intent(in) :: xij2
+  real(kind=b8)  :: y
+  real(kind=b8)  :: r5, r1
+
+  real(kind=b8)  :: alpha, beta
+
+  integer :: i, j
+
+  alpha = 19.0_b8
+  beta = 0.12_b8
+
+  y = 0.0
+  do i = 1, np
+    do j = i + 1, np
+      r1 = sqrt(xij2(sl,i,j))
+      r5 = r1*xij2(sl,i,j)**2
+      y = y - alpha/(1.0_b8+beta*r5)
+    end do
+  end do
+  y = y*0.5_b8
+
+end function aziz_tfun
+!@-node:gcross.20090623152316.97:aziz
+!@+node:gcross.20090623152316.98:charge
+function charge_tfun( x, xij2, sl, nslice, np, ndim ) result( y )
+  integer :: sl, nslice, np, ndim
+  real(kind=b8) , dimension( nslice , np, ndim ), intent(in) :: x
+  real(kind=b8) , dimension( nslice , np, np ), intent(in) :: xij2
+  real(kind=b8)  :: y
+
+  real(kind=b8)  :: r2,r1
+
+  integer :: i, j
+
+  y = 0.0
+  do i = 1, np
+    do j = i + 1, np
+      r2 = xij2(sl,i,j)
+      r1 = sqrt(r2)
+      y = y - ( p_cc0*r1 + p_cc1*r2 )/( 1 + p_cc2*r1 )
+    end do
+  end do
+
+end function charge_tfun
+!@-node:gcross.20090623152316.98:charge
+!@-node:gcross.20090623152316.92:Jastrow functions
+!@-node:gcross.20090623152316.103:Trial functions
+!@-others
 
 end module vpi_trial_func
+!@-node:gcross.20090623152316.91:@thin vpi_trial_func.f90
+!@-leo

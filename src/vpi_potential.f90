@@ -1,11 +1,21 @@
+!@+leo-ver=4-thin
+!@+node:gcross.20090623152316.34:@thin vpi_potential.f90
+!@@language fortran90
 module vpi_potential
+  !@  << Imported modules >>
+  !@+node:gcross.20090623152316.35:<< Imported modules >>
   use vpi_defines
   use vpi_xij
   use vpi_aziz
+  !@-node:gcross.20090623152316.35:<< Imported modules >>
+  !@nl
   implicit none
 
 contains 
 
+!@+others
+!@+node:gcross.20090623152316.36:Single particle potentials
+!@+node:gcross.20090623152316.37:null
 function vpi_Usp_NULL( x, slice, ip, nslice, np, ndim ) result ( Usp )
   integer :: nslice, np, ndim
   integer :: slice, ip
@@ -26,8 +36,9 @@ function vpi_gUsp_NULL( x, slice, nslice, np, ndim ) result ( gUsp )
   gUsp = 0.0_b8
 
 end function vpi_gUsp_NULL
-
-
+!@-node:gcross.20090623152316.37:null
+!@+node:gcross.20090623152316.41:boxes
+!@+node:gcross.20090623152316.38:rectangular box
 function vpi_Usp_box( x, slice, ip, nslice, np, ndim ) result ( Usp )
   integer :: nslice, np, ndim
   integer :: slice, ip
@@ -52,7 +63,8 @@ function vpi_gUsp_box( x, slice, nslice, np, ndim ) result ( gUsp )
   gUsp = 0
 
 end function vpi_gUsp_box
-
+!@-node:gcross.20090623152316.38:rectangular box
+!@+node:gcross.20090623152316.39:cylinderical box
 function vpi_Usp_cylinder( x, slice, ip, nslice, np, ndim ) result ( Usp )
   integer :: nslice, np, ndim
   integer :: slice, ip
@@ -77,8 +89,9 @@ function vpi_gUsp_cylinder( x, slice, nslice, np, ndim ) result ( gUsp )
   gUsp = 0
 
 end function vpi_gUsp_cylinder
-
-
+!@-node:gcross.20090623152316.39:cylinderical box
+!@-node:gcross.20090623152316.41:boxes
+!@+node:gcross.20090623152316.40:wlink (?)
 function vpi_Usp_wlink( x, slice, ip, nslice, np, ndim ) result( Usp )
   integer :: nslice, np, ndim
   integer :: slice, ip
@@ -111,7 +124,9 @@ function vpi_gUsp_wlink( x, ip, slice, nslice, np, ndim ) result ( gUsp )
   gUsp(:,3) = 2.0_b8*lam_ho*x(slice,:,3)
 
 end function vpi_gUsp_wlink
-
+!@-node:gcross.20090623152316.40:wlink (?)
+!@+node:gcross.20090623152316.42:harmonic oscillators
+!@+node:gcross.20090623152316.43:3D (all axes)
 function vpi_Usp_HO( x, slice, ip, nslice, np, ndim ) result ( Usp )
   integer :: nslice, np, ndim
   integer :: slice, ip
@@ -134,7 +149,9 @@ function vpi_gUsp_HO( x, slice, nslice, np, ndim ) result ( gUsp )
   gUsp(:,3) = lam_ho*x(slice,:,3)
 
 end function vpi_gUsp_HO
-
+!@nonl
+!@-node:gcross.20090623152316.43:3D (all axes)
+!@+node:gcross.20090623152316.44:1D (Z axis)
 function vpi_Usp_HOz( x, slice, ip, nslice, np, ndim ) result ( Usp )
   integer :: nslice, np, ndim
   integer :: slice, ip
@@ -157,7 +174,8 @@ function vpi_gUsp_HOz( x, slice, nslice, np, ndim ) result ( gUsp )
   gUsp(:,3) = lam_ho*x(slice,:,3)
 
 end function vpi_gUsp_HOz
-
+!@-node:gcross.20090623152316.44:1D (Z axis)
+!@+node:gcross.20090623152316.45:overlapping (?)
 function vpi_Usp_HO_overlap( x, slice, ip, nslice, np, ndim ) result ( Usp )
   integer :: nslice, np, ndim
   integer :: slice, ip
@@ -190,7 +208,10 @@ function vpi_gUsp_HO_overlap( x, slice, nslice, np, ndim ) result ( gUsp )
   end if
 
 end function vpi_gUsp_HO_overlap
-
+!@nonl
+!@-node:gcross.20090623152316.45:overlapping (?)
+!@-node:gcross.20090623152316.42:harmonic oscillators
+!@+node:gcross.20090623152316.46:Morse oscillator
 !dimensionless 3D morse oscilator H = -0.5T +De[exp(-2a(r-r0))-2*exp(-a(r-r0))]
 function vpi_Usp_Morse( x, slice, ip, nslice, np, ndim ) result ( Usp )
   integer :: nslice, np, ndim
@@ -244,7 +265,10 @@ function vpi_gUsp_Morse( x, slice, nslice, np, ndim ) result ( gUsp )
   end if
 
 end function vpi_gUsp_Morse
-
+!@nonl
+!@-node:gcross.20090623152316.46:Morse oscillator
+!@+node:gcross.20090623152316.60:wells
+!@+node:gcross.20090623152316.47:G (?)
 function vpi_Usp_Gwell( x, slice, ip, nslice, np, ndim ) result ( Usp )
   integer :: nslice, np, ndim
   integer :: slice, ip
@@ -269,7 +293,8 @@ function vpi_gUsp_Gwell( x, slice, nslice, np, ndim ) result ( gUsp )
               (x(slice,:,3)-gw_z0)*gw_e_norm*exp(-(x(slice,:,3)-gw_z0)**2/gw_2asq)/gw_asq
 
 end function vpi_gUsp_Gwell
-
+!@-node:gcross.20090623152316.47:G (?)
+!@+node:gcross.20090623152316.48:D (?)
 function vpi_Usp_Dwell( x, slice, ip, nslice, np, ndim ) result ( Usp )
   integer :: nslice, np, ndim
   integer :: slice, ip
@@ -292,14 +317,41 @@ function vpi_gUsp_Dwell( x, slice, nslice, np, ndim ) result ( gUsp )
   gUsp(:,3) = 4.0_b8*ep_dw*((x(slice,:,3)/a_dw)**2 - 1.0_b8)*(x(slice,:,3)/a_dw2) 
 
 end function vpi_gUsp_Dwell
+!@-node:gcross.20090623152316.48:D (?)
+!@+node:gcross.20090623152316.61:N (?)
+function vpi_Usp_Nwell( x, slice, ip, nslice, np, ndim ) result ( Usp )
+  integer :: nslice, np, ndim
+  integer :: slice, ip
+  real(kind=b8), dimension ( nslice, np , ndim ) :: x
 
+  real(kind=b8) :: Usp
+
+  Usp = ( x(slice,ip,1)**2 + x(slice,ip,2)**2 + lam_ho*x(slice,ip,3)**2) + p_nw_vb*cos(x(slice,ip,3)*p_nw_l)
+
+end function vpi_Usp_Nwell
+
+function vpi_gUsp_Nwell( x, slice, nslice, np, ndim ) result ( gUsp )
+  real(kind=b8), dimension ( nslice, np , ndim ) ::  x
+  integer :: slice, nslice, np, ndim
+
+  real(kind=b8), dimension ( np, ndim ) :: gUsp
+
+  gUsp(:,1) = 2.0_b8*x(slice,:,1)
+  gUsp(:,2) = 2.0_b8*x(slice,:,2)
+  gUsp(:,3) = 2.0_b8*lam_ho*x(slice,:,3) - p_nw_vb*p_nw_l*sin(x(slice,:,3)*p_nw_l)
+
+end function vpi_gUsp_Nwell
+!@-node:gcross.20090623152316.61:N (?)
+!@-node:gcross.20090623152316.60:wells
+!@+node:gcross.20090623152316.49:Annulus
+!@+node:gcross.20090623152316.50:version 1
 function vpi_Usp_Annulus( x, slice, ip, nslice, np, ndim ) result ( Usp )
   real(kind=b8), dimension ( nslice, np , ndim ) :: x
   integer :: slice, ip, nslice, np, ndim
   real(kind=b8) :: Usp
 
-  Usp = ( x(slice,ip,2)**2 + ap_lam*( x(slice,ip,1)**2  + x(slice,ip,3)**2) ) + &
-    ap_e_norm*exp(-( x(slice,ip,1)**2 + x(slice,ip,3)**2 )/ap_2asq)
+  Usp = ( x(slice,ip,2)**2 + ap_lam*( x(slice,ip,1)**2  + x(slice,ip,3)**2) ) &
+        + ap_e_norm*exp(-( x(slice,ip,1)**2 + x(slice,ip,3)**2 )/ap_2asq)
 
   if ( x(slice,ip,1) .gt. ab_x0 ) then 
     Usp = Usp + ab_e_norm*exp(-( x(slice,ip,3)**2 )/ab_2asq)
@@ -328,14 +380,15 @@ function vpi_gUsp_Annulus( x, slice, nslice, np, ndim ) result ( gUsp )
   end do
 
 end function vpi_gUsp_Annulus
-
+!@-node:gcross.20090623152316.50:version 1
+!@+node:gcross.20090623152316.51:version 2
 function vpi_Usp_Annulus2( x, slice, ip, nslice, np, ndim ) result ( Usp )
   real(kind=b8), dimension ( nslice, np , ndim ) :: x
   integer :: slice, ip, nslice, np, np2, ndim
   real(kind=b8) :: Usp
 
-  Usp = ( x(slice,ip,2)**2 + ap_lam*( x(slice,ip,1)**2  + x(slice,ip,3)**2) ) + &
-        ap_e_norm*exp(-( x(slice,ip,1)**2 + x(slice,ip,3)**2 )/ap_2asq)
+  Usp = ( x(slice,ip,2)**2 + ap_lam*( x(slice,ip,1)**2  + x(slice,ip,3)**2) ) &
+        + ap_e_norm*exp(-( x(slice,ip,1)**2 + x(slice,ip,3)**2 )/ap_2asq)
 
   if ( ip .gt. np-N_PARTICLE2 ) then 
     if ( x(slice,ip,1) .gt. ab_x0 ) then 
@@ -366,7 +419,9 @@ function vpi_gUsp_Annulus2( x, slice, nslice, np, ndim ) result ( gUsp )
   end do
 
 end function vpi_gUsp_Annulus2
-
+!@nonl
+!@-node:gcross.20090623152316.51:version 2
+!@+node:gcross.20090623152316.52:version 3
 function vpi_Usp_Annulus3( x, slice, ip, nslice, np, ndim ) result ( Usp )
   real(kind=b8), dimension ( nslice, np , ndim ) :: x
   integer :: slice, ip, nslice, np, np2, ndim
@@ -409,7 +464,10 @@ function vpi_gUsp_Annulus3( x, slice, nslice, np, ndim ) result ( gUsp )
   end do
 
 end function vpi_gUsp_Annulus3
-
+!@-node:gcross.20090623152316.52:version 3
+!@-node:gcross.20090623152316.49:Annulus
+!@+node:gcross.20090623152316.53:atomic (1/r)
+!@+node:gcross.20090623152316.54:normal version
 function vpi_Usp_Atom( x, slice, ip, nslice, np, ndim ) result ( Usp )
   integer :: nslice, np, ndim
   integer :: slice, ip
@@ -441,7 +499,9 @@ function vpi_gUsp_Atom( x, slice, nslice, np, ndim ) result ( gUsp )
   end do
 
 end function vpi_gUsp_Atom
-
+!@nonl
+!@-node:gcross.20090623152316.54:normal version
+!@+node:gcross.20090623152316.55:overlap version (?)
 function vpi_Usp_Atom_overlap( x, slice, ip, nslice, np, ndim ) result ( Usp )
   integer :: nslice, np, ndim
   integer :: slice, ip
@@ -486,7 +546,103 @@ function vpi_gUsp_Atom_overlap( x, slice, nslice, np, ndim ) result ( gUsp )
   end if
 
 end function vpi_gUsp_Atom_overlap
+!@-node:gcross.20090623152316.55:overlap version (?)
+!@-node:gcross.20090623152316.53:atomic (1/r)
+!@+node:gcross.20090623152316.65:lattice (?)
+!@+node:gcross.20090623152316.66:2D (X/Z)
+function vpi_Usp_lattice( x, slice, ip, nslice, np, ndim ) result ( Usp )
+  integer :: nslice, np, ndim
+  integer :: slice, ip
+  real(kind=b8), dimension ( nslice, np , ndim ) :: x
 
+  real(kind=b8) :: Usp
+
+  Usp = 0.0_b8
+
+  Usp = ( x(slice,ip,1)**2 + lam_ho*x(slice,ip,2)**2 + x(slice,ip,3)**2) &
+       + p_lattice_vb*cos(x(slice,ip,1)*p_lattice_ax)**2 &
+       + p_lattice_vb*cos(x(slice,ip,3)*p_lattice_az)**2
+
+end function vpi_Usp_lattice
+
+function vpi_gUsp_lattice( x, slice, nslice, np, ndim ) result ( gUsp )
+  real(kind=b8), dimension ( nslice, np , ndim ) ::  x
+  integer :: slice, nslice, np, ndim
+
+  real(kind=b8), dimension ( np, ndim ) :: gUsp
+
+  gUsp(:,1) = 2.0_b8*x(slice,:,1) - 2.0_b8*p_lattice_vb*p_lattice_ax*cos(x(slice,:,1)*p_lattice_ax)*sin(x(slice,:,1)*p_lattice_ax)
+  gUsp(:,2) = 2.0_b8*lam_ho*x(slice,:,2)
+  gUsp(:,3) = 2.0_b8*x(slice,:,3) - 2.0_b8*p_lattice_vb*p_lattice_ax*cos(x(slice,:,3)*p_lattice_az)*sin(x(slice,:,3)*p_lattice_az)
+
+end function vpi_gUsp_lattice
+!@nonl
+!@-node:gcross.20090623152316.66:2D (X/Z)
+!@+node:gcross.20090623152316.67:3D
+function vpi_Usp_3dlattice( x, slice, ip, nslice, np, ndim ) result ( Usp )
+  integer :: nslice, np, ndim
+  integer :: slice, ip
+  real(kind=b8), dimension ( nslice, np , ndim ) :: x
+
+  real(kind=b8) :: Usp
+
+  Usp = 0.0_b8
+
+  Usp = 0.5_b8*( x(slice,ip,1)**2 + x(slice,ip,2)**2 + lam_ho*x(slice,ip,3)**2) +  &
+     p_lattice_vb*cos(x(slice,ip,1)*p_lattice_ax+p_lattice_phase_x)**2 + &
+     p_lattice_vb*cos(x(slice,ip,2)*p_lattice_ay+p_lattice_phase_y)**2 + & 
+     p_lattice_vb*cos(x(slice,ip,3)*p_lattice_az+p_lattice_phase_z)**2
+
+end function vpi_Usp_3dlattice
+
+function vpi_gUsp_3dlattice( x, slice, nslice, np, ndim ) result ( gUsp )
+  real(kind=b8), dimension ( nslice, np , ndim ) ::  x
+  integer :: slice, nslice, np, ndim
+
+  real(kind=b8), dimension ( np, ndim ) :: gUsp
+
+  gUsp(:,1) = x(slice,:,1) - &
+     2.0_b8*p_lattice_vb*p_lattice_ax*cos(x(slice,:,1)*p_lattice_ax + p_lattice_phase_x)* &
+     sin(x(slice,:,1)*p_lattice_ax+p_lattice_phase_x)
+  gUsp(:,2) = lam_ho*x(slice,:,2) - &
+     2.0_b8*p_lattice_vb*p_lattice_ay*cos(x(slice,:,2)*p_lattice_ay+p_lattice_phase_y)* &
+     sin(x(slice,:,2)*p_lattice_ay+p_lattice_phase_y)
+  gUsp(:,3) = x(slice,:,3) - &
+     2.0_b8*p_lattice_vb*p_lattice_az*cos(x(slice,:,3)*p_lattice_az+p_lattice_phase_z)* &
+     sin(x(slice,:,3)*p_lattice_az+p_lattice_phase_z)
+
+end function vpi_gUsp_3dlattice
+!@-node:gcross.20090623152316.67:3D
+!@-node:gcross.20090623152316.65:lattice (?)
+!@-node:gcross.20090623152316.36:Single particle potentials
+!@+node:gcross.20090623152316.56:Pair interaction potentials
+!@+node:gcross.20090623152316.89:NULL
+function vpi_Uij_NULL( x, xij2, slice, ip, nslice, np, ndim, acc_flag ) result ( Uij )
+  real(kind=b8), dimension ( nslice, np , ndim ) :: x
+  real(kind=b8), dimension ( nslice, np , np ) :: xij2
+  integer :: slice, ip, nslice, np, ndim
+  logical :: acc_flag
+
+  real(kind=b8) :: Uij
+
+  acc_flag = .true.
+
+  Uij = 0
+
+end function vpi_Uij_NULL
+
+function vpi_gUij_NULL( x, xij2, slice, nslice, np, ndim ) result ( gUij )
+  real(kind=b8), dimension ( nslice, np , ndim ) :: x
+  real(kind=b8), dimension ( nslice, np , np ) :: xij2
+  integer :: slice, nslice, np, ndim
+
+  real(kind = b8), dimension ( np , ndim ) :: gUij
+
+  gUij(:,:) = 0
+
+end function vpi_gUij_NULL
+!@-node:gcross.20090623152316.89:NULL
+!@+node:gcross.20090623152316.57:Charge
 function vpi_Uij_Charge( x, xij2, slice, ip, nslice, np, ndim, acc_flag ) result ( Uij )
   real(kind=b8), dimension ( nslice, np , ndim ) :: x
   real(kind=b8), dimension ( nslice, np , np ) :: xij2
@@ -527,9 +683,10 @@ function vpi_gUij_Charge( x, xij2, slice, nslice, np, ndim ) result ( gUij )
   gUij(:,1) = -atom_qe*g_ee(:,1)
   gUij(:,2) = -atom_qe*g_ee(:,2)
   gUij(:,3) = -atom_qe*g_ee(:,3)
-  
-end function vpi_gUij_Charge
 
+end function vpi_gUij_Charge
+!@-node:gcross.20090623152316.57:Charge
+!@+node:gcross.20090623152316.58:LJ (?)
 function vpi_Uij_LJ( x, xij2, slice, ip, nslice, np, ndim, acc_flag ) result ( Uij )
   real(kind=b8), dimension ( nslice, np , ndim ) :: x
   real(kind=b8), dimension ( nslice, np , np ) :: xij2
@@ -585,9 +742,10 @@ function vpi_gUij_LJ( x, xij2, slice, nslice, np, ndim ) result ( gUij )
       gUij(j,:) = gUij(j,:) - e_lj*t_gUij(:)
     end do
   end do
-  
-end function vpi_gUij_LJ
 
+end function vpi_gUij_LJ
+!@-node:gcross.20090623152316.58:LJ (?)
+!@+node:gcross.20090623152316.59:SA (?)
 function vpi_Uij_SA( x, xij2, slice, ip, nslice, np, ndim, acc_flag ) result ( Uij )
   real(kind=b8), dimension ( nslice, np , ndim ) :: x
   real(kind=b8), dimension ( nslice, np , np ) :: xij2
@@ -660,9 +818,10 @@ function vpi_gUij_SA( x, xij2, slice, nslice, np, ndim ) result ( gUij )
       gUij(j,:) = gUij(j,:) - t_gUij(:)
     end do
   end do
-  
-end function vpi_gUij_SA
 
+end function vpi_gUij_SA
+!@-node:gcross.20090623152316.59:SA (?)
+!@+node:gcross.20090623152316.62:Sc (?)
 function vpi_Uij_Sc( x, xij2, slice, ip, nslice, np, ndim, acc_flag ) result ( Uij )
   real(kind=b8), dimension ( nslice, np , ndim ) :: x
   real(kind=b8), dimension ( nslice, np , np ) :: xij2
@@ -715,9 +874,10 @@ function vpi_gUij_Sc( x, xij2, slice, nslice, np, ndim ) result ( gUij )
       gUij(j,:) = gUij(j,:) + 2.0*p_sc_w*t_gUij(:)
     end do
   end do
-  
-end function vpi_gUij_Sc
 
+end function vpi_gUij_Sc
+!@-node:gcross.20090623152316.62:Sc (?)
+!@+node:gcross.20090623152316.63:Hard sphere
 function vpi_Uij_Hs( x, xij2, slice, ip, nslice, np, ndim, acc_flag ) result ( Uij )
   real(kind=b8), dimension ( nslice, np , ndim ) :: x
   real(kind=b8), dimension ( nslice, np , np ) :: xij2
@@ -759,124 +919,11 @@ function vpi_gUij_Hs( x, xij2, slice, nslice, np, ndim ) result ( gUij )
   gUij = 0
 
 end function vpi_gUij_Hs
-
-function vpi_Usp_Nwell( x, slice, ip, nslice, np, ndim ) result ( Usp )
-  integer :: nslice, np, ndim
-  integer :: slice, ip
-  real(kind=b8), dimension ( nslice, np , ndim ) :: x
-
-  real(kind=b8) :: Usp
-
-  Usp = ( x(slice,ip,1)**2 + x(slice,ip,2)**2 + lam_ho*x(slice,ip,3)**2) + p_nw_vb*cos(x(slice,ip,3)*p_nw_l)
-
-end function vpi_Usp_Nwell
-
-function vpi_gUsp_Nwell( x, slice, nslice, np, ndim ) result ( gUsp )
-  real(kind=b8), dimension ( nslice, np , ndim ) ::  x
-  integer :: slice, nslice, np, ndim
-
-  real(kind=b8), dimension ( np, ndim ) :: gUsp
-
-  gUsp(:,1) = 2.0_b8*x(slice,:,1)
-  gUsp(:,2) = 2.0_b8*x(slice,:,2)
-  gUsp(:,3) = 2.0_b8*lam_ho*x(slice,:,3) - p_nw_vb*p_nw_l*sin(x(slice,:,3)*p_nw_l)
-
-end function vpi_gUsp_Nwell
-
-function vpi_Usp_lattice( x, slice, ip, nslice, np, ndim ) result ( Usp )
-  integer :: nslice, np, ndim
-  integer :: slice, ip
-  real(kind=b8), dimension ( nslice, np , ndim ) :: x
-
-  real(kind=b8) :: Usp
-
-  Usp = 0.0_b8
-
-  Usp = ( x(slice,ip,1)**2 + lam_ho*x(slice,ip,2)**2 + x(slice,ip,3)**2) &
-       + p_lattice_vb*cos(x(slice,ip,1)*p_lattice_ax)**2 &
-       + p_lattice_vb*cos(x(slice,ip,3)*p_lattice_az)**2
-
-end function vpi_Usp_lattice
-
-function vpi_gUsp_lattice( x, slice, nslice, np, ndim ) result ( gUsp )
-  real(kind=b8), dimension ( nslice, np , ndim ) ::  x
-  integer :: slice, nslice, np, ndim
-
-  real(kind=b8), dimension ( np, ndim ) :: gUsp
-
-  gUsp(:,1) = 2.0_b8*x(slice,:,1) - 2.0_b8*p_lattice_vb*p_lattice_ax*cos(x(slice,:,1)*p_lattice_ax)*sin(x(slice,:,1)*p_lattice_ax)
-  gUsp(:,2) = 2.0_b8*lam_ho*x(slice,:,2)
-  gUsp(:,3) = 2.0_b8*x(slice,:,3) - 2.0_b8*p_lattice_vb*p_lattice_ax*cos(x(slice,:,3)*p_lattice_az)*sin(x(slice,:,3)*p_lattice_az)
-
-end function vpi_gUsp_lattice
-
-function vpi_Usp_3dlattice( x, slice, ip, nslice, np, ndim ) result ( Usp )
-  integer :: nslice, np, ndim
-  integer :: slice, ip
-  real(kind=b8), dimension ( nslice, np , ndim ) :: x
-
-  real(kind=b8) :: Usp
-
-  Usp = 0.0_b8
-
-  Usp = 0.5_b8*( x(slice,ip,1)**2 + x(slice,ip,2)**2 + lam_ho*x(slice,ip,3)**2) +  &
-     p_lattice_vb*cos(x(slice,ip,1)*p_lattice_ax+p_lattice_phase_x)**2 + &
-     p_lattice_vb*cos(x(slice,ip,2)*p_lattice_ay+p_lattice_phase_y)**2 + & 
-     p_lattice_vb*cos(x(slice,ip,3)*p_lattice_az+p_lattice_phase_z)**2
-
-end function vpi_Usp_3dlattice
-
-function vpi_gUsp_3dlattice( x, slice, nslice, np, ndim ) result ( gUsp )
-  real(kind=b8), dimension ( nslice, np , ndim ) ::  x
-  integer :: slice, nslice, np, ndim
-
-  real(kind=b8), dimension ( np, ndim ) :: gUsp
-
-  gUsp(:,1) = x(slice,:,1) - &
-     2.0_b8*p_lattice_vb*p_lattice_ax*cos(x(slice,:,1)*p_lattice_ax + p_lattice_phase_x)* &
-     sin(x(slice,:,1)*p_lattice_ax+p_lattice_phase_x)
-  gUsp(:,2) = lam_ho*x(slice,:,2) - &
-     2.0_b8*p_lattice_vb*p_lattice_ay*cos(x(slice,:,2)*p_lattice_ay+p_lattice_phase_y)* &
-     sin(x(slice,:,2)*p_lattice_ay+p_lattice_phase_y)
-  gUsp(:,3) = x(slice,:,3) - &
-     2.0_b8*p_lattice_vb*p_lattice_az*cos(x(slice,:,3)*p_lattice_az+p_lattice_phase_z)* &
-     sin(x(slice,:,3)*p_lattice_az+p_lattice_phase_z)
-
-end function vpi_gUsp_3dlattice
-
-function vpi_Uij_dimer( x, x_rot, xij2, slice, ip, nslice, np, ndim ) result ( Uij )
-  real(kind=b8), dimension ( nslice, np , ndim ) :: x
-  real(kind=b8), dimension ( nslice, np , N_DIM_ROT ) :: x_rot
-  real(kind=b8), dimension ( nslice, np , np ) :: xij2
-  integer :: slice, ip, nslice, np, ndim
-
-  real(kind=b8) :: Uij
-
-  real(kind=b8) :: h1,h2
-  real(kind=b8) :: t3,t6,costh
-  real(kind=b8), dimension (3) :: dr
-  integer :: i
-
-  t3 = 0d0
-  do i=1,ip-1
-    costh = dot_product(x_rot(slice,ip,:),x_rot(slice,i,:))
-    dr = x(slice,ip,:)-x(slice,i,:)
-    h1 = dot_product(dr,x_rot(slice,i ,:))
-    h2 = dot_product(dr,x_rot(slice,ip,:))
-    t3 = t3 + (costh-3d0*h1*h2/xij2(slice,ip,i))*xij2(slice,ip,i)**(-1.5d0)
-  end do
-  do i=ip+1,np
-    costh = dot_product(x_rot(slice,ip,:),x_rot(slice,i,:))
-    dr = x(slice,ip,:)-x(slice,i,:)
-    h1 = dot_product(dr,x_rot(slice,i ,:))
-    h2 = dot_product(dr,x_rot(slice,ip,:))
-    t3 = t3 + (costh-3d0*h1*h2/xij2(slice,ip,i))*xij2(slice,ip,i)**(-1.5d0)
-  end do
-
-  Uij = e_dimer*t3
-
-end function vpi_Uij_dimer
-
+!@-node:gcross.20090623152316.63:Hard sphere
+!@+node:gcross.20090623152316.64:Nwell (?)
+!@-node:gcross.20090623152316.64:Nwell (?)
+!@+node:gcross.20090623152316.68:dimer
+!@+node:gcross.20090623152316.70:polarized (?)
 !function vpi_Uij_polarized_dimer( x, xij2, slice, ip, nslice, np, ndim, acc_flag ) result ( Uij )
 !  real(kind=b8), dimension ( nslice, np , ndim ) :: x
 !  real(kind=b8), dimension ( nslice, np , np ) :: xij2
@@ -902,7 +949,79 @@ end function vpi_Uij_dimer
 !  end if
 !
 !end function vpi_Uij_polarized_dimer
+!@-node:gcross.20090623152316.70:polarized (?)
+!@+node:gcross.20090623152316.71:Z polarized
+function vpi_Uij_z_polarized_dimer( x, xij2, slice, ip, nslice, np, ndim, acc_flag ) result ( Uij )
+  real(kind=b8), dimension ( nslice, np , ndim ) :: x
+  real(kind=b8), dimension ( nslice, np , N_DIM_ROT ) :: x_rot
+  real(kind=b8), dimension ( nslice, np , np ) :: xij2
+  integer :: slice, ip, nslice, np, ndim
+  logical :: acc_flag
 
+  real(kind=b8) :: Uij
+  real(kind=b8) :: t3,tmp
+
+  integer :: i,k
+
+  acc_flag = .true.
+  t3 = 0.0_b8
+  do i=1,ip-1
+    tmp =  a_lj*xij2(slice,ip,i)**(-6) &
+         + xij2(slice,ip,i)**(-1.5)*(1.0_b8-3.0_b8*xij2(slice,ip,i)**(-1)*(x(slice,ip,3)-x(slice,i,3))**2)
+    t3 = t3 + exp(-(xij2(slice,ip,i)/(p_pbc_L*.99))**50)*tmp
+  end do
+
+  do i=ip+1,np
+    tmp =  a_lj*xij2(slice,ip,i)**(-6) &
+         + xij2(slice,ip,i)**(-1.5)*(1.0_b8-3.0_b8*xij2(slice,ip,i)**(-1)*(x(slice,ip,3)-x(slice,i,3))**2)
+    t3 = t3 + exp(-(xij2(slice,ip,i)/(p_pbc_L*.99))**50)*tmp
+  end do
+
+  Uij = t3 
+end function vpi_Uij_z_polarized_dimer
+
+function vpi_gUij_z_polarized_dimer( x, xij2, sl, nslice, np, ndim ) result ( gUij )
+  real(kind=b8), dimension ( nslice, np , ndim ) :: x
+  real(kind=b8), dimension ( nslice, np , np ) :: xij2
+  integer :: sl, nslice, np, ndim
+
+  real(kind = b8), dimension ( np , ndim ) :: gUij
+
+  real(kind=b8), dimension( nslice, np, ndim ) :: tx
+  real(kind=b8), dimension( nslice, np, np ) :: txij2
+  real(kind=b8), dimension( ndim ) :: fhi,flo
+  integer :: i, k
+  logical :: acc_flag
+
+  gUij = 0.0
+  do i = 1, np
+    tx(sl,:,:) = x(sl,:,:)
+    do k = 1, ndim
+      txij2(sl,:,:) = xij2(sl,:,:)
+      tx(sl,i,k) = x(sl,i,k) + ntol_eps
+      if(use_pbc) then
+        call vpi_update_xij_pbc( txij2, tx, sl, sl, i, nslice, np, ndim )
+      else
+        call vpi_update_xij( txij2, tx, sl, sl, i, nslice, np, ndim )
+      end if
+      fhi(k) = vpi_Uij_z_polarized_dimer( tx, txij2, sl, i, nslice, np, ndim, acc_flag )
+
+      tx(sl,i,k) = x(sl,i,k) - ntol_eps
+      if(use_pbc) then
+        call vpi_update_xij_pbc( txij2, tx, sl, sl, i, nslice, np, ndim )
+      else
+        call vpi_update_xij( txij2, tx, sl, sl, i, nslice, np, ndim )
+      end if
+      flo(k) =  vpi_Uij_z_polarized_dimer( tx, txij2, sl, i, nslice, np, ndim, acc_flag )
+      tx(sl,i,k) = x(sl,i,k)
+    end do
+    gUij(i,:) = fhi(:) - flo(:)
+  end do
+  gUij(:,:) = gUij(:,:)/(2.0_b8*ntol_eps)
+
+end function vpi_gUij_z_polarized_dimer
+!@-node:gcross.20090623152316.71:Z polarized
+!@+node:gcross.20090623152316.72:Z polarized w/ hard sphere
 function vpi_Uij_z_polarized_dimer_hs( x, xij2, slice, ip, nslice, np, ndim, acc_flag ) result ( Uij )
   real(kind=b8), dimension ( nslice, np , ndim ) :: x
   real(kind=b8), dimension ( nslice, np , N_DIM_ROT ) :: x_rot
@@ -956,7 +1075,7 @@ function vpi_gUij_z_polarized_dimer_hs( x, xij2, sl, nslice, np, ndim ) result (
   real(kind=b8), dimension( ndim ) :: fhi,flo
   integer :: i, k
   logical :: acc_flag
-  
+
   gUij = 0.0
   do i = 1, np
     tx(sl,:,:) = x(sl,:,:)
@@ -984,78 +1103,45 @@ function vpi_gUij_z_polarized_dimer_hs( x, xij2, sl, nslice, np, ndim ) result (
   gUij(:,:) = gUij(:,:)/(2.0_b8*ntol_eps)
 
 end function vpi_gUij_z_polarized_dimer_hs
-
-function vpi_Uij_z_polarized_dimer( x, xij2, slice, ip, nslice, np, ndim, acc_flag ) result ( Uij )
+!@-node:gcross.20090623152316.72:Z polarized w/ hard sphere
+!@-node:gcross.20090623152316.68:dimer
+!@-node:gcross.20090623152316.56:Pair interaction potentials
+!@+node:gcross.20090623184136.3812:Rotation potentials
+!@+node:gcross.20090623152316.69:dimer
+function vpi_RUij_dimer( x, x_rot, xij2, slice, ip, nslice, np, ndim ) result ( Uij )
   real(kind=b8), dimension ( nslice, np , ndim ) :: x
   real(kind=b8), dimension ( nslice, np , N_DIM_ROT ) :: x_rot
   real(kind=b8), dimension ( nslice, np , np ) :: xij2
   integer :: slice, ip, nslice, np, ndim
-  logical :: acc_flag
 
   real(kind=b8) :: Uij
-  real(kind=b8) :: t3,tmp
 
-  integer :: i,k
+  real(kind=b8) :: h1,h2
+  real(kind=b8) :: t3,t6,costh
+  real(kind=b8), dimension (3) :: dr
+  integer :: i
 
-  acc_flag = .true.
-  t3 = 0.0_b8
+  t3 = 0d0
   do i=1,ip-1
-    tmp =  a_lj*xij2(slice,ip,i)**(-6) &
-         + xij2(slice,ip,i)**(-1.5)*(1.0_b8-3.0_b8*xij2(slice,ip,i)**(-1)*(x(slice,ip,3)-x(slice,i,3))**2)
-    t3 = t3 + exp(-(xij2(slice,ip,i)/(p_pbc_L*.99))**50)*tmp
+    costh = dot_product(x_rot(slice,ip,:),x_rot(slice,i,:))
+    dr = x(slice,ip,:)-x(slice,i,:)
+    h1 = dot_product(dr,x_rot(slice,i ,:))
+    h2 = dot_product(dr,x_rot(slice,ip,:))
+    t3 = t3 + (costh-3d0*h1*h2/xij2(slice,ip,i))*xij2(slice,ip,i)**(-1.5d0)
   end do
-
   do i=ip+1,np
-    tmp =  a_lj*xij2(slice,ip,i)**(-6) &
-         + xij2(slice,ip,i)**(-1.5)*(1.0_b8-3.0_b8*xij2(slice,ip,i)**(-1)*(x(slice,ip,3)-x(slice,i,3))**2)
-    t3 = t3 + exp(-(xij2(slice,ip,i)/(p_pbc_L*.99))**50)*tmp
+    costh = dot_product(x_rot(slice,ip,:),x_rot(slice,i,:))
+    dr = x(slice,ip,:)-x(slice,i,:)
+    h1 = dot_product(dr,x_rot(slice,i ,:))
+    h2 = dot_product(dr,x_rot(slice,ip,:))
+    t3 = t3 + (costh-3d0*h1*h2/xij2(slice,ip,i))*xij2(slice,ip,i)**(-1.5d0)
   end do
 
-  Uij = t3 
-end function vpi_Uij_z_polarized_dimer
+  Uij = e_dimer*t3
 
-function vpi_gUij_z_polarized_dimer( x, xij2, sl, nslice, np, ndim ) result ( gUij )
-  real(kind=b8), dimension ( nslice, np , ndim ) :: x
-  real(kind=b8), dimension ( nslice, np , np ) :: xij2
-  integer :: sl, nslice, np, ndim
+end function vpi_RUij_dimer
 
-  real(kind = b8), dimension ( np , ndim ) :: gUij
-
-  real(kind=b8), dimension( nslice, np, ndim ) :: tx
-  real(kind=b8), dimension( nslice, np, np ) :: txij2
-  real(kind=b8), dimension( ndim ) :: fhi,flo
-  integer :: i, k
-  logical :: acc_flag
-  
-  gUij = 0.0
-  do i = 1, np
-    tx(sl,:,:) = x(sl,:,:)
-    do k = 1, ndim
-      txij2(sl,:,:) = xij2(sl,:,:)
-      tx(sl,i,k) = x(sl,i,k) + ntol_eps
-      if(use_pbc) then
-        call vpi_update_xij_pbc( txij2, tx, sl, sl, i, nslice, np, ndim )
-      else
-        call vpi_update_xij( txij2, tx, sl, sl, i, nslice, np, ndim )
-      end if
-      fhi(k) = vpi_Uij_z_polarized_dimer( tx, txij2, sl, i, nslice, np, ndim, acc_flag )
-
-      tx(sl,i,k) = x(sl,i,k) - ntol_eps
-      if(use_pbc) then
-        call vpi_update_xij_pbc( txij2, tx, sl, sl, i, nslice, np, ndim )
-      else
-        call vpi_update_xij( txij2, tx, sl, sl, i, nslice, np, ndim )
-      end if
-      flo(k) =  vpi_Uij_z_polarized_dimer( tx, txij2, sl, i, nslice, np, ndim, acc_flag )
-      tx(sl,i,k) = x(sl,i,k)
-    end do
-    gUij(i,:) = fhi(:) - flo(:)
-  end do
-  gUij(:,:) = gUij(:,:)/(2.0_b8*ntol_eps)
-
-end function vpi_gUij_z_polarized_dimer
-
-function vpi_gUij_dimer( x, x_rot, xij2, slice, nslice, np, ndim ) result ( gUij )
+function vpi_gRUij_dimer( x, x_rot, xij2, slice, nslice, np, ndim ) result ( gUij )
   real(kind=b8), dimension ( nslice, np , ndim ) :: x
   real(kind=b8), dimension ( nslice, np , N_DIM_ROT ) :: x_rot
   real(kind=b8), dimension ( nslice, np , np ) :: xij2
@@ -1064,6 +1150,27 @@ function vpi_gUij_dimer( x, x_rot, xij2, slice, nslice, np, ndim ) result ( gUij
   real(kind = b8), dimension ( np , ndim ) :: gUij
 
   gUij = 0
-end function vpi_gUij_dimer
+end function vpi_gRUij_dimer
+!@-node:gcross.20090623152316.69:dimer
+!@+node:gcross.20090623152316.90:undefined
+function vpi_RUij_undefined( x, x_rot, xij2, slice, ip, nslice, np, ndim ) result ( Uij )
+  real(kind=b8), dimension ( nslice, np , ndim ) :: x
+  real(kind=b8), dimension ( nslice, np , N_DIM_ROT ) :: x_rot
+  real(kind=b8), dimension ( nslice, np , np ) :: xij2
+  integer :: slice, ip, nslice, np, ndim
+  logical :: acc_flag
+
+  real(kind=b8) :: Uij
+
+  acc_flag = .true.
+
+  STOP "Code has attempted to evaluate an undefined potential!"
+
+end function vpi_RUij_undefined
+!@-node:gcross.20090623152316.90:undefined
+!@-node:gcross.20090623184136.3812:Rotation potentials
+!@-others
 
 end module vpi_potential
+!@-node:gcross.20090623152316.34:@thin vpi_potential.f90
+!@-leo
