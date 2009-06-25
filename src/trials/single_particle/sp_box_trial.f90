@@ -1,17 +1,22 @@
 !@+leo-ver=4-thin
 !@+node:gcross.20090624144408.1838:@thin sp_box_trial.f90
 !@@language fortran90
+!@@tabwidth -2
 module sp_box_trial
 
   !@  << Imported modules >>
   !@+node:gcross.20090624144408.1839:<< Imported modules >>
   use kinds
+  use constants
+  !@nonl
   !@-node:gcross.20090624144408.1839:<< Imported modules >>
   !@nl
 
   !@  << Variables >>
   !@+node:gcross.20090624144408.1840:<< Variables >>
-  real (kind=b8), private :: box_size
+  real (kind=b8), private :: x_length = 1_b8, x_wall_location
+  real (kind=b8), private :: y_length = 1_b8, y_wall_location
+  real (kind=b8), private :: z_length = 1_b8, z_wall_location
   !@-node:gcross.20090624144408.1840:<< Variables >>
   !@nl
 
@@ -22,9 +27,13 @@ contains
   !@+others
   !@+node:gcross.20090624144408.1842:init_sp_tfunc
   subroutine init_sp_tfunc ()
-    namelist /single_particle_trial_function_parameters/ box_size
+    namelist /single_particle_trial_function_parameters/ x_length, y_length, z_length
 
     read(unit=10,nml=single_particle_trial_function_parameters)
+
+    x_wall_location = x_length/2  
+    y_wall_location = y_length/2  
+    z_wall_location = z_length/2
 
     write(*,*) "Using box trial function with"
     write(*,nml=single_particle_trial_function_parameters)
@@ -36,11 +45,24 @@ contains
     real(kind=b8), dimension( nslice, np , ndim ) :: x
     real(kind=b8) :: y
     real, dimension( np ) :: psi_t
+    integer :: i
 
-    integer :: i, j
+    y = 0
 
-    psi_t(:)  = sum(log(cos( M_PI*x(islice,:,:)/(2.0_b8*box_size) )))
-    y = sum(psi_t)
+    do i = 1, np
+      if( (abs(x(islice,i,1)) > x_wall_location) .or. &
+          (abs(x(islice,i,2)) > y_wall_location) .or. &
+          (abs(x(islice,i,3)) > z_wall_location) ) then
+          y = -realbignumber
+          return
+      endif
+
+      y = y + log(cos( M_PI*x(islice,i,1) / (x_length) ) &
+                 *cos( M_PI*x(islice,i,2) / (y_length) ) &
+                 *cos( M_PI*x(islice,i,3) / (z_length) ) &
+               )
+
+    end do
 
   end function tfunc
   !@-node:gcross.20090624144408.1843:tfunc
