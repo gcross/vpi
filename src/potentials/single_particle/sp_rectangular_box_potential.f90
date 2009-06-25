@@ -11,9 +11,9 @@ module sp_rectangular_box_potential
 
   !@  << Variables >>
   !@+node:gcross.20090624094338.1372:<< Variables >>
-  real (kind=b8), private :: x_length = 0.5_b8
-  real (kind=b8), private :: y_length = 0.5_b8
-  real (kind=b8), private :: z_length = 0.5_b8
+  real (kind=b8), private :: x_length = 1_b8, x_wall_location
+  real (kind=b8), private :: y_length = 1_b8, y_wall_location
+  real (kind=b8), private :: z_length = 1_b8, z_wall_location
   !@-node:gcross.20090624094338.1372:<< Variables >>
   !@nl
 
@@ -28,10 +28,13 @@ contains
 
     read(unit=10,nml=single_particle_potential_parameters)
 
+    x_wall_location = x_length/2  
+    y_wall_location = y_length/2  
+    z_wall_location = z_length/2
+
     write(*,*) "Using single particle rectangular box potential with"
     write(*,nml=single_particle_potential_parameters)
   end subroutine init_sp_potential
-  !@nonl
   !@-node:gcross.20090624094338.1370:init_sp_potential
   !@+node:gcross.20090624094338.1368:Usp
   function Usp_func( x, slice, ip, nslice, np, ndim ) result ( Usp )
@@ -43,9 +46,9 @@ contains
 
     Usp = 0
   !  r = sqrt(dot_product(x(slice,ip,:),x(slice,ip,:))) 
-    if (  (abs(x(slice,ip,1)) > x_length) &
-     .or. (abs(x(slice,ip,2)) > y_length) &
-     .or. (abs(x(slice,ip,3)) > z_length)  ) & 
+    if (  (abs(x(slice,ip,1)) > x_wall_location) &
+     .or. (abs(x(slice,ip,2)) > y_wall_location) &
+     .or. (abs(x(slice,ip,3)) > z_wall_location)  ) & 
     then
       Usp = realbignumber
     end if
