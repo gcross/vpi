@@ -1,4 +1,4 @@
-all: kinds.o constants.o vpi_defines.o trials/single_particle/sp_morse_trial_common.o vpi
+all: kinds.o constants.o vpi_defines.o vpi_xij.o trials/single_particle/sp_morse_trial_common.o vpi
 
 MODULE_PATH = potentials/single_particle:potentials/two_body:potentials/rotational:trials/single_particle:trials/jastrow:.
 
