@@ -1,4 +1,6 @@
-all: vpi
+all: kinds.o constants.o vpi_defines.o trials/single_particle/sp_morse_trial_common.o vpi
+
+MODULE_PATH = potentials/single_particle:potentials/two_body:potentials/rotational:trials/single_particle:trials/jastrow:.
 
 ################################################################################
 # AIX
@@ -57,7 +59,7 @@ FC = mpif90
 F90FLAGS = -cpp
 #MYFFLAGS =  -O3 -funroll-loops -fomit-frame-pointer -finline-functions -D USE_MPI  -D USE_IMAGE_HSGFN -D EXPERIMENTAL
 #MYFFLAGS =  -p -O3 -funroll-loops -fomit-frame-pointer -finline-functions -D USE_MPI  -D USE_IMAGE_HSGFN -prof-genx 
-MYFFLAGS =  -O3 -funroll-loops -fomit-frame-pointer -finline-functions -D USE_MPI -D USE_IMAGE_HSGFN
+MYFFLAGS =  -O3 -funroll-loops -fomit-frame-pointer -finline-functions -D USE_MPI -D USE_IMAGE_HSGFN -Jmods
 #MYFFLAGS =  -g -D USE_MPI -D USE_IMAGE_HSGFN
 #zeus
 #MYLIBS =  -Wl,-rpath=/usr/local/tools/mkl/lib/ -L/usr/local/tools/mkl/lib/ -lmkl -lmkl_lapack64 -lguide -lpthread
@@ -75,69 +77,93 @@ MYLIBS =  -Wl -llapack -lpthread
 #thunder
 #MYLIBS = -L/usr/local/intel/mkl/lib/64 -lmkl -lmkl_lapack64 -lguide -lpthread
 
+PROGRAM_OBJS = kinds.o constants.o vpi_defines.o vpi_rand_utils.o vpi_xij.o vpi_aziz.o vpi_gfn.o vpi_bisect.o vpi_bbridge.o vpi_sample.o vpi_lattice.o vpi_obdm.o vpi_coordinate_utils.o vpi_phase_maps.o vpi_rotation.o timers.o vpi_main.o
 
-# Modules
-kinds.o : kinds.f90
-	${FC} ${F90FLAGS} ${MYFFLAGS} -c kinds.f90
-vpi_defines.o : vpi_defines.f90
-	${FC} ${F90FLAGS} ${MYFFLAGS} -c vpi_defines.f90
-vpi_timers.o : timers.f90
-	${FC} ${F90FLAGS} ${MYFFLAGS} -c timers.f90
-vpi_hnode_defines.o : vpi_hnode_defines.f90
-	${FC} ${F90FLAGS} ${MYFFLAGS} -c vpi_hnode_defines.f90
-vpi_rand_utils.o : vpi_rand_utils.f90
-	${FC} ${F90FLAGS} ${MYFFLAGS} -c timers.f90 vpi_rand_utils.f90
-vpi_aziz.o : vpi_aziz.f90
-	${FC} ${F90FLAGS} ${MYFFLAGS} -c vpi_aziz.f90
-vpi_potential.o : vpi_potential.f90
-	${FC} ${F90FLAGS} ${MYFFLAGS} -c vpi_potential.f90
-vpi_hnode_potential.o : vpi_hnode_potential.f90
-	${FC} ${F90FLAGS} ${MYFFLAGS} -c vpi_hnode_potential.f90
-vpi_trial_func.o : vpi_trial_func.f90
-	${FC} ${F90FLAGS} ${MYFFLAGS} -c vpi_trial_func.f90
-vpi_hnode_trial_func.o : vpi_hnode_trial_func.f90
-	${FC} ${F90FLAGS} ${MYFFLAGS} -c vpi_hnode_trial_func.f90
-vpi_gfn.o : vpi_gfn.f90
-	${FC} ${F90FLAGS} ${MYFFLAGS} -c vpi_gfn.f90
-vpi_bisect.o : vpi_bisect.f90
-	${FC} ${F90FLAGS} ${MYFFLAGS} -c vpi_bisect.f90
-vpi_bbridge.o : vpi_bbridge.f90
-	${FC} ${F90FLAGS} ${MYFFLAGS} -c vpi_bbridge.f90
-vpi_sample.o : vpi_sample.f90
-	${FC} ${F90FLAGS} ${MYFFLAGS} -c vpi_sample.f90
-vpi_lattice.o : vpi_lattice.f90
-	${FC} ${F90FLAGS} ${MYFFLAGS} -c vpi_lattice.f90
-vpi_hnode_lattice.o : vpi_hnode_lattice.f90
-	${FC} ${F90FLAGS} ${MYFFLAGS} -c vpi_hnode_lattice.f90
-vpi_xij.o : vpi_xij.f90
-	${FC} ${F90FLAGS} ${MYFFLAGS} -c vpi_xij.f90
-vpi_obdm.o : vpi_obdm.f90
-	${FC} ${F90FLAGS} ${MYFFLAGS} -c vpi_obdm.f90
-vpi_coordinate_utils.o : vpi_coordinate_utils.f90
-	${FC} ${F90FLAGS} ${MYFFLAGS} -c vpi_coordinate_utils.f90
-vpi_phase_maps.o : vpi_phase_maps.f90
-	${FC} ${F90FLAGS} ${MYFFLAGS} -c vpi_phase_maps.f90
-vpi_rotation.o : vpi_rotation.f90
-	${FC} ${F90FLAGS} ${MYFFLAGS} -c vpi_rotation.f90
-vpi_read_input.o : vpi_read_input.f90
-	${FC} ${F90FLAGS} ${MYFFLAGS} -c vpi_read_input.f90
-nl2sol.o : nl2sol.f90
-	${FC} ${F90FLAGS} ${MYFFLAGS} -c nl2sol.f90
+SINGLE_PARTICLE_POTENTIAL_OBJS = \
+	potentials/single_particle/sp_null_potential.o \
+	potentials/single_particle/sp_rectangular_box_potential.o \
+	potentials/single_particle/sp_cylindrical_box_potential.o \
+	potentials/single_particle/sp_harmonic_oscillator_1D_potential.o \
+	potentials/single_particle/sp_harmonic_oscillator_3D_potential.o \
+	potentials/single_particle/sp_harmonic_oscillator_overlapping_potential.o \
+	potentials/single_particle/sp_wlink_potential.o \
+	potentials/single_particle/sp_morse_oscillator_potential.o \
+	potentials/single_particle/sp_G_well_potential.o \
+	potentials/single_particle/sp_D_well_potential.o \
+	potentials/single_particle/sp_N_well_potential.o \
+	potentials/single_particle/sp_annulus_common.o \
+	potentials/single_particle/sp_annulus_version_1_potential.o \
+	potentials/single_particle/sp_annulus_version_2_potential.o \
+	potentials/single_particle/sp_annulus_version_3_potential.o \
+	potentials/single_particle/sp_atomic_potential.o \
+	potentials/single_particle/sp_atomic_overlapping_potential.o \
+	potentials/single_particle/sp_lattice_2D_with_HO_potential.o \
+	potentials/single_particle/sp_lattice_3D_with_HO_potential.o \
 
-#main
-vpi_main.o : vpi_main.f90
-	 ${FC} ${F90FLAGS} ${MYFFLAGS} -c  vpi_main.f90
+
+TWO_BODY_POTENTIAL_OBJS = \
+	potentials/two_body/tb_null_potential.o \
+	potentials/two_body/tb_charge_potential.o \
+	potentials/two_body/tb_lj_potential.o \
+	potentials/two_body/tb_sc_potential.o \
+	potentials/two_body/tb_hard_sphere_potential.o \
+#	potentials/two_body/tb_sa_potential.o \
+	potentials/two_body/tb_dimer_Z_polarized_potential.o \
+	potentials/two_body/tb_dimer_Z_polarized_with_hard_sphere_potential.o \
+
+ROTATIONAL_POTENTIAL_OBJS = \
+	potentials/rotational/rot_dimer_potential.o \
+	potentials/rotational/rot_undefined_potential.o \
+
+POTENTIAL_OBJS = \
+	${SINGLE_PARTICLE_POTENTIAL_OBJS} \
+	${TWO_BODY_POTENTIAL_OBJS} \
+	${ROTATIONAL_POTENTIAL_OBJS} \
+
+SINGLE_BODY_TRIAL_OBJS = \
+	trials/single_particle/sp_trial_numeric_differentiator.o \
+	trials/single_particle/sp_atomic_trial.o \
+	trials/single_particle/sp_He3plus_trial.o \
+	trials/single_particle/sp_box_trial.o \
+	trials/single_particle/sp_harmonic_3D_trial.o \
+	trials/single_particle/sp_anharmonic_trial.o \
+	trials/single_particle/sp_morse_trial_common.o \
+	trials/single_particle/sp_morse_version_1_trial.o \
+	trials/single_particle/sp_morse_version_2_trial.o \
+	trials/single_particle/sp_D_well_trial_common.o \
+	trials/single_particle/sp_D_well_version_1_trial.o \
+	trials/single_particle/sp_D_well_version_2_trial.o \
+	trials/single_particle/sp_lattice_trial.o \
+#	trials/single_particle/sp_N_well_trial.o \
+
+JASTROW_TRIAL_OBJS = \
+	trials/jastrow/jas_trial_numeric_differentiator.o \
+	trials/jastrow/jas_hard_sphere_trial.o \
+	trials/jastrow/jas_lj_trial.o \
+	trials/jastrow/jas_charge_trial.o \
+	trials/jastrow/jas_independent_trial.o \
+
+TRIAL_OBJS = ${SINGLE_BODY_TRIAL_OBJS} ${JASTROW_TRIAL_OBJS}
+
+OBJS = ${POTENTIAL_OBJS} ${TRIAL_OBJS} ${PROGRAM_OBJS}
+
+%.o: %.f90
+	${FC} ${F90FLAGS} ${MYFFLAGS} -c $< -o $@
+
+vpi_rand_utils.f90: timers.o
 
 # Final executables
-vpi :: kinds.o vpi_defines.o vpi_rand_utils.o vpi_xij.o vpi_aziz.o vpi_potential.o vpi_gfn.o vpi_trial_func.o vpi_bisect.o vpi_bbridge.o vpi_sample.o vpi_lattice.o vpi_obdm.o vpi_coordinate_utils.o vpi_phase_maps.o vpi_rotation.o vpi_read_input.o timers.o vpi_main.o
-	${FC} kinds.o vpi_defines.o vpi_rand_utils.o vpi_xij.o vpi_aziz.o vpi_potential.o vpi_gfn.o vpi_trial_func.o vpi_bisect.o vpi_bbridge.o vpi_sample.o vpi_lattice.o vpi_obdm.o vpi_coordinate_utils.o vpi_phase_maps.o vpi_rotation.o vpi_read_input.o timers.o vpi_main.o  -o ../bin/vpi-hoz-independent ${MYLIBS}
+vpi :: ${OBJS}
+	${FC} ${OBJS}  -o ../bin/vpi-hoz-independent ${MYLIBS}
 
 hnode :: vpi_hnode_defines.o vpi_rand_utils.o vpi_xij.o vpi_hnode_potential.o vpi_gfn.o vpi_hnode_trial_func.o vpi_bisect.o vpi_hnode_lattice.o vpi_obdm.o hnode_main.f90
 	${FC} ${F90FLAGS} ${MYFFLAGS} vpi_hnode_defines.o vpi_rand_utils.o vpi_xij.o vpi_hnode_potential.o vpi_gfn.o vpi_hnode_trial_func.o vpi_bisect.o vpi_hnode_lattice.o vpi_obdm.o hnode_main.f90 -o ../bin/hnode-test
 
 clean : 
 	rm -f *.mod
+	rm -f */*/*.mod
 	rm -f *.o
+	rm -f */*/*.o
 	rm -f *.lst
 	rm -f *.i
 	rm -f *.inc

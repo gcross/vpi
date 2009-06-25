@@ -37,7 +37,6 @@ p_ljc5 0.0017
 p_ljc1 -0.42
 a_lj 5.31441e-07
 e_lj 1.0
-lam_ho 100.0
 a_dw 1.5
 ep_dw 10.0
 atom_qn 1.0

@@ -1,3 +1,7 @@
+!@+leo-ver=4-thin
+!@+node:gcross.20090624144408.2046:@thin vpi_lattice.f90
+!@@language fortran90
+
 module vpi_lattice
 
   use vpi_defines
@@ -39,7 +43,7 @@ subroutine vpi_make_lattice( q, a, fill_method)
         y = get_pbc(q(1,j,2)-q(1,i,2))
         z = get_pbc(q(1,j,3)-q(1,i,3))
         r2 = x*x + y*y + z*z
-        if ( r2 .le. a_hs2 ) then
+        if ( r2 .le. hard_sphere_radius_squared ) then
           goto 10
         end if
       end do
@@ -51,60 +55,65 @@ subroutine vpi_make_lattice( q, a, fill_method)
       i = i + 1
     end do 
 
-   case (GAUSSIAN_FILL)
-
-    i = 1
-    do while ( i .le. np )
-20  call ru_gasdev( nu )
-      q(1,i,1) = nu(1)/p_hox
-      q(1,i,2) = nu(2)/p_hoy
-      q(1,i,3) = nu(3)/p_hoz
-
-      do j = 1, i-1
-        x = get_pbc(q(1,j,1)-q(1,i,1))
-        y = get_pbc(q(1,j,2)-q(1,i,2))
-        z = get_pbc(q(1,j,3)-q(1,i,3))
-        r2 = x*x + y*y + z*z
-        if ( r2 .le. a_hs2 ) then
-          goto 20
-        end if
-      end do
-
-      do k = 1, ndim
-        q(:,i,k) = q(1,i,k)
-      end do
-
-      i = i + 1
-    end do 
-
-   case (DWELL_GAUSSIAN_FILL)
-
-    i = 1
-    do while ( i .le. np )
-30  call ru_gasdev( nu )
-      q(1,i,:) = nu(:)/2
-      if(i .le. np/2) then
-        q(1,i,3) = q(1,i,3)+a_dw
-      else
-        q(1,i,3) = q(1,i,3)-a_dw
-      end if
-
-      do j = 1, i-1
-        x = get_pbc(q(1,j,1)-q(1,i,1))
-        y = get_pbc(q(1,j,2)-q(1,i,2))
-        z = get_pbc(q(1,j,3)-q(1,i,3))
-        r2 = x*x + y*y + z*z
-        if ( r2 .le. 2.0*a_hs2 ) then
-          goto 30
-        end if
-      end do
-
-      do k = 1, ndim
-        q(:,i,k) = q(1,i,k)
-      end do
-
-      i = i + 1
-    end do 
+!@+at
+!    case (GAUSSIAN_FILL)
+! 
+!     i = 1
+!     do while ( i .le. np )
+! 20  call ru_gasdev( nu )
+!       q(1,i,1) = nu(1)/p_hox
+!       q(1,i,2) = nu(2)/p_hoy
+!       q(1,i,3) = nu(3)/p_hoz
+! 
+!       do j = 1, i-1
+!         x = get_pbc(q(1,j,1)-q(1,i,1))
+!         y = get_pbc(q(1,j,2)-q(1,i,2))
+!         z = get_pbc(q(1,j,3)-q(1,i,3))
+!         r2 = x*x + y*y + z*z
+!         if ( r2 .le. hard_sphere_radius_squared ) then
+!           goto 20
+!         end if
+!       end do
+! 
+!       do k = 1, ndim
+!         q(:,i,k) = q(1,i,k)
+!       end do
+! 
+!       i = i + 1
+!     end do
+! 
+!    case (DWELL_GAUSSIAN_FILL)
+! 
+!     i = 1
+!     do while ( i .le. np )
+! 30  call ru_gasdev( nu )
+!       q(1,i,:) = nu(:)/2
+!       if(i .le. np/2) then
+!         q(1,i,3) = q(1,i,3)+a_dw
+!       else
+!         q(1,i,3) = q(1,i,3)-a_dw
+!       end if
+! 
+!       do j = 1, i-1
+!         x = get_pbc(q(1,j,1)-q(1,i,1))
+!         y = get_pbc(q(1,j,2)-q(1,i,2))
+!         z = get_pbc(q(1,j,3)-q(1,i,3))
+!         r2 = x*x + y*y + z*z
+!         if ( r2 .le. 2.0*hard_sphere_radius_squared ) then
+!           goto 30
+!         end if
+!       end do
+! 
+!       do k = 1, ndim
+!         q(:,i,k) = q(1,i,k)
+!       end do
+! 
+!       i = i + 1
+!     end do
+!@-at
+!@@c
+    case default
+      stop "Unsupported lattice fill strategy requested."
   end select
 
 end subroutine vpi_make_lattice
@@ -121,3 +130,5 @@ end function get_pbc
 
 
 end module vpi_lattice
+!@-node:gcross.20090624144408.2046:@thin vpi_lattice.f90
+!@-leo

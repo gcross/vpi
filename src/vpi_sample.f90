@@ -233,7 +233,7 @@ subroutine get_collisions(q,ip,clist,n_coll)
       cflag = 0
       do i = 1, n_slice
         xij = sum((q(i,j,:) - q(i,ip,:))**2) 
-        if(xij < a_hs2) then
+        if(xij < hard_sphere_radius_squared) then
           cflag = 1
           exit
         end if

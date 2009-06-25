@@ -4,9 +4,7 @@
 !@@tabwidth -2
 program Test_VPI
 
-  !@  << Declarations >>
-  !@+node:gcross.20090623152316.7:<< Declarations >>
-  !@<< Imported modules >>
+  !@  << Imported modules >>
   !@+node:gcross.20090623152316.5:<< Imported modules >>
   use vpi_rand_utils
   use vpi_coordinate_utils
@@ -21,22 +19,20 @@ program Test_VPI
   use vpi_lattice
   use vpi_xij
   use vpi_obdm
-  use vpi_read_input
   use timers
   !@-node:gcross.20090623152316.5:<< Imported modules >>
   !@nl
 
+  !@  << Declarations >>
+  !@+node:gcross.20090623152316.7:<< Declarations >>
   !@<< Choice of trial / potential functions >>
   !@+node:gcross.20090623152316.4:<< Choice of trial / potential functions >>
-  use vpi_potential, Usp_func => vpi_Usp_HOz, &
-                     Uij_func => vpi_Uij_NULL, &
-                     gUsp_func => vpi_gUsp_HOz, &
-                     gUij_func => vpi_gUij_NULL, &
-                     Uij_rot_func => vpi_RUij_undefined
-  use vpi_trial_func, tfunc => hoz_tfun, &
-                      jas_tfun => independent_tfun, &
-                      grad_lap_sp_tfun => numeric_grad_lap_spf, &
-                      grad_lap_jas_tfun => grad_lap_independent_tfun
+  use sp_rectangular_box_potential
+  use tb_NULL_potential
+  use rot_undefined_potential
+
+  use sp_box_trial
+  use jas_independent_trial
   !@-node:gcross.20090623152316.4:<< Choice of trial / potential functions >>
   !@nl
 
@@ -161,8 +157,6 @@ program Test_VPI
   real (kind=b8) :: dE = 0
   real (kind=b8) :: dn_rms = 0
   real (kind=b8) :: dn_rms_red = 0
-  real (kind=b8), dimension(num_jas_params) :: jas_params
-  real (kind=b8), dimension(num_jas_params) :: sp_params
 
   integer :: i,j,ik,k,l,m,ii,jj,kk,ll,pass
   integer :: coll_iter,corpcnt,corper,opt_nconfig_total,opt_nconfig_max
@@ -182,7 +176,6 @@ program Test_VPI
   real(kind=b8) :: rotgfn0, rotgfn1 
   real(kind=b8) :: hsgfn0, hsgfn1 
   real(kind=b8) :: lntfn0, lntfn1 
-  real(kind=b8) :: tp_hox,tp_hoy,tp_hoz,tp_c1
   real(kind=b8), dimension(2) :: tx0,tx1
   real, dimension(2) :: tsize,tdxdn,tdndx
 
@@ -233,7 +226,7 @@ program Test_VPI
   ! Read in the configuration parameters.
   !@-at
   !@@c
-    call read_input_file(my_rank)
+    call read_configuration_file(my_rank)
   !@+at
   ! Read in optional specifications of the lattice.
   !@-at
@@ -250,9 +243,6 @@ program Test_VPI
   !@<< Initialize variables >>
   !@+node:gcross.20090623152316.11:<< Initialize variables >>
     dMfix = 16
-    tp_hox = p_hox
-    tp_hoy = p_hoy
-    tp_hoz = p_hoz
     lngfn0 = 0.0_b8
     lngfn1  = 0.0_b8
 
@@ -264,8 +254,7 @@ program Test_VPI
     n_slice_samples = n_slice
 
     CSLICE = N_SLICE/2
-    a_hs2 = a_hs*a_hs
-    a_dw2 = a_dw**2
+    hard_sphere_radius_squared = hard_sphere_radius*hard_sphere_radius
     dxdn = size_x / N_BINS
     dndx = 1.0/dxdn
     dxdn_rot_xyz = size_x / N_BINS_ROT_XYZ
@@ -414,89 +403,6 @@ program Test_VPI
   U_0 = 0.0
   U_1 = 0.0
 
-  jas_params(PNUM_ljc1) = p_ljc1
-  jas_params(PNUM_ljc5) = p_ljc5
-!  jas_params(1) = a_hs
-!  jas_params(2) = a_hs2
-
-  if ( my_rank .eq. 0 ) then
-    open(12, file="params.dat", status="replace")
-    write(12,*)  "N_SLICE",N_SLICE
-    write(12,*)  "CSLICE",CSLICE
-    write(12,*)  "N_PARTICLE",N_PARTICLE
-    write(12,*)  "N_DIM",N_DIM
-    write(12,*)  "N_BINS", N_BINS
-    write(12,*)  "dM", dM
-    write(12,*)  "nblocks", nblocks
-    write(12,*)  "nsteps", nsteps
-    write(12,*)  "dnu", dnu
-    write(12,*)  "dswap", dswap
-    write(12,*)  "drot", drot
-    write(12,*)  "dtau", dtau
-    write(12,*)  "size_x", size_x
-    write(12,*)  "eval_off_diagonal", eval_off_diagonal
-    write(12,*)  "od_pnum", od_pnum
-    write(12,*)  "use_gfn4",use_gfn4
-    write(12,*)  "lambda",lambda
-    write(12,*)  "a_dw", a_dw
-    write(12,*)  "ep_dw", ep_dw
-    write(12,*)  "e_lj", e_lj
-    write(12,*)  "a_lj", a_lj
-    write(12,*)  "lam_ho", lam_ho
-    write(12,*)  "p_hox", p_hox
-    write(12,*)  "p_hoy", p_hoy
-    write(12,*)  "p_hoz", p_hoz
-    write(12,*)  "p_ljc5", p_ljc5
-    write(12,*)  "p_ljc1", p_ljc1
-    write(12,*)  "e0_nua", e0_nua
-    write(12,*)  "m_nua", m_nua
-    write(12,*)  "lam_nw", m_nua
-    write(12,*)  "gw_e", gw_e
-    write(12,*)  "gw_asq", gw_asq
-    write(12,*)  "gw_z0", gw_z0
-    write(12,*)  "run_type:", run_type
-    write(12,*)  "ap_e::", ap_e 
-    write(12,*)  "ap_a::", ap_a
-    write(12,*)  "ap_e_norm::", ap_e_norm
-    write(12,*)  "ap_lam::", ap_lam
-    write(12,*)  "ae3::", ae3
-    write(12,*)  "ab_e::", ab_e
-    write(12,*)  "ab_a::", ab_a
-    write(12,*)  "ab_e_norm::", ab_e_norm
-    write(12,*)  "ab_x0::", ab_x0
-    write(12,*)  "domega::", domega
-    write(12,*)  "p_MO_a::", p_MO_a
-    write(12,*)  "p_MO_ap::", p_MO_ap
-    write(12,*)  "p_MO_r0::", p_MO_r0
-    write(12,*)  "p_MO_De::", p_MO_De
-    write(12,*)  "p_sc_a::", p_sc_a
-    write(12,*)  "p_sc_w::", p_sc_w
-    write(12,*)  "a_hs::", a_hs
-
-    write(12,*)  "p_lattice_vb::", p_lattice_vb
-    write(12,*)  "p_lattice_ax::", p_lattice_ax
-    write(12,*)  "p_lattice_az::", p_lattice_az
-    write(12,*)  "p_lwx::", p_lwx
-    write(12,*)  "p_lwz::", p_lwz
-
-    write(12,*)  "eval_rotation", eval_rotation
-    write(12,*)  "p_B", p_B
-    write(12,*)  "e_dimer", e_dimer
-
-    write(12,*)  "PROB_BBRIDGE_MOVE", PROB_BBRIDGE_MOVE
-    write(12,*)  "PROB_RIGID_MOVE", PROB_RIGID_MOVE
-    write(12,*)  "PROB_SWAP_MOVE", PROB_SWAP_MOVE
-    write(12,*)  "PROB_ROT_MOVE", PROB_ROT_MOVE
-    write(12,*)  "force_space_flip",  force_space_flip
-    do i = 1, N_VORTEX
-      write(12,*)  p_vcoords(i,1), p_vcoords(i,2)
-    end do
-
-    close(12)
-  end if
-
-
-  tp_c1 = p_ljc1
   accr = 0
   sp_accr = 0
   swap_accr = 0
@@ -715,13 +621,13 @@ program Test_VPI
     end do
 
 #ifdef USE_SWFN
-    lntfn0 = 2.0_b8*( tfunc(q0, CSLICE, sp_params, N_SLICE, N_PARTICLE, N_DIM) + &
-                      jas_tfun( q0, xij2_0, jas_params, CSLICE, N_SLICE, N_PARTICLE, N_DIM) )
+    lntfn0 = 2.0_b8*( tfunc(q0, CSLICE, N_SLICE, N_PARTICLE, N_DIM) + &
+                      jas_tfun( q0, xij2_0, CSLICE, N_SLICE, N_PARTICLE, N_DIM) )
 #else
-    lntfn0 = tfunc(q0, 1, sp_params, N_SLICE, N_PARTICLE, N_DIM) + &
-             tfunc(q0, N_SLICE, sp_params, N_SLICE, N_PARTICLE, N_DIM) + &
-             jas_tfun(q0, xij2_0, jas_params, 1, N_SLICE, N_PARTICLE, N_DIM) + &
-             jas_tfun(q0, xij2_0, jas_params, N_SLICE, N_SLICE, N_PARTICLE, N_DIM)
+    lntfn0 = tfunc(q0, 1, N_SLICE, N_PARTICLE, N_DIM) + &
+             tfunc(q0, N_SLICE, N_SLICE, N_PARTICLE, N_DIM) + &
+             jas_tfun(q0, xij2_0, 1, N_SLICE, N_PARTICLE, N_DIM) + &
+             jas_tfun(q0, xij2_0, N_SLICE, N_SLICE, N_PARTICLE, N_DIM)
 #endif
 
     U_1(:,:) = U_0(:,:)
@@ -968,35 +874,44 @@ program Test_VPI
             lngfn0 = vpi_gfn2_sp( sl_start, sl_end, part_num, U_0, N_SLICE, N_PARTICLE, N_DIM, dtau ) 
           end if
 
-          if ( use_HS_gfn ) then
     !@@raw
-#ifdef USE_IMAGE_HSGFN
     !@@end_raw
-            hsgfn1 = vpi_hs_gfn( sl_start, sl_end, part_num, xij2_1, N_SLICE, N_PARTICLE, N_DIM, dtau*lambda )
-            hsgfn0 = vpi_hs_gfn( sl_start, sl_end, part_num, xij2_0, N_SLICE, N_PARTICLE, N_DIM, dtau*lambda )
     !@@raw
-#else
     !@@end_raw
-            hsgfn1 = vpi_hs_gfn2( sl_start, sl_end, part_num, q1, N_SLICE, N_PARTICLE, N_DIM, dtau*lambda )
-            hsgfn0 = vpi_hs_gfn2( sl_start, sl_end, part_num, q0, N_SLICE, N_PARTICLE, N_DIM, dtau*lambda )
     !@@raw
-#endif
     !@@end_raw
-            if( hsgfn0 > 0 .and. hsgfn1 > 0 ) then
-              lngfn1 = lngfn1 + log(hsgfn1)
-              lngfn0 = lngfn0 + log(hsgfn0)
-            else
-              print *, "****ERROR***** hsgfn < 0 ", hsgfn0, hsgfn1
-              lngfn1 = 0
-            endif
-          end if
-
-          if ( use_HW_gfn ) then
-            hsgfn1 = vpi_hw_gfn( sl_start, sl_end, part_num, q1, N_SLICE, N_PARTICLE, N_DIM, dtau*lambda )
-            hsgfn0 = vpi_hw_gfn( sl_start, sl_end, part_num, q0, N_SLICE, N_PARTICLE, N_DIM, dtau*lambda )
-            lngfn1 = lngfn1 + log(hsgfn1)
-            lngfn0 = lngfn0 + log(hsgfn0)
-          end if
+    !@+at
+    !       if ( use_HS_gfn ) then
+    ! #ifdef USE_IMAGE_HSGFN
+    !         hsgfn1 = vpi_hs_gfn( sl_start, sl_end, part_num, xij2_1, 
+    ! N_SLICE, N_PARTICLE, N_DIM, dtau*lambda )
+    !         hsgfn0 = vpi_hs_gfn( sl_start, sl_end, part_num, xij2_0, 
+    ! N_SLICE, N_PARTICLE, N_DIM, dtau*lambda )
+    ! #else
+    !         hsgfn1 = vpi_hs_gfn2( sl_start, sl_end, part_num, q1, N_SLICE, 
+    ! N_PARTICLE, N_DIM, dtau*lambda )
+    !         hsgfn0 = vpi_hs_gfn2( sl_start, sl_end, part_num, q0, N_SLICE, 
+    ! N_PARTICLE, N_DIM, dtau*lambda )
+    ! #endif
+    !         if( hsgfn0 > 0 .and. hsgfn1 > 0 ) then
+    !           lngfn1 = lngfn1 + log(hsgfn1)
+    !           lngfn0 = lngfn0 + log(hsgfn0)
+    !         else
+    !           print *, "****ERROR***** hsgfn < 0 ", hsgfn0, hsgfn1
+    !           lngfn1 = 0
+    !         endif
+    !       end if
+    ! 
+    !       if ( use_HW_gfn ) then
+    !         hsgfn1 = vpi_hw_gfn( sl_start, sl_end, part_num, q1, N_SLICE, 
+    ! N_PARTICLE, N_DIM, dtau*lambda )
+    !         hsgfn0 = vpi_hw_gfn( sl_start, sl_end, part_num, q0, N_SLICE, 
+    ! N_PARTICLE, N_DIM, dtau*lambda )
+    !         lngfn1 = lngfn1 + log(hsgfn1)
+    !         lngfn0 = lngfn0 + log(hsgfn0)
+    !       end if
+    !@-at
+    !@@c
 
           if ( eval_rotation ) then
             rotgfn1 =  gfn_rot(q_rot1,part_num,sl_start,sl_end,dtau)
@@ -1008,14 +923,14 @@ program Test_VPI
         end if
 
 
-        lntfn1 = tfunc(q1, 1, sp_params, N_SLICE, N_PARTICLE, N_DIM) + &
-                 tfunc(q1, N_SLICE, sp_params, N_SLICE, N_PARTICLE, N_DIM) + &
-                 jas_tfun(q1, xij2_1, jas_params,1, N_SLICE, N_PARTICLE, N_DIM) + &
-                 jas_tfun(q1, xij2_1, jas_params, N_SLICE, N_SLICE, N_PARTICLE, N_DIM)
-        lntfn0 = tfunc(q0, 1, sp_params, N_SLICE, N_PARTICLE, N_DIM) + &
-                 tfunc(q0, N_SLICE, sp_params, N_SLICE, N_PARTICLE, N_DIM) + &
-                 jas_tfun(q0, xij2_0, jas_params, 1, N_SLICE, N_PARTICLE, N_DIM) + &
-                 jas_tfun(q0, xij2_0, jas_params, N_SLICE, N_SLICE, N_PARTICLE, N_DIM)
+        lntfn1 = tfunc(q1, 1, N_SLICE, N_PARTICLE, N_DIM) + &
+                 tfunc(q1, N_SLICE, N_SLICE, N_PARTICLE, N_DIM) + &
+                 jas_tfun(q1, xij2_1, 1, N_SLICE, N_PARTICLE, N_DIM) + &
+                 jas_tfun(q1, xij2_1, N_SLICE, N_SLICE, N_PARTICLE, N_DIM)
+        lntfn0 = tfunc(q0, 1, N_SLICE, N_PARTICLE, N_DIM) + &
+                 tfunc(q0, N_SLICE, N_SLICE, N_PARTICLE, N_DIM) + &
+                 jas_tfun(q0, xij2_0, 1, N_SLICE, N_PARTICLE, N_DIM) + &
+                 jas_tfun(q0, xij2_0, N_SLICE, N_SLICE, N_PARTICLE, N_DIM)
 
 
     !        print "(2a20)", "lngfn0", "lngfn1"
@@ -1076,18 +991,18 @@ program Test_VPI
           n_moves = n_moves + 1
           n_moves_pb = n_moves_pb + 1
           n_moves_pb_total = n_moves_pb_total + 1
-          pass = grad_lap_sp_tfun( qobs, 1, N_PARTICLE, N_DIM, N_SLICE, grad_lntfn, lap_lntfn, sp_params, tfunc )
-          pass = grad_lap_jas_tfun( qobs, xij2_0, 1, N_PARTICLE, N_DIM, N_SLICE, grad_lnjas, lap_lnjas, jas_params, jas_tfun )
+          pass = grad_lap_sp_tfun( qobs, 1, N_PARTICLE, N_DIM, N_SLICE, grad_lntfn, lap_lntfn )
+          pass = grad_lap_jas_tfun( qobs, xij2_0, 1, N_PARTICLE, N_DIM, N_SLICE, grad_lnjas, lap_lnjas )
           call eval_E_local(N_PARTICLE, N_DIM, grad_lntfn, lap_lntfn, grad_lnjas, lap_lnjas, sum(U_0(1,:)), E_l)
           E_left = E_left + E_l
 
-          pass = grad_lap_sp_tfun( qobs, N_SLICE, N_PARTICLE, N_DIM, N_SLICE, grad_lntfn, lap_lntfn, sp_params, tfunc )
-          pass = grad_lap_jas_tfun( qobs, xij2_0, N_SLICE, N_PARTICLE, N_DIM, N_SLICE, grad_lnjas, lap_lnjas,jas_params, jas_tfun )
+          pass = grad_lap_sp_tfun( qobs, N_SLICE, N_PARTICLE, N_DIM, N_SLICE, grad_lntfn, lap_lntfn )
+          pass = grad_lap_jas_tfun( qobs, xij2_0, N_SLICE, N_PARTICLE, N_DIM, N_SLICE, grad_lnjas, lap_lnjas )
           call eval_E_local(N_PARTICLE, N_DIM, grad_lntfn, lap_lntfn, grad_lnjas, lap_lnjas, sum(U_0(N_SLICE,:)), E_l)
           E_right = E_right + E_l
 
-          pass = grad_lap_sp_tfun( qobs, CSLICE, N_PARTICLE, N_DIM, N_SLICE, grad_lntfn, lap_lntfn , sp_params, tfunc)
-          pass = grad_lap_jas_tfun( qobs, xij2_0, CSLICE, N_PARTICLE, N_DIM, N_SLICE, grad_lnjas, lap_lnjas,jas_params, jas_tfun )
+          pass = grad_lap_sp_tfun( qobs, CSLICE, N_PARTICLE, N_DIM, N_SLICE, grad_lntfn, lap_lntfn )
+          pass = grad_lap_jas_tfun( qobs, xij2_0, CSLICE, N_PARTICLE, N_DIM, N_SLICE, grad_lnjas, lap_lnjas )
           call eval_E_local(N_PARTICLE, N_DIM, grad_lntfn, lap_lntfn, grad_lnjas, lap_lnjas, sum(U_0(CSLICE,:)), E_l)
           E_center = E_center + E_l
           call MPI_ALLreduce(E_l,t1,1,mpi_double_precision,MPI_SUM,MPI_COMM_WORLD,ierr)
@@ -1841,6 +1756,7 @@ program Test_VPI
 !@+others
 !@+node:gcross.20090623152316.13:Subroutines
 !@+others
+!@+node:gcross.20090624144408.2048:Evaluators
 !@+node:gcross.20090623152316.14:vpi_eval_density_cheb
 subroutine vpi_eval_density_cheb( rho, x, nbins, size_x, dndx )
   real(kind=b8), dimension( nbins , N_DIM ), intent(out):: rho
@@ -2037,20 +1953,23 @@ subroutine vpi_eval_N_R( N_R, dn_rms, x, islice, dslice )
 
   integer :: i,j, cnt
 
+  stop "Evaluation of N_R has been disabled."
 
-  do j = islice-dslice, islice+dslice
-    cnt = 1
-    do i = 1, N_PARTICLE
-      if ( x(j,i,3) .gt. gw_z0 ) then
-        cnt = cnt + 1
-      end if 
-    end do
-    N_R(cnt) = N_R(cnt) + 1.0_b8/(2.0_b8*dslice+1.0_b8)
-  end do
-  dn_rms = dn_rms + (cnt-N_Particle/2)**2
+!@+at
+!   do j = islice-dslice, islice+dslice
+!     cnt = 1
+!     do i = 1, N_PARTICLE
+!       if ( x(j,i,3) .gt. gw_z0 ) then
+!         cnt = cnt + 1
+!       end if
+!     end do
+!     N_R(cnt) = N_R(cnt) + 1.0_b8/(2.0_b8*dslice+1.0_b8)
+!   end do
+!   dn_rms = dn_rms + (cnt-N_Particle/2)**2
+!@-at
+!@@c
 
 end subroutine vpi_eval_N_R
-!@nonl
 !@-node:gcross.20090623152316.21:vpi_eval_N_R
 !@+node:gcross.20090623152316.22:vpi_eval_B_z2
 subroutine vpi_eval_N_z2( N_zs,N_za, x )
@@ -2308,6 +2227,97 @@ subroutine vpi_eval_gof_rot( gof_rot, gof_rot_xyz, gof_rot_xyz_avg, gofr_rot, q,
 end subroutine vpi_eval_gof_rot
 !@nonl
 !@-node:gcross.20090623152316.31:vpi_eval_gofrot
+!@-node:gcross.20090624144408.2048:Evaluators
+!@+node:gcross.20090624144408.2049:Input
+!@+node:gcross.20090624144408.2051:read_configuration_file
+subroutine read_configuration_file(pid)
+  integer :: pid
+
+  logical :: iexist
+  character (len=30) :: param_file
+  character (len=50) :: pstr
+
+  write(param_file,"(a8)") "param.in"
+
+  inquire(file=param_file, exist=iexist)
+  if (iexist) then
+     ! Seed file exists, read seed from seedfile
+     open(10, file=param_file, status="old")
+     read(10, nml=configuration)
+     write(*, nml=configuration)
+
+     call init_sp_potential
+     call init_tb_potential     
+     call init_sp_tfunc
+     call init_jas_tfunc
+
+     close(10)
+  endif
+
+end subroutine read_configuration_file
+!@-node:gcross.20090624144408.2051:read_configuration_file
+!@+node:gcross.20090624144408.2052:read_lattice_file
+subroutine read_lattice_file(pid)
+  integer :: pid
+
+  logical :: iexist
+  character (len=30) :: lattice_file
+  character (len=50) :: pstr
+
+  integer :: i
+
+  write(lattice_file,"(a8)") "lattice.in"
+
+  allocate( p_lat_r0(N_PARTICLE, N_DIM+1) )
+
+  inquire(file=lattice_file, exist=iexist)
+  if (iexist) then
+     ! Seed file exists, read seed from seedfile
+     open(10, file=lattice_file, status="old")
+     do i=1, N_PARTICLE
+       read(10, *) pstr, p_lat_r0(i,1),  p_lat_r0(i,2),  p_lat_r0(i,3), p_lat_r0(i,4)
+       write(*,*) pstr, p_lat_r0(i,1),  p_lat_r0(i,2),  p_lat_r0(i,3), p_lat_r0(i,4)
+     enddo
+     close(10)
+  endif
+
+end subroutine read_lattice_file
+!@-node:gcross.20090624144408.2052:read_lattice_file
+!@+node:gcross.20090624144408.2053:read_expot_file
+subroutine read_expot_file(pid)
+  integer :: pid
+
+  logical :: iexist
+  character (len=30) :: expot_file
+  character (len=50) :: pstr
+
+  integer :: i
+
+  stop "Reading expot file not presently supported."
+
+!@+at
+!   write(expot_file,"(a8)") "expot.in"
+! 
+!   inquire(file=expot_file, exist=iexist)
+!   if (iexist) then
+!      ! Seed file exists, read seed from seedfile
+!      open(12, file=expot_file, status="old")
+!      read(12, *) pstr, p_sa_a(1), p_sa_a(2), p_sa_a(3)
+!      write(*,*) pstr, p_sa_a(1), p_sa_a(2), p_sa_a(3)
+!      read(12, *) pstr, p_sa_b(1), p_sa_b(2), p_sa_b(3)
+!      write(*,*) pstr, p_sa_b(1), p_sa_b(2), p_sa_b(3)
+!      read(12, *) pstr, p_sa_c(1), p_sa_c(2), p_sa_c(3)
+!      write(*,*) pstr, p_sa_c(1), p_sa_c(2), p_sa_c(3)
+!      read(12, *) pstr, p_sa_d(1), p_sa_d(2), p_sa_d(3)
+!      write(*,*) pstr, p_sa_d(1), p_sa_d(2), p_sa_d(3)
+!      close(12)
+!   endif
+!@-at
+!@@c
+end subroutine read_expot_file
+!@-node:gcross.20090624144408.2053:read_expot_file
+!@-node:gcross.20090624144408.2049:Input
+!@+node:gcross.20090624144408.2050:Misc
 !@+node:gcross.20090623152316.32:vpi_accept_path
 function vpi_accept_path( lngfn0, lngfn1, dphase ) result( accept )
   real(kind = b8) :: lngfn0, lngfn1
@@ -2328,6 +2338,45 @@ function vpi_accept_path( lngfn0, lngfn1, dphase ) result( accept )
 
 end function vpi_accept_path
 !@-node:gcross.20090623152316.32:vpi_accept_path
+!@+node:gcross.20090623152316.115:eval_E_local
+subroutine eval_E_local(np,ndim,grad_lnspf, lap_lnspf, grad_lnjas, lap_lnjas, U, E_l)
+  integer, intent(in) :: np, ndim
+  real(kind=b8), dimension( np , ndim ), intent(in) :: grad_lnjas 
+  real(kind=b8), dimension( np , ndim ), intent(in) :: grad_lnspf 
+  real(kind=b8), intent(in) :: lap_lnspf
+  real(kind=b8), intent(in) :: lap_lnjas 
+  real(kind=b8), intent(in) :: U
+  real(kind=b8), intent(out) :: E_l
+
+  real(kind=b8) :: t0,t1,T
+
+  integer i,j
+
+  t0 = 0.0_b8
+!  do i = 1, np
+!    do j = 1, ndim
+!      t1  = grad_lnspf(i,j) +  grad_lnjas(i,j) 
+!      t0 = t0 + t1*t1
+!    end do
+!  end do
+
+  t0 = sum((grad_lnspf(:,:) +  grad_lnjas(:,:))**2)
+
+  T = t0 + lap_lnspf + lap_lnjas
+!  do i = 1, np
+!    do j = 1, ndim
+!      write(111,"(1a,2g18.6)") "#",grad_lnspf(i,j), grad_lnjas(i,j) 
+!    end do
+!  end do
+
+!  write (111,"(7a18)") "#grad^2","lap_lnspf","lap_lnjas","T","U","E_l","lambda"
+!  write (111,"(7g18.6)") t0,lap_lnspf,lap_lnjas,T,U,E_l,lambda
+  E_l = U - lambda*T
+
+
+end subroutine  eval_E_local
+!@-node:gcross.20090623152316.115:eval_E_local
+!@-node:gcross.20090624144408.2050:Misc
 !@-others
 !@-node:gcross.20090623152316.13:Subroutines
 !@-others
