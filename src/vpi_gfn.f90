@@ -46,41 +46,44 @@ function vpi_gfn4_sp( sl_start, sl_end, ip, U, gradU2, U_weight, gU2_weight, nsl
 !  print *,ln_gfn
 end function vpi_gfn4_sp
 !@-node:gcross.20090624144408.1800:4th order
+!@+node:dubois9.20090625101848.1680:hard wall
+! image approximation
+function vpi_hw_gfn( sl_start, sl_end, ip, q, nslice, np, ndim, dt ) result ( hw_gfn )
+  integer :: sl_start, sl_end, ip
+  integer :: nslice, np, ndim
+  real(kind=b8) :: dt
+  real(kind=b8), dimension ( nslice, np, ndim ) :: q
+  real(kind=b8) :: hw_gfn,tgfn
+
+  real(kind=b8) :: x,x0,xr,d
+  integer :: i,j
+
+  hw_gfn = 0.0_b8
+  tgfn = 0.0_b8
+
+  do i = 1, ndim
+    do j = sl_start+1, sl_end
+      x0 = q(j-1,ip,i)
+      x = q(j,ip,i)
+      d = (hard_wall_locations(i) - x)
+      xr = hard_wall_locations(i) + d
+      tgfn = exp(( -(xr-x0)**2  + (x-x0)**2)/(2.0_b8*lambda*dt))
+      hw_gfn = hw_gfn + log(1.0_b8 - tgfn)
+
+      d = (hard_wall_locations(i)+ x)
+      xr = -hard_wall_locations(i) - d
+      tgfn = exp(( -(xr-x0)**2  + (x-x0)**2)/(2.0_b8*lambda*dt))
+      hw_gfn = hw_gfn+ log(1.0_b8 - tgfn)
+    end do
+  end do
+
+  hw_gfn = exp(hw_gfn)
+
+end function vpi_hw_gfn
+!@-node:dubois9.20090625101848.1680:hard wall
 !@-others
 
 !@+at
-! 
-! ! image approximation
-! function vpi_hw_gfn( sl_start, sl_end, ip, q, nslice, np, ndim, dt ) result 
-! ( hw_gfn )
-!   integer :: sl_start, sl_end, ip
-!   integer :: nslice, np, ndim
-!   real(kind=b8) :: dt
-!   real(kind=b8), dimension ( nslice, np, ndim ) :: q
-!   real(kind=b8) :: hw_gfn,tgfn
-! 
-!   real(kind=b8) :: x,x0,xr,d
-!   integer :: i,j
-! 
-!   hw_gfn = 1.0_b8
-!   tgfn = 0.0_b8
-! 
-!   do i = 1, ndim
-!     do j = sl_start+1, sl_end
-!       x0 = q(j-1,ip,i)
-!       x = q(j,ip,i)
-!       d = (abox - x0)
-!       xr = x0 + d*2.0_b8
-!       tgfn = exp(-( (xr-x)**2 )/(2*dt))
-!       d = (x0+abox)
-!       xr = x0 - d*2.0_b8
-!       tgfn = tgfn + exp(-( (xr-x)**2 )/(2*dt))
-!       hw_gfn = hw_gfn*(1.0_b8-tgfn*exp((x0-x)**2/(2*dt)))
-!     end do
-!   end do
-! 
-! end function vpi_hw_gfn
-! 
 ! ! image approximation
 ! function vpi_hs_gfn( sl_start, sl_end, ip, xij2, nslice, np, ndim, dt ) 
 ! result ( hs_gfn )
@@ -146,7 +149,8 @@ end function vpi_gfn4_sp
 !         r12 = sum(dx12(:)**2)
 !         u = r+rp
 !         tmp = hard_sphere_radius*(u-hard_sphere_radius)/(r*rp)
-!         D = u**2 - 2.0_b8*(hard_sphere_radius*u - hard_sphere_radius_squared + tmp*dot_product(dx,dxp))
+!         D = u**2 - 2.0_b8*(hard_sphere_radius*u - hard_sphere_radius_squared 
+! + tmp*dot_product(dx,dxp))
 !         hs_gfn = hs_gfn * (1.0_b8 - tmp*exp(-(D-r12)/(2.0_b8*lambda*dt)))
 !       end if
 !     end do
@@ -163,7 +167,8 @@ end function vpi_gfn4_sp
 !         r12 = sum(dx12(:)**2)
 !         u = r+rp
 !         tmp = hard_sphere_radius*(u-hard_sphere_radius)/(r*rp)
-!         D = u**2 - 2.0_b8*(hard_sphere_radius*u - hard_sphere_radius_squared + tmp*dot_product(dx,dxp))
+!         D = u**2 - 2.0_b8*(hard_sphere_radius*u - hard_sphere_radius_squared 
+! + tmp*dot_product(dx,dxp))
 !         hs_gfn = hs_gfn * (1.0_b8 - tmp*exp(-(D-r12)/(2.0_b8*lambda*dt)))
 !       end if
 !     end do

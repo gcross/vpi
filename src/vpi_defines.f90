@@ -93,12 +93,14 @@ module vpi_defines
   
   logical, parameter :: use_bbridge = .true.
   logical :: use_HS_gfn = .false.
+
   logical :: use_HW_gfn = .false.
+  real(kind=b8), dimension(3) :: hard_wall_locations = (/ 0.5_b8, 0.5_b8, 0.5_b8 /)
 
   logical, parameter :: eval_rdm2_ring = .false.
   logical, parameter :: eval_rdm22_ring = .false.
   logical, parameter :: eval_obdm_ring = .false.
-  logical, parameter :: use_eval_N_R = .true.
+  logical, parameter :: use_eval_N_R = .false.
 
   logical :: try_split_move = .false.
   logical,parameter :: wrap_path = .false.
@@ -156,10 +158,19 @@ module vpi_defines
     eval_qsq_sum, &
     use_eval_cfn, &
     use_HS_gfn, &
+    use_HW_gfn, &
+    hard_wall_locations, &
     use_gfn4, &
     use_pbc, &
     p_pbc_L, &
     use_lattice_file, &
     use_expot_file
+
+contains
+
+subroutine init_global_parameters ()
+  read(10, nml=configuration)
+  write(*, nml=configuration)
+end subroutine
 
 end module vpi_defines

@@ -901,17 +901,14 @@ program Test_VPI
     !           lngfn1 = 0
     !         endif
     !       end if
-    ! 
-    !       if ( use_HW_gfn ) then
-    !         hsgfn1 = vpi_hw_gfn( sl_start, sl_end, part_num, q1, N_SLICE, 
-    ! N_PARTICLE, N_DIM, dtau*lambda )
-    !         hsgfn0 = vpi_hw_gfn( sl_start, sl_end, part_num, q0, N_SLICE, 
-    ! N_PARTICLE, N_DIM, dtau*lambda )
-    !         lngfn1 = lngfn1 + log(hsgfn1)
-    !         lngfn0 = lngfn0 + log(hsgfn0)
-    !       end if
     !@-at
     !@@c
+          if ( use_HW_gfn ) then
+            hsgfn1 = vpi_hw_gfn( sl_start, sl_end, part_num, q1, N_SLICE, N_PARTICLE, N_DIM, dtau )
+            hsgfn0 = vpi_hw_gfn( sl_start, sl_end, part_num, q0, N_SLICE, N_PARTICLE, N_DIM, dtau )
+            lngfn1 = lngfn1 + log(hsgfn1)
+            lngfn0 = lngfn0 + log(hsgfn0)
+          end if
 
           if ( eval_rotation ) then
             rotgfn1 =  gfn_rot(q_rot1,part_num,sl_start,sl_end,dtau)
@@ -2243,8 +2240,8 @@ subroutine read_configuration_file(pid)
   if (iexist) then
      ! Seed file exists, read seed from seedfile
      open(10, file=param_file, status="old")
-     read(10, nml=configuration)
-     write(*, nml=configuration)
+
+     call init_global_parameters
 
      call init_sp_potential
      call init_tb_potential     
