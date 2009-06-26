@@ -159,7 +159,7 @@ program Test_VPI
   integer :: i,j,ik,k,l,m,ii,jj,kk,ll,pass
   integer :: coll_iter,corpcnt,corper,opt_nconfig_total,opt_nconfig_max
 
-  integer(long) :: n_moves, n_moves_pb, n_moves_pb_total, sp_moves, swap_moves, bi_moves, end_moves, split_moves
+  integer(long) :: n_moves, n_moves_pb, sp_moves, swap_moves, bi_moves, end_moves, split_moves
   integer(long) :: left_moves, right_moves
   integer :: mtype
   integer :: sp_try, swap_try, bi_try, end_try, split_try 
@@ -407,7 +407,6 @@ program Test_VPI
 
   n_moves = 0
   n_moves_pb = 0
-  n_moves_pb_total = 0
   sp_moves = 0
   swap_moves = 0
   bi_moves = 0
@@ -1075,7 +1074,6 @@ program Test_VPI
           corpcnt = 0
           n_moves = n_moves + 1
           n_moves_pb = n_moves_pb + 1
-          n_moves_pb_total = n_moves_pb_total + 1
           pass = grad_lap_sp_tfun( qobs, 1, N_PARTICLE, N_DIM, N_SLICE, grad_lntfn, lap_lntfn )
           pass = grad_lap_jas_tfun( qobs, xij2_0, 1, N_PARTICLE, N_DIM, N_SLICE, grad_lnjas, lap_lnjas )
           call eval_E_local(N_PARTICLE, N_DIM, grad_lntfn, lap_lntfn, grad_lnjas, lap_lnjas, sum(U_0(1,:)), E_l)
