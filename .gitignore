@@ -1,3 +1,5 @@
 *.o
 *.mod
 bin
+.DS_Store
+*.dat*
