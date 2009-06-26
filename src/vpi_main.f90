@@ -641,24 +641,32 @@ program Test_VPI
       E_left = 0.0_b8
       E_center = 0.0_b8
       E_right = 0.0_b8
-    !@@raw
+      !@  << Start the timer >>
+      !@+node:gcross.20090626091217.1689:<< Start the timer >>
+      !@@raw
 #ifdef USE_MPI
-    !@@end_raw
+      !@@end_raw
       time0 = MPI_Wtime()
-    !@@raw
+      !@@raw
 #else
-    !@@end_raw
+      !@@end_raw
       time0 = day_timer()
-    !@@raw
+      !@@raw
 #endif
-    !@@end_raw
+      !@@end_raw
+      !@-node:gcross.20090626091217.1689:<< Start the timer >>
+      !@nl
 
     !      write(my_fname,"(a10,i4.4)")"xl-xr.dat.",my_rank
     !      open(13, file=my_fname,  POSITION="APPEND")
       do j = 1,nsteps
-    !@@raw
+        !@    << Perform Monte Carlo iteration >>
+        !@+node:gcross.20090626112946.1694:<< Perform Monte Carlo iteration >>
+        !@<< If debugging, then dump out all particle positions >>
+        !@+node:gcross.20090626112946.1708:<< If debugging, then dump out all particle positions >>
+        !@@raw
 #ifdef DEBUG_L0
-    !@@end_raw
+        !@@end_raw
         do k = 1, N_SLICE
           do l = 1, N_PARTICLE
             do m = 1, N_DIM
@@ -668,25 +676,35 @@ program Test_VPI
             end do
           end do
         end do
-    !@@raw
+        !@@raw
 #endif
-    !@@end_raw
+        !@@end_raw
+        !@-node:gcross.20090626112946.1708:<< If debugging, then dump out all particle positions >>
+        !@nl
 
+        !@<< Randomly choose a move to make and apply it to the system >>
+        !@+node:gcross.20090626112946.1688:<< Randomly choose a move to make and apply it to the system >>
         call sample_scheme1(q0, q1, move_start, move_end, part_num, mtype)
         if( eval_rotation ) then
           call sample_rotation(q_rot0, q_rot1, move_start, move_end, part_num)
         end if
 
+        !@<< Impose periodic boundary conditions >>
+        !@+node:gcross.20090626112946.1691:<< Impose periodic boundary conditions >>
         if(use_pbc) then
           q1(move_start:move_end,:,:) = q1(move_start:move_end,:,:) &
                                        - p_pbc_L*floor(q1(move_start:move_end,:,:)/p_pbc_L - 0.5_b8) &
                                        - p_pbc_L
         end if
+        !@-node:gcross.20090626112946.1691:<< Impose periodic boundary conditions >>
+        !@nl
 
-    !        if( .not.((part_num .eq. od_pnum) .and. eval_off_diagonal) ) then  
-    !          q1(cslice+1,part_num,:) = q1(cslice,part_num,:)
-    !        endif
+        !        if( .not.((part_num .eq. od_pnum) .and. eval_off_diagonal) ) then  
+        !          q1(cslice+1,part_num,:) = q1(cslice,part_num,:)
+        !        endif
 
+        !@<< Update move type statistics >>
+        !@+node:gcross.20090626112946.1690:<< Update move type statistics >>
         mcount(move_start:move_end) =  mcount(move_start:move_end) + 1
         bi_try = 0 
         sp_try = 0 
@@ -705,12 +723,17 @@ program Test_VPI
         sp_moves = sp_moves + sp_try
         swap_moves = swap_moves + swap_try
 
-    !        print *,"move_start, move_end", move_start, move_end
-    !        do ii=1,N_SLICE
-    !          print *, "q0: ",ii,  q0(ii,:,:)
-    !          print *, "q1: ",ii,  q1(ii,:,:)
-    !        end do
+        !        print *,"move_start, move_end", move_start, move_end
+        !        do ii=1,N_SLICE
+        !          print *, "q0: ",ii,  q0(ii,:,:)
+        !          print *, "q1: ",ii,  q1(ii,:,:)
+        !        end do
+        !@nonl
+        !@-node:gcross.20090626112946.1690:<< Update move type statistics >>
+        !@nl
 
+        !@<< Update the displacement matrix >>
+        !@+node:gcross.20090626112946.1689:<< Update the displacement matrix >>
         do ii = 1, N_PARTICLE
           if(use_pbc) then
             call vpi_update_xij_pbc( xij2_1, q1, move_start, move_end, ii, N_SLICE, N_PARTICLE, N_DIM  )
@@ -718,10 +741,16 @@ program Test_VPI
             call vpi_update_xij( xij2_1, q1, move_start, move_end, ii, N_SLICE, N_PARTICLE, N_DIM  )
           end if
         end do
+        !@-node:gcross.20090626112946.1689:<< Update the displacement matrix >>
+        !@nl
+        !@-node:gcross.20090626112946.1688:<< Randomly choose a move to make and apply it to the system >>
+        !@nl
 
-    !@@raw
+        !@<< (Inactive experimental stuff that I don't understand) >>
+        !@+node:gcross.20090626112946.1707:<< (Inactive experimental stuff that I don't understand) >>
+        !@@raw
 #ifdef EXPERIMENTAL
-    !@@end_raw
+        !@@end_raw
         if(mtype == MT_SWAP .or. mtype == MT_RIGID ) then
           acc_flag = .true.
           do ii = dMfix, N_SLICE,dMfix*2
@@ -730,7 +759,7 @@ program Test_VPI
               U_ij = Uij_func( q1, xij2_1, jj, part_num, N_SLICE, N_PARTICLE, N_DIM, acc_flag )
             end do
             coll_iter = 0
-    crepair:    do while ((coll_iter < maxfix_iter) .and. (acc_flag .eqv. .false.))
+        crepair:    do while ((coll_iter < maxfix_iter) .and. (acc_flag .eqv. .false.))
               tmp_move_start = ii-dMfix-1
               tmp_move_end = ii+dMfix+1
               if(tmp_move_start .le. 1) then
@@ -750,36 +779,45 @@ program Test_VPI
                 U_ij = Uij_func( q1, xij2_1, jj, part_num, N_SLICE, N_PARTICLE, N_DIM, acc_flag )
               end do
               coll_iter = coll_iter + 1
-    !@@raw
+        !@@raw
 #ifdef DEBUG_EXP
-    !@@end_raw
+        !@@end_raw
               if(acc_flag .eqv. .true.) then 
                 print *, my_rank,'fixed step: ', j, 'slice: ', ii, 'iter: ', coll_iter
               end if
-    !@@raw
+        !@@raw
 #endif DEBUG_EXP
-    !@@end_raw
+        !@@end_raw
             end do crepair
             if(acc_flag .eqv. .false.) then 
-    !@@raw
+        !@@raw
 #ifdef DEBUG_EXP
-    !@@end_raw
+        !@@end_raw
               print *, my_rank,'failed step: ', j, 'slice: ', ii, 'iter: ', coll_iter
-    !@@raw
+        !@@raw
 #endif DEBUG_EXP
-    !@@end_raw
+        !@@end_raw
               exit
             end if
           end do 
         end if
-    !@@raw
+        !@@raw
 #endif
-    !@@end_raw
+        !@@end_raw
+        !@nonl
+        !@-node:gcross.20090626112946.1707:<< (Inactive experimental stuff that I don't understand) >>
+        !@nl
 
         if ( use_eval_phase ) then
           call update_phase( phase_1, move_start, move_end, q1, xij2_1 )
         end if 
 
+        !@<< Determine whether the move should be accepted >>
+        !@+node:gcross.20090626112946.1693:<< Determine whether the move should be accepted >>
+        !@<< Compute probability of acceptance >>
+        !@+node:gcross.20090626112946.1695:<< Compute probability of acceptance >>
+        !@<< Compute contribution from potentials >>
+        !@+node:gcross.20090626112946.1696:<< Compute contribution from potentials >>
         acc_flag = .true.
         do ii = move_start, move_end
           U_0(ii,:) = 0.0_b8
@@ -787,8 +825,7 @@ program Test_VPI
             U_sp = Usp_func( q0, ii, jj, N_SLICE, N_PARTICLE, N_DIM )
             U_ij = Uij_func( q0, xij2_0, ii, jj, N_SLICE, N_PARTICLE, N_DIM, acc_flag )
             if(acc_flag .eqv. .false.) then
-              print *,"ERROR, overlap in supposedly clean path"
-              stop
+              stop "ERROR, overlap in supposedly clean path"
             end if
             if( eval_rotation ) then
               Uij_rot =  Uij_rot_func( q0, q_rot0, xij2_0, ii, jj, N_SLICE, N_PARTICLE, N_DIM )
@@ -815,7 +852,7 @@ program Test_VPI
             U_sp = Usp_func( q1, ii, jj, N_SLICE, N_PARTICLE, N_DIM )
             U_ij = Uij_func( q1, xij2_1, ii, jj, N_SLICE, N_PARTICLE, N_DIM, acc_flag )
             if(acc_flag .eqv. .false.) then
-    !            print *,"overlap", mtype
+        !            print *,"overlap", mtype
               exit 
             end if
             if( eval_rotation ) then
@@ -835,17 +872,27 @@ program Test_VPI
           end if
         end do
 
+        !@+at
+        ! If acc_flag is false then this move is rejected so we should skip 
+        ! past computing the rest of the contributions to the acceptance 
+        ! probability.
+        !@-at
+        !@@c
+
         if(acc_flag .eqv. .false.) then
           ccnt = ccnt + 1
           goto 10
         end if
 
-    !        print *, "U_1:", U_1
-    !        print *, "U_0:", U_0
-    !        print *, "gradU2_1:", gradU2_1
-    !        print *, "gradU2_0:", gradU2_0
+        !        print *, "U_1:", U_1
+        !        print *, "U_0:", U_0
+        !        print *, "gradU2_1:", gradU2_1
+        !        print *, "gradU2_0:", gradU2_0
+        !@-node:gcross.20090626112946.1696:<< Compute contribution from potentials >>
+        !@nl
 
-
+        !@<< Compute contribution from propagators >>
+        !@+node:gcross.20090626112946.1697:<< Compute contribution from propagators >>
         if(move_start .le. 1) then
           sl_start = 1
         else
@@ -869,35 +916,30 @@ program Test_VPI
             lngfn0 = vpi_gfn2_sp( sl_start, sl_end, part_num, U_0, N_SLICE, N_PARTICLE, N_DIM, dtau ) 
           end if
 
-    !@@raw
-    !@@end_raw
-    !@@raw
-    !@@end_raw
-    !@@raw
-    !@@end_raw
-    !@+at
-    !       if ( use_HS_gfn ) then
-    ! #ifdef USE_IMAGE_HSGFN
-    !         hsgfn1 = vpi_hs_gfn( sl_start, sl_end, part_num, xij2_1, 
-    ! N_SLICE, N_PARTICLE, N_DIM, dtau*lambda )
-    !         hsgfn0 = vpi_hs_gfn( sl_start, sl_end, part_num, xij2_0, 
-    ! N_SLICE, N_PARTICLE, N_DIM, dtau*lambda )
-    ! #else
-    !         hsgfn1 = vpi_hs_gfn2( sl_start, sl_end, part_num, q1, N_SLICE, 
-    ! N_PARTICLE, N_DIM, dtau*lambda )
-    !         hsgfn0 = vpi_hs_gfn2( sl_start, sl_end, part_num, q0, N_SLICE, 
-    ! N_PARTICLE, N_DIM, dtau*lambda )
-    ! #endif
-    !         if( hsgfn0 > 0 .and. hsgfn1 > 0 ) then
-    !           lngfn1 = lngfn1 + log(hsgfn1)
-    !           lngfn0 = lngfn0 + log(hsgfn0)
-    !         else
-    !           print *, "****ERROR***** hsgfn < 0 ", hsgfn0, hsgfn1
-    !           lngfn1 = 0
-    !         endif
-    !       end if
-    !@-at
-    !@@c
+        !@+at
+        !   if ( use_HS_gfn ) then
+        ! #ifdef USE_IMAGE_HSGFN
+        !     hsgfn1 = vpi_hs_gfn( sl_start, sl_end, part_num, xij2_1, 
+        ! N_SLICE, N_PARTICLE, N_DIM, dtau*lambda )
+        !     hsgfn0 = vpi_hs_gfn( sl_start, sl_end, part_num, xij2_0, 
+        ! N_SLICE, N_PARTICLE, N_DIM, dtau*lambda )
+        ! #else
+        !     hsgfn1 = vpi_hs_gfn2( sl_start, sl_end, part_num, q1, N_SLICE, 
+        ! N_PARTICLE, N_DIM, dtau*lambda )
+        !     hsgfn0 = vpi_hs_gfn2( sl_start, sl_end, part_num, q0, N_SLICE, 
+        ! N_PARTICLE, N_DIM, dtau*lambda )
+        ! #endif
+        !     if( hsgfn0 > 0 .and. hsgfn1 > 0 ) then
+        !       lngfn1 = lngfn1 + log(hsgfn1)
+        !       lngfn0 = lngfn0 + log(hsgfn0)
+        !     else
+        !       print *, "****ERROR***** hsgfn < 0 ", hsgfn0, hsgfn1
+        !       lngfn1 = 0
+        !     endif
+        !   end if
+        !@-at
+        !@@c
+
           if ( use_HW_gfn ) then
             hsgfn1 = vpi_hw_gfn( sl_start, sl_end, part_num, q1, N_SLICE, N_PARTICLE, N_DIM, dtau )
             hsgfn0 = vpi_hw_gfn( sl_start, sl_end, part_num, q0, N_SLICE, N_PARTICLE, N_DIM, dtau )
@@ -908,7 +950,7 @@ program Test_VPI
           if ( eval_rotation ) then
             rotgfn1 =  gfn_rot(q_rot1,part_num,sl_start,sl_end,dtau)
             rotgfn0 =  gfn_rot(q_rot0,part_num,sl_start,sl_end,dtau)
-    !          write (1000+my_rank,*) rotgfn0, rotgfn1
+        !          write (1000+my_rank,*) rotgfn0, rotgfn1
             lngfn1 = lngfn1 + log(rotgfn1)
             lngfn0 = lngfn0 + log(rotgfn0)
           end if
@@ -924,18 +966,38 @@ program Test_VPI
                  jas_tfun(q0, xij2_0, 1, N_SLICE, N_PARTICLE, N_DIM) + &
                  jas_tfun(q0, xij2_0, N_SLICE, N_SLICE, N_PARTICLE, N_DIM)
 
+        !        print "(2a20)", "lngfn0", "lngfn1"
+        !        print *, lngfn0, lngfn1
+        !        print "(2a20)", "lntfn0", "lntfn1"
+        !        print *, lntfn0, lntfn1
+        !@-node:gcross.20090626112946.1697:<< Compute contribution from propagators >>
+        !@nl
+        !@-node:gcross.20090626112946.1695:<< Compute probability of acceptance >>
+        !@nl
 
-    !        print "(2a20)", "lngfn0", "lngfn1"
-    !        print *, lngfn0, lngfn1
-    !        print "(2a20)", "lntfn0", "lntfn1"
-    !        print *, lntfn0, lntfn1
+        !@<< Optionally impose the fixed phase condition >>
+        !@+node:gcross.20090626112946.1698:<< Optionally impose the fixed phase condition >>
         if (impose_fixed_phase) then
           dphase = product(phase_1(move_start:move_end))/product(phase_0(move_start:move_end))
         else
           dphase = 1.0_b8
         end if
-    10      if ( vpi_accept_path( lngfn0 + lntfn0, lngfn1 + lntfn1, dphase) .and. acc_flag) then
-    !          print *, "!!! ACCEPTED !!!"
+        !@-node:gcross.20090626112946.1698:<< Optionally impose the fixed phase condition >>
+        !@nl
+
+        !@<< Accept or reject the move >>
+        !@+node:gcross.20090626112946.1706:<< Accept or reject the move >>
+        10 if ( vpi_accept_path( lngfn0 + lntfn0, lngfn1 + lntfn1, dphase) .and. acc_flag) then
+          !@  << Accept the move >>
+          !@+node:gcross.20090626112946.1699:<< Accept the move >>
+          !          print *, "!!! ACCEPTED !!!"
+          !@<< Update the degrees of freedom and derived quantities >>
+          !@+node:gcross.20090626112946.1701:<< Update the degrees of freedom and derived quantities >>
+          !@+at
+          ! Update degrees of freedom
+          !@-at
+          !@@c
+
           q0(move_start:move_end,:,:) = q1(move_start:move_end,:,:)
           if(use_pbc) then
             qobs(move_start:move_end,:,:) = q0(move_start:move_end,:,:) &
@@ -948,12 +1010,23 @@ program Test_VPI
           if( eval_rotation ) then
             q_rot0(move_start:move_end,:,:) = q_rot1(move_start:move_end,:,:)
           end if
+
+          !@+at
+          ! Update derived quantities
+          !@-at
+          !@@c
+
           xij2_0(move_start:move_end,:,:) = xij2_1(move_start:move_end,:,:) 
           U_0(move_start:move_end,:) = U_1(move_start:move_end,:)
           gradU2_0(move_start:move_end) =  gradU2_1(move_start:move_end)
           if( use_eval_phase ) then
             phase_0(move_start:move_end) = phase_1(move_start:move_end)
           end if
+          !@-node:gcross.20090626112946.1701:<< Update the degrees of freedom and derived quantities >>
+          !@nl
+
+          !@<< Update statistics >>
+          !@+node:gcross.20090626112946.1703:<< Update statistics >>
           accr = accr + 1;
           accr_v(move_start:move_end) = accr_v(move_start:move_end) + 1
           lntfn0 = lntfn1
@@ -962,8 +1035,19 @@ program Test_VPI
           swap_accr = swap_accr + swap_try
           end_accr = end_accr + end_try
           split_accr = split_accr + split_try
+          !@-node:gcross.20090626112946.1703:<< Update statistics >>
+          !@nl
+          !@nonl
+          !@-node:gcross.20090626112946.1699:<< Accept the move >>
+          !@nl
         else
-    !          print *, "!!! REJECTED !!!"
+          !@  << Reject the move >>
+          !@+node:gcross.20090626112946.1704:<< Reject the move >>
+          !          print *, "!!! REJECTED !!!"
+          !@+at
+          ! Reset all degrees of freedom and derived quantities.
+          !@-at
+          !@@c
           q1(move_start:move_end,:,:) = q0(move_start:move_end,:,:)
           if( eval_rotation ) then
             q_rot1(move_start:move_end,:,:) = q_rot0(move_start:move_end,:,:)
@@ -971,8 +1055,17 @@ program Test_VPI
           xij2_1(move_start:move_end,:,:) = xij2_0(move_start:move_end,:,:)
           U_1(move_start:move_end,:) = U_0(move_start:move_end,:)
           gradU2_1(move_start:move_end) =  gradU2_0(move_start:move_end)
+          !@-node:gcross.20090626112946.1704:<< Reject the move >>
+          !@nl
         end if
+        !@-node:gcross.20090626112946.1706:<< Accept or reject the move >>
+        !@nl
 
+        !@-node:gcross.20090626112946.1693:<< Determine whether the move should be accepted >>
+        !@nl
+
+        !@<< Compute quantities of interest >>
+        !@+node:gcross.20090626112946.1692:<< Compute quantities of interest >>
         corpcnt = corpcnt + 1
         if(corpcnt >= corper) then
           call vpi_eval_gofr( gofr, xij2_0(CSLICE,:,:), N_BINS_GOFR, dndx_GOFR )
@@ -1003,7 +1096,7 @@ program Test_VPI
             q_opt(n_moves_pb,:,:) = qobs(cslice,:,:)
           end if
 
-    !         print "(56g30.15)", my_rank, e_diff,E_l,e_red/num_procs,abs(E_l-e_red/num_procs)
+        !         print "(56g30.15)", my_rank, e_diff,E_l,e_red/num_procs,abs(E_l-e_red/num_procs)
 
           t1 =  sum(U_0(CSLICE+1,:)) - sum(U_0(CSLICE,:))
           if(eval_off_diagonal .eqv. .false.) then
@@ -1016,7 +1109,7 @@ program Test_VPI
           dE =  dE + t1
           if(eval_qsq_sum) then
             do k = 1, N_SLICE_SAMPLES
-    !            ik =  int((k-1)*float(N_SLICE)/(N_SLICE_SAMPLES-1)) + 1
+        !            ik =  int((k-1)*float(N_SLICE)/(N_SLICE_SAMPLES-1)) + 1
               ik = k
               U_cum(k) = U_cum(k) + sum(U_0(ik,:))/(N_PARTICLE)
               U_avg(k) = U_cum(k)/n_moves
@@ -1029,9 +1122,9 @@ program Test_VPI
 
           call vpi_eval_density( rho, qobs(CSLICE,:,:), N_BINS, size_x/2, dndx )
           call vpi_eval_radial_density( rho_r, qobs(CSLICE,:,:), n_bins_gofr, dndr ) 
-    !        if ( eval_off_diagonal ) then
-    !          call vpi_eval_density_sp( dxlxr, (qobs(CSLICE,od_pnum,:)-qobs(CSLICE+1,od_pnum,:)), N_BINS, size_x/2, dndx )
-    !        end if
+        !        if ( eval_off_diagonal ) then
+        !          call vpi_eval_density_sp( dxlxr, (qobs(CSLICE,od_pnum,:)-qobs(CSLICE+1,od_pnum,:)), N_BINS, size_x/2, dndx )
+        !        end if
           call vpi_eval_density( trial_rho_L, qobs(1,:,:), N_BINS, size_x/2, dndx )
           call vpi_eval_density( trial_rho_R, qobs(N_SLICE,:,:), N_BINS, size_x/2, dndx )
           if(eval_full_density) then
@@ -1073,10 +1166,10 @@ program Test_VPI
           if( use_eval_N_R ) then
             call vpi_eval_N_R( N_R, dn_rms, qobs(:,:,:), CSLICE, 0 )
           end if
-    !        call eval_N_z2( N_zs,N_za, q0(CSLICE,:,:) )
-    !       do ii = 1, N_SLICE
-    !         call eval_N_R( corr_N_R(ii,:), q0(ii,:,:) )
-    !       end do
+        !        call eval_N_z2( N_zs,N_za, q0(CSLICE,:,:) )
+        !       do ii = 1, N_SLICE
+        !         call eval_N_R( corr_N_R(ii,:), q0(ii,:,:) )
+        !       end do
           if(eval_rdm) then
             do ii = 1, N_PARTICLE
               do jj = ii+1, N_PARTICLE
@@ -1129,22 +1222,30 @@ program Test_VPI
             call vpi_eval_nrdm( nrdm_z, qobs(CSLICE,:,3), qobs(CSLICE+1,:,3) )
           end if
         end if
+        !@-node:gcross.20090626112946.1692:<< Compute quantities of interest >>
+        !@nl
+
+        !@-node:gcross.20090626112946.1694:<< Perform Monte Carlo iteration >>
+        !@nl
       end do
 
-    !      if( eval_off_diagonal ) then
-    !        write(13, "(3g18.9)", ADVANCE="NO") qobs(CSLICE,1,:)
-    !        write(13, "(3g18.9)", ADVANCE="NO") qobs(CSLICE+1,1,:)
-    !        write(13, "(3g)", ADVANCE="NO") q0(CSLICE,2,:)
-    !        write(13, "(3g)") q0(CSLICE+1,2,:)
-    !      end if
-    !      close(13)
+      !@  << Compute and output current simulation results >>
+      !@+node:gcross.20090626091217.1690:<< Compute and output current simulation results >>
+      !      if( eval_off_diagonal ) then
+      !        write(13, "(3g18.9)", ADVANCE="NO") qobs(CSLICE,1,:)
+      !        write(13, "(3g18.9)", ADVANCE="NO") qobs(CSLICE+1,1,:)
+      !        write(13, "(3g)", ADVANCE="NO") q0(CSLICE,2,:)
+      !        write(13, "(3g)") q0(CSLICE+1,2,:)
+      !      end if
+      !      close(13)
+
 
       call MPI_REDUCE(rho,rho_red,n_bins*n_dim,mpi_double_precision,MPI_SUM,0,MPI_COMM_WORLD,ierr)
       if(my_rank .eq. 0) then
         write(my_fname,"(a11)")"rho_cum.dat"
         open(12, file=my_fname, status="replace")
         do ii = 1,N_BINS
-    !          write(12, "(6g30.21)") ii, rho_red(ii,:)/( num_procs*n_moves*dxdn(:)*N_PARTICLE )
+      !          write(12, "(6g30.21)") ii, rho_red(ii,:)/( num_procs*n_moves*dxdn(:)*N_PARTICLE )
           write(12, "(6g30.21)") dxdn(:)*(ii-0.5) - size_x(:)/2.0, rho_red(ii,:)/( num_procs*n_moves*dxdn(:)*N_PARTICLE )
         end do
         close(12)
@@ -1404,13 +1505,13 @@ program Test_VPI
         close(12)
       end if
 
-    !      write(my_fname,"(a10,i4.4)")"dxlxr.dat.",my_rank
-    !      open(12, file=my_fname, status="replace")
-    !      do ii = 1,size(dxlxr,1)
-    !        write(12, "(6g24.16)", ADVANCE="NO") dxdn*(ii-1) - size_x/2.0, dxlxr(ii,:)/( n_moves*dxdn*N_PARTICLE )
-    !        write(12, *)
-    !      end do
-    !      close(12)
+      !      write(my_fname,"(a10,i4.4)")"dxlxr.dat.",my_rank
+      !      open(12, file=my_fname, status="replace")
+      !      do ii = 1,size(dxlxr,1)
+      !        write(12, "(6g24.16)", ADVANCE="NO") dxdn*(ii-1) - size_x/2.0, dxlxr(ii,:)/( n_moves*dxdn*N_PARTICLE )
+      !        write(12, *)
+      !      end do
+      !      close(12)
 
       if(eval_rdm) then
         write(my_fname,"(a11,i4.4)")"rdm2_z.dat.",my_rank
@@ -1529,16 +1630,16 @@ program Test_VPI
         close(12)
       end if 
 
-    !      write(my_fname,"(a13,i4.4)")("corr_N_R.dat.",my_rank)
-    !      open(12, file=my_fname, status="replace")
-    !      do ii = 1, N_PARTICLE+1
-    !        write(12, "(i12)", ADVANCE="NO") (ii-1)
-    !        do jj = 1, N_SLICE
-    !          write(12, "(g20.12)", ADVANCE="NO") corr_N_R(jj,ii)/( n_moves )
-    !        end do
-    !        write(12, *)
-    !      end do
-    !      close(12)
+      !      write(my_fname,"(a13,i4.4)")("corr_N_R.dat.",my_rank)
+      !      open(12, file=my_fname, status="replace")
+      !      do ii = 1, N_PARTICLE+1
+      !        write(12, "(i12)", ADVANCE="NO") (ii-1)
+      !        do jj = 1, N_SLICE
+      !          write(12, "(g20.12)", ADVANCE="NO") corr_N_R(jj,ii)/( n_moves )
+      !        end do
+      !        write(12, *)
+      !      end do
+      !      close(12)
 
 
       if(eval_full_density) then
@@ -1601,22 +1702,22 @@ program Test_VPI
         close(23)
       end if
 
-    !      write(my_fname,"(a10,i4.4)")"od_sig.dat.",my_rank
-    !      open(24, file=my_fname, status="replace")
-    !      do ii = 1, N_BINS
-    !        do jj = 1, N_BINS
-    !          write(24, *) dxdn(1)*(ii-0.5) - size_x(1)/2.0, dxdn(3)*(jj-0.5) - size_x(3)/2.0, od_sig(ii,jj)/( n_moves*N_PARTICLE )
-    !        end do
-    !        write(24, *)
-    !      end do
-    !      close(24)
+      !      write(my_fname,"(a10,i4.4)")"od_sig.dat.",my_rank
+      !      open(24, file=my_fname, status="replace")
+      !      do ii = 1, N_BINS
+      !        do jj = 1, N_BINS
+      !          write(24, *) dxdn(1)*(ii-0.5) - size_x(1)/2.0, dxdn(3)*(jj-0.5) - size_x(3)/2.0, od_sig(ii,jj)/( n_moves*N_PARTICLE )
+      !        end do
+      !        write(24, *)
+      !      end do
+      !      close(24)
 
       if(eval_qsq_sum) then
         write(my_fname,"(a8,i4.4)")"qsq.dat.",my_rank
         open(10, file=my_fname, status="replace")
         write(10, *) "#", accr/(n_moves)
         do ii = 1,N_SLICE_SAMPLES
-    !          ik =  int((ii-1)*float(N_SLICE)/(N_SLICE_SAMPLES-1)) + 1
+      !          ik =  int((ii-1)*float(N_SLICE)/(N_SLICE_SAMPLES-1)) + 1
           ik = ii
           write(10, "(4g20.12)") (ik-1)*dtau, qsq_sum(ii,:)/(N_PARTICLE*n_moves)
         end do
@@ -1625,7 +1726,7 @@ program Test_VPI
         write(my_fname,"(a10,i4.4)")"U_avg.dat.",my_rank
         open(12, file=my_fname,  status="replace")
         do ii = 1, size(U_avg)
-    !          ik =  int((ii-1)*float(N_SLICE)/(N_SLICE_SAMPLES-1)) + 1
+      !          ik =  int((ii-1)*float(N_SLICE)/(N_SLICE_SAMPLES-1)) + 1
           ik = ii
           write(12, "(2g30.15)")  (ik-1)*dtau, U_avg(ii)
         end do
@@ -1702,17 +1803,22 @@ program Test_VPI
       close(10)
       close(11)
 
-    !@@raw
+      !@-node:gcross.20090626091217.1690:<< Compute and output current simulation results >>
+      !@nl
+
+      !@  << Stop the timer and output iteration statistics for this block >>
+      !@+node:gcross.20090626112946.1687:<< Stop the timer and output iteration statistics for this block >>
+      !@@raw
 #ifdef USE_MPI
-    !@@end_raw
-      time1 = MPI_Wtime()
-    !@@raw
+      !@@end_raw
+        time1 = MPI_Wtime()
+      !@@raw
 #else
-    !@@end_raw
-      time1 = day_timer()
-    !@@raw
+      !@@end_raw
+        time1 = day_timer()
+      !@@raw
 #endif
-    !@@end_raw
+      !@@end_raw
 
       write(my_fname,"(a10,i4.4)")"stats.dat.",my_rank
       open(27, file=my_fname,  POSITION="APPEND")
@@ -1722,15 +1828,17 @@ program Test_VPI
       if(swap_moves .eq. 0) swap_moves = 1
       write(27,"(i10, 5g12.3)")  i, time1-time0, &
         bi_accr/bi_moves, sp_accr/sp_moves, swap_accr/swap_moves,ccnt/n_moves
-    !     write(27,"(a4, 2i12)") "#", left_moves, right_moves
+      !     write(27,"(a4, 2i12)") "#", left_moves, right_moves
       close(27)
 
       inquire(file="terminate_all", exist=ex)
       if ( ex ) then
         goto 13
       end if
+      !@-node:gcross.20090626112946.1687:<< Stop the timer and output iteration statistics for this block >>
+      !@nl
+
     end do
-    !@nonl
     !@-node:gcross.20090623152316.33:<< Main iteration >>
     !@nl
 
