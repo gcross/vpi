@@ -154,7 +154,7 @@ vpi_rand_utils.f90: timers.o
 
 # Final executables
 vpi :: ${OBJS}
-	${FC} ${OBJS}  -o ../bin/vpi-hoz-independent ${MYLIBS}
+	${FC} ${OBJS}  -o ../bin/vpi ${MYLIBS}
 
 hnode :: vpi_hnode_defines.o vpi_rand_utils.o vpi_xij.o vpi_hnode_potential.o vpi_gfn.o vpi_hnode_trial_func.o vpi_bisect.o vpi_hnode_lattice.o vpi_obdm.o hnode_main.f90
 	${FC} ${F90FLAGS} ${MYFFLAGS} vpi_hnode_defines.o vpi_rand_utils.o vpi_xij.o vpi_hnode_potential.o vpi_gfn.o vpi_hnode_trial_func.o vpi_bisect.o vpi_hnode_lattice.o vpi_obdm.o hnode_main.f90 -o ../bin/hnode-test
