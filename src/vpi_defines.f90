@@ -1,3 +1,6 @@
+!@+leo-ver=4-thin
+!@+node:gcross.20090626112946.1710:@thin vpi_defines.f90
+!@@language fortran90
 module vpi_defines
 
   use kinds
@@ -90,7 +93,7 @@ module vpi_defines
   logical :: eval_qsq_sum = .false.
   logical, parameter :: impose_fixed_phase = .false.
   logical, parameter :: impose_fixed_node = .false.
-  
+
   logical, parameter :: use_bbridge = .true.
   logical :: use_HS_gfn = .false.
 
@@ -174,3 +177,5 @@ subroutine init_global_parameters ()
 end subroutine
 
 end module vpi_defines
+!@-node:gcross.20090626112946.1710:@thin vpi_defines.f90
+!@-leo

@@ -3,13 +3,13 @@
 <leo_file>
 <leo_header file_format="2" tnodes="0" max_tnode_index="0" clone_windows="0"/>
 <globals body_outline_ratio="0.5">
-	<global_window_position top="22" left="10" height="852" width="804"/>
+	<global_window_position top="22" left="10" height="852" width="694"/>
 	<global_log_window_position top="0" left="0" height="0" width="0"/>
 </globals>
 <preferences/>
 <find_panel_settings/>
 <vnodes>
-<v t="gcross.20090623152316.1" str_leo_pos="3"><vh>@chapters</vh></v>
+<v t="gcross.20090623152316.1" str_leo_pos="4"><vh>@chapters</vh></v>
 <v t="gcross.20090624144408.2045"><vh>@path attic</vh>
 <v t="gcross.20090623152316.91"><vh>@thin vpi_trial_incomplete.f90</vh></v>
 </v>
@@ -98,6 +98,7 @@
 <v t="gcross.20090623152316.73"><vh>@thin vpi_sample.f90</vh></v>
 <v t="gcross.20090624144408.1798"><vh>@thin vpi_gfn.f90</vh></v>
 <v t="gcross.20090624144408.2046"><vh>@thin vpi_lattice.f90</vh></v>
+<v t="gcross.20090626112946.1710"><vh>@thin vpi_defines.f90</vh></v>
 </v>
 </vnodes>
 <tnodes>
