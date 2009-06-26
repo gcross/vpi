@@ -6,8 +6,12 @@ module sp_He3plus_trial
   !@  << Imported modules >>
   !@+node:gcross.20090624144408.1810:<< Imported modules >>
   use kinds
+  use constants
+  use sp_trial_numeric_differentiator
   !@-node:gcross.20090624144408.1810:<< Imported modules >>
   !@nl
+
+  implicit none
 
   !@  << Variables >>
   !@+node:gcross.20090624144408.1811:<< Variables >>
@@ -25,7 +29,7 @@ contains
   end subroutine init_sp_tfunc
   !@-node:gcross.20090624144408.1813:init_sp_tfunc
   !@+node:gcross.20090624144408.1814:tfunc
-  function He3_fn_plus_tfun( x, islice, nslice, np, ndim ) result( y )
+  function tfunc( x, islice, nslice, np, ndim ) result( y )
     integer :: islice, nslice, np, ndim
     real(kind=b8), dimension( : , : , : ) :: x
 
@@ -47,28 +51,21 @@ contains
       y = -realbignumber
     end if
 
-  end function He3_fn_plus_tfun
+  end function tfunc
   !@-node:gcross.20090624144408.1814:tfunc
   !@+node:gcross.20090624144408.1815:grad & lapacian of tfunc
   function grad_lap_sp_tfun( x, slice, np, ndim, nslice, grad_lntfn, lap_lntfn ) result( y )
-    real(kind=b8), dimension( : , : , : ), intent(in) :: x
+    implicit none
+
+    real(kind=b8), dimension( nslice , np , ndim ), intent(in) :: x
     real(kind=b8), dimension( np , ndim ), intent(out) :: grad_lntfn 
     real(kind=b8),intent(out) :: lap_lntfn 
     integer, intent(in) :: np, ndim, nslice, slice
     integer :: y
 
-    integer :: i, j
-
-    grad_lntfn(:,1) = -2.0_b8*p_hox*x(slice,:,1)
-    grad_lntfn(:,2) = -2.0_b8*p_hoy*x(slice,:,2)
-    grad_lntfn(:,3) = -2.0_b8*p_hoz*x(slice,:,3)
-
-    lap_lntfn = -2.0_b8*(p_hox+p_hoy+p_hoz)*np 
-    y = 1
+    y = numeric_grad_lap_spf( x, slice, np, ndim, nslice, grad_lntfn, lap_lntfn, tfunc )
 
   end function grad_lap_sp_tfun
-
-
   !@-node:gcross.20090624144408.1815:grad & lapacian of tfunc
   !@-others
   !@-node:gcross.20090624144408.1812:<< Subroutines >>

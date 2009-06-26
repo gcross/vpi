@@ -10,6 +10,8 @@ module jas_independent_trial
   !@-node:gcross.20090624144408.2039:<< Imported modules >>
   !@nl
 
+  implicit none
+
   !@  << Variables >>
   !@+node:gcross.20090624144408.2040:<< Variables >>
   !@-node:gcross.20090624144408.2040:<< Variables >>

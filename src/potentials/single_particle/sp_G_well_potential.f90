@@ -10,6 +10,8 @@ module sp_G_well_potential
   !@-node:gcross.20090624144408.1456:<< Imported modules >>
   !@nl
 
+  implicit none
+
   !@  << Variables >>
   !@+node:gcross.20090624144408.1457:<< Variables >>
   real (kind=b8), private :: x_HO_coefficient = 1.0_b8
@@ -59,7 +61,7 @@ contains
 
     Usp =   x_HO_coefficient*x(slice,ip,1)**2 &
           + y_HO_coefficient*x(slice,ip,2)**2 &
-          + z_HO_coefficeint*x(slice,ip,3)**2 &
+          + z_HO_coefficient*x(slice,ip,3)**2 &
           + exp_coeff_with_normalization &
               * exp(-(x(slice,ip,3)-exponential_center)**2/exp_characteristic_length_squared_times_2)
 
@@ -72,12 +74,12 @@ contains
 
     real(kind=b8), dimension ( np, ndim ) :: gUsp
 
-    gUsp(:,1) = 2.0_b8*x_HO_coefficeint*x(slice,:,1)
-    gUsp(:,2) = 2.0_b8*y_HO_coefficeint*x(slice,:,2)
-    gUsp(:,3) = 2.0_b8*z_HO_coefficeint*x(slice,:,3) - &
-      (x(slice,:,3)-exponential_center) / characteristic_length_squared &
+    gUsp(:,1) = 2.0_b8*x_HO_coefficient*x(slice,:,1)
+    gUsp(:,2) = 2.0_b8*y_HO_coefficient*x(slice,:,2)
+    gUsp(:,3) = 2.0_b8*z_HO_coefficient*x(slice,:,3) - &
+      (x(slice,:,3)-exponential_center) / exp_characteristic_length_squared &
         * exp_coeff_with_normalization &
-           * exp(-(x(slice,:,3)-exponential_center)**2/characteristic_length_squared_times_2)
+           * exp(-(x(slice,:,3)-exponential_center)**2/exp_characteristic_length_squared_times_2)
   end function gUsp_func
 
   !@-node:gcross.20090624144408.1461:gUsp

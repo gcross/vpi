@@ -10,6 +10,8 @@ module tb_hard_sphere_potential
   !@-node:gcross.20090624144408.1715:<< Imported modules >>
   !@nl
 
+  implicit none
+
   !@  << Variables >>
   !@+node:gcross.20090624144408.1716:<< Variables >>
   real (kind=b8), private :: radius

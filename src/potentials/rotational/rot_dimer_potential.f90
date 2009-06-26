@@ -10,6 +10,8 @@ module rot_dimer_potential
   !@-node:gcross.20090624144408.1759:<< Imported modules >>
   !@nl
 
+  implicit none
+
   !@  << Variables >>
   !@+node:gcross.20090624144408.1760:<< Variables >>
   real (kind=b8), private :: coefficient = 1e-4_b8
@@ -24,7 +26,7 @@ contains
   !@+others
   !@+node:gcross.20090624144408.1762:init_rot_potential
   subroutine init_rot_potential ()
-    namelist /rotational_potential_parameters/ rotational
+    namelist /rotational_potential_parameters/ coefficient
 
     read(unit=10,nml=rotational_potential_parameters)
 

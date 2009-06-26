@@ -10,6 +10,8 @@ module sp_D_well_version_2_trial
   !@-node:gcross.20090624144408.1954:<< Imported modules >>
   !@nl
 
+  implicit none
+
 contains
 
   !@  << Subroutines >>
@@ -34,6 +36,7 @@ contains
     real(kind=b8), dimension( np , ndim ), intent(out) :: grad_lntfn 
     real(kind=b8),intent(out) :: lap_lntfn 
     integer, intent(in) :: np, ndim, nslice, sl
+    integer :: y
     y = 1
     grad_lntfn(:,1) = -x_harmonic_coefficient*x(sl,:,1)
     grad_lntfn(:,2) = -y_harmonic_coefficient*x(sl,:,2)

@@ -9,6 +9,8 @@ module sp_harmonic_oscillator_3D_potential
   !@-node:gcross.20090624094338.1411:<< Imported modules >>
   !@nl
 
+  implicit none
+
   !@  << Variables >>
   !@+node:gcross.20090624094338.1412:<< Variables >>
   real (kind=b8), private :: x_coefficient = 1.0_b8
@@ -41,7 +43,7 @@ contains
     real(kind=b8) :: Usp
 
     Usp = ( x_coefficient*x(slice,ip,1)**2 &
-          + y_coefficeint*x(slice,ip,2)**2 &
+          + y_coefficient*x(slice,ip,2)**2 &
           + z_coefficient*x(slice,ip,3)**2 &
           ) / 2.0_b8
 

@@ -9,6 +9,8 @@ module tb_lj_potential
   !@-node:gcross.20090624144408.1673:<< Imported modules >>
   !@nl
 
+  implicit none
+
   !@  << Variables >>
   !@+node:gcross.20090624144408.1674:<< Variables >>
   real (kind=b8), private :: coefficient = 2352.5_b8
@@ -47,8 +49,8 @@ contains
 
     acc_flag = .true.
 
-    t6 = lenth_scale_squared**6 * (sum( xij2(slice,ip,1:ip-1)**(-6) ) + sum( xij2(slice,ip,ip+1:np)**(-6) ))
-    t3 = lenth_scale_squared**3 * (sum( xij2(slice,ip,1:ip-1)**(-3) ) + sum( xij2(slice,ip,ip+1:np)**(-3) ))
+    t6 = length_scale_squared**6 * (sum( xij2(slice,ip,1:ip-1)**(-6) ) + sum( xij2(slice,ip,ip+1:np)**(-6) ))
+    t3 = length_scale_squared**3 * (sum( xij2(slice,ip,1:ip-1)**(-3) ) + sum( xij2(slice,ip,ip+1:np)**(-3) ))
 
     Uij = coefficient * ( t6 - t3 )/2.0_b8
 
@@ -88,7 +90,7 @@ contains
         tij = gc1*rij**(-7) + gc2*rij**(-4)
         t_gUij(:) = ( x(slice,i,:) - x(slice,j,:) ) * tij
         gUij(i,:) = gUij(i,:) + coefficient*t_gUij(:)
-        gUij(j,:) = gUij(j,:) - coeficcient*t_gUij(:)
+        gUij(j,:) = gUij(j,:) - coefficient*t_gUij(:)
       end do
     end do
 

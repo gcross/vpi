@@ -12,6 +12,8 @@ module sp_box_trial
   !@-node:gcross.20090624144408.1839:<< Imported modules >>
   !@nl
 
+  implicit none
+
   !@  << Variables >>
   !@+node:gcross.20090624144408.1840:<< Variables >>
   real (kind=b8), private :: x_length = 1_b8, x_wall_location
@@ -72,6 +74,7 @@ contains
     real(kind=b8), dimension( np , ndim ), intent(out) :: grad_lntfn 
     real(kind=b8),intent(out) :: lap_lntfn 
     integer, intent(in) :: np, ndim, nslice, sl
+    integer :: y
 
     integer :: i, j
 

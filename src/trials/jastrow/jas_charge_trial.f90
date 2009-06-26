@@ -11,6 +11,8 @@ module jas_charge_trial
   !@-node:gcross.20090624144408.2025:<< Imported modules >>
   !@nl
 
+  implicit none
+
   !@  << Variables >>
   !@+node:gcross.20090624144408.2026:<< Variables >>
   real(kind=b8) :: coefficient_0
@@ -29,8 +31,6 @@ contains
     namelist /jastrow_trial_parameters/ coefficient_0, coefficient_1, coefficient_2
 
     read(unit=10,nml=jastrow_trial_parameters)
-
-    radius_squared = radius**2
 
     write(*,*) "Using charge Jastrow trial function with"
     write(*,nml=jastrow_trial_parameters)
@@ -66,6 +66,7 @@ contains
     real(kind=b8), dimension( nslice, np, np ) :: xij2
     real(kind=b8), dimension( np, ndim ), intent(out) :: grad_lntfn
     real(kind=b8), intent(out) :: lap_lntfn
+    integer :: y
 
     y = numeric_grad_lap_jas( x, xij2, sl, np, ndim, nslice, grad_lntfn, lap_lntfn, jas_tfun )
 

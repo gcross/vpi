@@ -10,6 +10,8 @@ module rot_undefined_potential
   !@-node:gcross.20090624144408.1773:<< Imported modules >>
   !@nl
 
+  implicit none
+
   !@  << Variables >>
   !@+node:gcross.20090624144408.1774:<< Variables >>
   real (kind=b8), private :: coefficient = 1e-4_b8

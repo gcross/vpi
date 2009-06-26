@@ -10,6 +10,8 @@ module sp_morse_version_2_trial
   !@-node:gcross.20090624144408.1918:<< Imported modules >>
   !@nl
 
+  implicit none
+
 contains
 
   !@  << Subroutines >>

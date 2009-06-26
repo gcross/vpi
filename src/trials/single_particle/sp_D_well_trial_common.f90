@@ -9,6 +9,8 @@ module sp_D_well_trial_common
   !@-node:gcross.20090624144408.1932:<< Imported modules >>
   !@nl
 
+  implicit none
+
   !@  << Variables >>
   !@+node:gcross.20090624144408.1933:<< Variables >>
   real(kind=b8) :: x_harmonic_coefficient, y_harmonic_coefficient

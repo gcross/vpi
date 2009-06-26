@@ -10,6 +10,8 @@ module sp_D_well_potential
   !@-node:gcross.20090624144408.1472:<< Imported modules >>
   !@nl
 
+  implicit none
+
   !@  << Variables >>
   !@+node:gcross.20090624144408.1473:<< Variables >>
   real(kind=b8), private :: length_scale = 1.5_b8

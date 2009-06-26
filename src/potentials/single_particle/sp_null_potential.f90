@@ -9,6 +9,8 @@ module sp_null_potential
   !@-node:gcross.20090624144408.1412:<< Imported modules >>
   !@nl
 
+  implicit none
+
   !@  << Variables >>
   !@+node:gcross.20090624144408.1413:<< Variables >>
   !@-node:gcross.20090624144408.1413:<< Variables >>

@@ -6,9 +6,12 @@ module sp_D_well_version_1_trial
   !@  << Imported modules >>
   !@+node:gcross.20090624144408.1942:<< Imported modules >>
   use kinds
+  use vpi_defines
   use sp_D_well_trial_common
   !@-node:gcross.20090624144408.1942:<< Imported modules >>
   !@nl
+
+  implicit none
 
 contains
 

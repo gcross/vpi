@@ -10,6 +10,8 @@ module sp_N_well_trial
   !@-node:gcross.20090624144408.1967:<< Imported modules >>
   !@nl
 
+  implicit none
+
   !@  << Variables >>
   !@+node:gcross.20090624144408.1968:<< Variables >>
   real (kind=b8), private :: coefficient_2nd_order

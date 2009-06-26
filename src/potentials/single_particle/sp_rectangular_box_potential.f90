@@ -6,8 +6,11 @@ module sp_rectangular_box_potential
   !@  << Imported modules >>
   !@+node:gcross.20090624094338.1373:<< Imported modules >>
   use kinds
+  use constants
   !@-node:gcross.20090624094338.1373:<< Imported modules >>
   !@nl
+
+  implicit none
 
   !@  << Variables >>
   !@+node:gcross.20090624094338.1372:<< Variables >>

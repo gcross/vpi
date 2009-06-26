@@ -6,8 +6,11 @@ module sp_atomic_overlapping_potential
   !@  << Imported modules >>
   !@+node:gcross.20090624144408.1574:<< Imported modules >>
   use kinds
+  use vpi_defines
   !@-node:gcross.20090624144408.1574:<< Imported modules >>
   !@nl
+
+  implicit none
 
   !@  << Variables >>
   !@+node:gcross.20090624144408.1575:<< Variables >>

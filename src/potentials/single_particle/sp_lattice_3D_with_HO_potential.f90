@@ -10,6 +10,8 @@ module sp_lattice_3D_with_HO_potential
   !@-node:gcross.20090624144408.1602:<< Imported modules >>
   !@nl
 
+  implicit none
+
   !@  << Variables >>
   !@+node:gcross.20090624144408.1603:<< Variables >>
   real(kind=b8), private :: p_lattice_vb = 80

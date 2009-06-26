@@ -9,6 +9,8 @@ module sp_wlink_potential
   !@-node:gcross.20090624144408.1427:<< Imported modules >>
   !@nl
 
+  implicit none
+
   !@  << Variables >>
   !@+node:gcross.20090624144408.1428:<< Variables >>
   real (kind=b8), private :: a1wlink, a2wlink, vbwlink, w0wlink

@@ -10,6 +10,8 @@ module sp_N_well_potential
   !@-node:gcross.20090624144408.1486:<< Imported modules >>
   !@nl
 
+  implicit none
+
   !@  << Variables >>
   !@+node:gcross.20090624144408.1487:<< Variables >>
   real(kind=b8), private :: lam_ho = 1.0_b8

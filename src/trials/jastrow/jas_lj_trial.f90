@@ -10,6 +10,8 @@ module jas_lj_trial
   !@-node:gcross.20090624144408.2011:<< Imported modules >>
   !@nl
 
+  implicit none
+
   !@  << Variables >>
   !@+node:gcross.20090624144408.2012:<< Variables >>
   real(kind=b8) :: p_ljc5 = 1.14083e-07_b8
@@ -27,8 +29,6 @@ contains
     namelist /jastrow_trial_parameters/ p_ljc1, p_ljc5
 
     read(unit=10,nml=jastrow_trial_parameters)
-
-    radius_squared = radius**2
 
     write(*,*) "Using L.J. Jastrow trial function with"
     write(*,nml=jastrow_trial_parameters)

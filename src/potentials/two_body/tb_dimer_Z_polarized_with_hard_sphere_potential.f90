@@ -11,6 +11,8 @@ module tb_dimer_Z_polarized_with_hard_sphere_potential
   !@-node:gcross.20090624144408.1744:<< Imported modules >>
   !@nl
 
+  implicit none
+
   !@  << Variables >>
   !@+node:gcross.20090624144408.1745:<< Variables >>
   real (kind=b8), private :: lj_coefficient

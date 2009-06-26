@@ -7,9 +7,12 @@ module sp_annulus_version_2_potential
   !@+node:gcross.20090624144408.1524:<< Imported modules >>
   use kinds
   use constants
+  use vpi_defines
   use sp_annulus_common
   !@-node:gcross.20090624144408.1524:<< Imported modules >>
   !@nl
+
+  implicit none
 
 contains
 

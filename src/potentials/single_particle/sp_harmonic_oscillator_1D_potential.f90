@@ -9,6 +9,8 @@ module sp_harmonic_oscillator_1D_potential
   !@-node:gcross.20090624094338.1397:<< Imported modules >>
   !@nl
 
+  implicit none
+
   !@  << Variables >>
   !@+node:gcross.20090624094338.1398:<< Variables >>
   real (kind=b8), private :: coefficient = 1.0_b8

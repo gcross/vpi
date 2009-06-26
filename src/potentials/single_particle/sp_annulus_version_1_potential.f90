@@ -11,6 +11,8 @@ module sp_annulus_version_1_potential
   !@-node:gcross.20090624144408.1513:<< Imported modules >>
   !@nl
 
+  implicit none
+
 contains
 
   !@  << Subroutines >>

@@ -9,6 +9,8 @@ module sp_anharmonic_trial
   !@-node:gcross.20090624144408.1867:<< Imported modules >>
   !@nl
 
+  implicit none
+
   !@  << Variables >>
   !@+node:gcross.20090624144408.1868:<< Variables >>
   real (kind=b8), private :: coefficient_2nd_order
@@ -44,11 +46,11 @@ contains
   end function tfunc
   !@-node:gcross.20090623152316.110:tfunc
   !@+node:gcross.20090624144408.1872:grad & lapacian of tfunc
-  function grad_lap_sp_tfun( x, slice, np, ndim, nslice, grad_lntfn, lap_lntfn ) result( y )
+  function grad_lap_sp_tfun( x, sl, np, ndim, nslice, grad_lntfn, lap_lntfn ) result( y )
     real(kind=b8), dimension( nslice , np , ndim ), intent(in) :: x
     real(kind=b8), dimension( np , ndim ), intent(out) :: grad_lntfn 
     real(kind=b8),intent(out) :: lap_lntfn 
-    integer, intent(in) :: np, ndim, nslice, slice
+    integer, intent(in) :: np, ndim, nslice, sl
     integer :: y
 
     grad_lntfn(:,1) = 0

@@ -9,6 +9,8 @@ module sp_harmonic_3D_trial
   !@-node:gcross.20090624144408.1853:<< Imported modules >>
   !@nl
 
+  implicit none
+
   !@  << Variables >>
   !@+node:gcross.20090624144408.1854:<< Variables >>
   real (kind=b8), private :: x_coefficient = 1.0_b8

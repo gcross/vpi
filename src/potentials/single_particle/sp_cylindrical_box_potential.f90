@@ -6,8 +6,11 @@ module sp_cylindrical_box_potential
   !@  << Imported modules >>
   !@+node:gcross.20090624094338.1382:<< Imported modules >>
   use kinds
+  use constants
   !@-node:gcross.20090624094338.1382:<< Imported modules >>
   !@nl
+
+  implicit none
 
   !@  << Variables >>
   !@+node:gcross.20090624094338.1383:<< Variables >>
@@ -41,7 +44,7 @@ contains
 
     Usp = 0
     r = sqrt( x(slice,ip,1)**2 + x(slice,ip,2)**2 ) 
-    if(r > r_cylinder) then
+    if(r > cylinder_radius) then
       Usp = realbignumber*r**2
     end if
 

@@ -9,11 +9,13 @@ module sp_morse_trial_common
   !@-node:gcross.20090624144408.1905:<< Imported modules >>
   !@nl
 
+  implicit none
+
   !@  << Variables >>
   !@+node:gcross.20090624144408.1906:<< Variables >>
   ! variational parameters for Morse potential trial function
-  real(kind=b8), private :: p_MO_vpa = 15.29_b8
-  real(kind=b8), private :: p_MO_vpb = 6.82_b8
+  real(kind=b8) :: p_MO_vpa = 15.29_b8
+  real(kind=b8) :: p_MO_vpb = 6.82_b8
   !@-node:gcross.20090624144408.1906:<< Variables >>
   !@nl
 

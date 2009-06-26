@@ -6,8 +6,11 @@ module sp_harmonic_oscillator_overlapping_potential
   !@  << Imported modules >>
   !@+node:gcross.20090624094338.1425:<< Imported modules >>
   use kinds
+  use vpi_defines
   !@-node:gcross.20090624094338.1425:<< Imported modules >>
   !@nl
+
+  implicit none
 
   !@  << Variables >>
   !@+node:gcross.20090624094338.1426:<< Variables >>

@@ -9,9 +9,11 @@ module sp_atomic_trial
   !@-node:gcross.20090624144408.1792:<< Imported modules >>
   !@nl
 
+  implicit none
+
   !@  << Variables >>
   !@+node:gcross.20090624144408.1793:<< Variables >>
-  real (kind=b8), private :: constant_1, constant_2
+  real (kind=b8), private :: coefficient_0, coefficient_1
   !@-node:gcross.20090624144408.1793:<< Variables >>
   !@nl
 
@@ -22,7 +24,7 @@ contains
   !@+others
   !@+node:gcross.20090624144408.1795:init_sp_tfunc
   subroutine init_sp_tfunc ()
-    namelist /single_particle_trial_function_parameters/ constant_1, constant_2
+    namelist /single_particle_trial_function_parameters/ coefficient_0, coefficient_1
 
     read(unit=10,nml=single_particle_trial_function_parameters)
 
@@ -44,7 +46,7 @@ contains
     do i = 1, np
       r2 = dot_product(x(sl,i,:),x(sl,i,:))
       r1 = sqrt(r2)
-      y = y - ( constant_0*r1 + constant_1*r2 )/( 1 + constant_1*r1 )
+      y = y - ( coefficient_0*r1 + coefficient_1*r2 )/( 1 + coefficient_1*r1 )
     end do
 
   end function tfunc
@@ -66,12 +68,15 @@ contains
     r2(:) = x(slice,:,1)**2 + x(slice,:,2)**2 + x(slice,:,3)**2
     r(:) = sqrt(r2(:))
     r3(:) = r(:)*r2(:)
-    t_grad(:) = -(p_ac0+p_ac1*(2*r(:)+p_ac1*r2(:)))/(r(:)*(1+p_ac1*r2(:))**2)
+    t_grad(:) = -(coefficient_0+coefficient_1*(2*r(:)+coefficient_1*r2(:)))/(r(:)*(1+coefficient_1*r2(:))**2)
     grad_lntfn(:,1) = x(slice,:,1)*t_grad(:)
     grad_lntfn(:,2) = x(slice,:,2)*t_grad(:)
     grad_lntfn(:,3) = x(slice,:,3)*t_grad(:)
 
-    lap_lntfn = sum((-2.0_b8*(p_ac0 + p_ac1*(3.0_b8*r(:) + 3.0_b8*p_ac1*r2(:) + p_ac1**2*r3(:) )))/(r(:)*(1.0_b8+p_ac1*r2(:))**3))
+    lap_lntfn = sum( &
+                  (-2.0_b8*(coefficient_0 + coefficient_1*(3.0_b8*r(:) + 3.0_b8*coefficient_1*r2(:) + coefficient_1**2*r3(:) ))) &
+                  / (r(:)*(1.0_b8+coefficient_1*r2(:))**3) &
+              )
 
     y = 1
 

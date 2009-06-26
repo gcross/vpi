@@ -4,7 +4,10 @@
 
 module sp_trial_numeric_differentiator
 
-use kinds
+  use kinds
+  use vpi_defines
+
+  implicit none
 
 contains
 

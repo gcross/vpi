@@ -9,6 +9,8 @@ module tb_charge_potential
   !@-node:gcross.20090624144408.1645:<< Imported modules >>
   !@nl
 
+  implicit none
+
   !@  << Variables >>
   !@+node:gcross.20090624144408.1646:<< Variables >>
   real (kind=b8), private :: coefficient

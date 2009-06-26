@@ -10,6 +10,8 @@ module jas_hard_sphere_trial
   !@-node:gcross.20090624144408.1997:<< Imported modules >>
   !@nl
 
+  implicit none
+
   !@  << Variables >>
   !@+node:gcross.20090624144408.1998:<< Variables >>
   real (kind=b8), private :: radius

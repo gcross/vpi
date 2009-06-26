@@ -10,6 +10,8 @@ module tb_sa_potential
   !@-node:gcross.20090624144408.1687:<< Imported modules >>
   !@nl
 
+  implicit none
+
   !@  << Variables >>
   !@+node:gcross.20090624144408.1688:<< Variables >>
   !@-node:gcross.20090624144408.1688:<< Variables >>

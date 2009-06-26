@@ -6,6 +6,7 @@ module vpi_lattice
 
   use vpi_defines
   use vpi_rand_utils
+
   implicit none
 
   integer, parameter :: LATTICE_FILL = 0

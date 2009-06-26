@@ -9,6 +9,8 @@ module tb_null_potential
   !@-node:gcross.20090624144408.1631:<< Imported modules >>
   !@nl
 
+  implicit none
+
   !@  << Variables >>
   !@+node:gcross.20090624144408.1632:<< Variables >>
   !@-node:gcross.20090624144408.1632:<< Variables >>

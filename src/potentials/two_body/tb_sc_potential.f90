@@ -10,11 +10,13 @@ module tb_sc_potential
   !@-node:gcross.20090624144408.1701:<< Imported modules >>
   !@nl
 
+  implicit none
+
   !@  << Variables >>
   !@+node:gcross.20090624144408.1702:<< Variables >>
   real (kind=b8), private :: coefficient = 2352.5_b8
   real (kind=b8), private :: length_scale = 0.05_b8
-  real (kind=b8), private :: length_scaling_coefficient
+  real (kind=b8), private :: length_scaling_factor
   real (kind=b8), private :: derivative_coefficient
   !@-node:gcross.20090624144408.1702:<< Variables >>
   !@nl

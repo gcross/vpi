@@ -11,17 +11,20 @@ module sp_lattice_trial
   !@-node:gcross.20090624144408.1982:<< Imported modules >>
   !@nl
 
+  implicit none
+
   !@  << Variables >>
   !@+node:gcross.20090624144408.1983:<< Variables >>
   real(kind=b8), private :: x_harmonic_coefficient = 1_b8
   real(kind=b8), private :: y_harmonic_coefficient = 1_b8
   real(kind=b8), private :: z_harmonic_coefficient = 1_b8
-  real(kind=b8), private :: p_lattice_ax = M_PI
-  real(kind=b8), private :: p_lattice_ay = M_PI
-  real(kind=b8), private :: p_lattice_az = M_PI
-  real(kind=b8), private :: p_lattice_phase_x = M_PI/2.0_b8
-  real(kind=b8), private :: p_lattice_phase_y = M_PI/2.0_b8
-  real(kind=b8), private :: p_lattice_phase_z = M_PI/2.0_b8
+  real(kind=b8), private :: lattice_ax = M_PI
+  real(kind=b8), private :: lattice_ay = M_PI
+  real(kind=b8), private :: lattice_az = M_PI
+  real(kind=b8), private :: lattice_weight = 1
+  real(kind=b8), private :: lattice_phase_x = M_PI/2.0_b8
+  real(kind=b8), private :: lattice_phase_y = M_PI/2.0_b8
+  real(kind=b8), private :: lattice_phase_z = M_PI/2.0_b8
   !@-node:gcross.20090624144408.1983:<< Variables >>
   !@nl
 
@@ -32,7 +35,11 @@ contains
   !@+others
   !@+node:gcross.20090624144408.1985:init_sp_tfunc
   subroutine init_sp_tfunc ()
-    namelist /single_particle_trial_function_parameters/ coefficient_2nd_order, coefficient_4th_order
+    namelist /single_particle_trial_function_parameters/ &
+      x_harmonic_coefficient, y_harmonic_coefficient, z_harmonic_coefficient, &
+      lattice_ax, lattice_ay, lattice_az, &
+      lattice_phase_x, lattice_phase_y, lattice_phase_z, &
+      lattice_weight
 
     read(unit=10,nml=single_particle_trial_function_parameters)
 
@@ -51,9 +58,9 @@ contains
                   + y_harmonic_coefficient*x(sl,:,2)**2 &
                   + z_harmonic_coefficient*x(sl,:,3)**2 &
                  )/2.0 + &
-                p_lat_w*sin(x(sl,:,1)*p_lattice_ax+p_lattice_phase_x)**2 + &
-                p_lat_w*sin(x(sl,:,2)*p_lattice_ay+p_lattice_phase_y)**2 + &
-                p_lat_w*sin(x(sl,:,3)*p_lattice_az+p_lattice_phase_z)**2
+                lattice_weight*sin(x(sl,:,1)*lattice_ax+lattice_phase_x)**2 + &
+                lattice_weight*sin(x(sl,:,2)*lattice_ay+lattice_phase_y)**2 + &
+                lattice_weight*sin(x(sl,:,3)*lattice_az+lattice_phase_z)**2
     y = sum(psi_t)
 
   end function tfunc

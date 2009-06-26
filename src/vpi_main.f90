@@ -20,11 +20,7 @@ program Test_VPI
   use vpi_xij
   use vpi_obdm
   use timers
-  !@-node:gcross.20090623152316.5:<< Imported modules >>
-  !@nl
 
-  !@  << Declarations >>
-  !@+node:gcross.20090623152316.7:<< Declarations >>
   !@<< Choice of trial / potential functions >>
   !@+node:gcross.20090623152316.4:<< Choice of trial / potential functions >>
   use sp_rectangular_box_potential
@@ -35,16 +31,18 @@ program Test_VPI
   use jas_independent_trial
   !@-node:gcross.20090623152316.4:<< Choice of trial / potential functions >>
   !@nl
+  !@-node:gcross.20090623152316.5:<< Imported modules >>
+  !@nl
 
   implicit none
 
-  !@@raw
+!@@raw
 #ifdef USE_MPI
   include 'mpif.h'
 #endif
-  !@@end_raw
+!@@end_raw
 
-  !@<< Global variables >>
+  !@  << Global Variables >>
   !@+node:gcross.20090623152316.6:<< Global variables >>
   INTEGER :: short, medium, long, vlong
   PARAMETER (short = SELECTED_INT_KIND(2), &
@@ -188,9 +186,6 @@ program Test_VPI
   INTEGER no_fn_evals,no_fn_evals_nl2sol
   !@nonl
   !@-node:gcross.20090623152316.6:<< Global variables >>
-  !@nl
-  !@nonl
-  !@-node:gcross.20090623152316.7:<< Declarations >>
   !@nl
 
   !@  << Initialization >>

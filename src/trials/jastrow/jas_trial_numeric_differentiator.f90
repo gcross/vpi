@@ -3,9 +3,11 @@
 !@@language fortran90
 module jas_trial_numeric_differentiator
 
-use kinds
-use vpi_defines
-use vpi_xij
+  use kinds
+  use vpi_defines
+  use vpi_xij
+
+  implicit none
 
 contains
 

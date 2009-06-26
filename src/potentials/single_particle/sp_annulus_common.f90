@@ -10,22 +10,24 @@ module sp_annulus_common
   !@-node:gcross.20090624144408.1501:<< Imported modules >>
   !@nl
 
+  implicit none
+
   !@  << Variables >>
   !@+node:gcross.20090624144408.1502:<< Variables >>
-  real, private :: ab_e = 0
-  real, private :: ab_a = 0.1
-  real, private :: ab_asq 
-  real, private :: ab_2asq
-  real, private :: ab_e_norm
-  real, private :: ab_x0 = -100
+  real :: ab_e = 0
+  real :: ab_a = 0.1
+  real :: ab_asq 
+  real :: ab_2asq
+  real :: ab_e_norm
+  real :: ab_x0 = -100
 
-  real, private :: ap_e = 20
-  real, private :: ap_a = 1.5
-  real, private :: ap_asq 
-  real, private :: ap_2asq
-  real, private :: ap_e_norm
-  real, private :: ap_lam = 1.0
-  real, private :: ae3 = 4  ! extra harmonic confinment for second species in Annulus3
+  real :: ap_e = 20
+  real :: ap_a = 1.5
+  real :: ap_asq 
+  real :: ap_2asq
+  real :: ap_e_norm
+  real :: ap_lam = 1.0
+  real :: ae3 = 4  ! extra harmonic confinment for second species in Annulus3
   !@-node:gcross.20090624144408.1502:<< Variables >>
   !@nl
 

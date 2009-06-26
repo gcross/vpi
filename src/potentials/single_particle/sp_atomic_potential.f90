@@ -9,6 +9,8 @@ module sp_atomic_potential
   !@-node:gcross.20090624144408.1560:<< Imported modules >>
   !@nl
 
+  implicit none
+
   !@  << Variables >>
   !@+node:gcross.20090624144408.1561:<< Variables >>
   real (kind=b8), private :: coefficient = 1.0_b8
