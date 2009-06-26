@@ -190,6 +190,8 @@ program Test_VPI
 
   !@  << Initialization >>
   !@+node:gcross.20090623152316.8:<< Initialization >>
+  print *, "*** INITIALIZE ***"
+
   !@@raw
 #ifdef USE_MPI
   !@@end_raw
@@ -369,9 +371,9 @@ program Test_VPI
   !@nonl
   !@-node:gcross.20090623152316.12:<< Allocate memory for arrays >>
   !@nl
-  !@-node:gcross.20090623152316.8:<< Initialization >>
-  !@nl
 
+  !@<< Set statistical counters to zero >>
+  !@+node:gcross.20090626131222.1708:<< Set statistical counters to zero >>
   mcount = 0
   accr_v = 0
   U_cum = 0
@@ -419,7 +421,12 @@ program Test_VPI
   grad_lntfn = 0
   lap_lnjas = 0
   lap_lntfn = 0
+  !@nonl
+  !@-node:gcross.20090626131222.1708:<< Set statistical counters to zero >>
+  !@nl
 
+  !@<< Initialize "slice weights" >>
+  !@+node:gcross.20090626131222.1709:<< Initialize "slice weights" >>
   ! these "slice weights" are used to give the proper weight to even
   ! and odd terms when calculating the Green's function.  
   ! in the fourth order short time approximation for the Green's funciton,
@@ -459,31 +466,43 @@ program Test_VPI
   U_weight(N_SLICE) = 0.5_b8
   U_weight(CSLICE) = 0.5_b8
   U_weight(CSLICE+1) = 0.5_b8
+  !@nonl
+  !@-node:gcross.20090626131222.1709:<< Initialize "slice weights" >>
+  !@nl
 
-  ! read in seed file / create a new seed for random number generator
+    !@  << Seed random number generator >>
+    !@+node:gcross.20090626131222.1710:<< Seed random number generator >>
+    ! read in seed file / create a new seed for random number generator
     call ru_init_seed_file(my_rank)
     if (eval_rotation) then
       gfn_v = init_rot_gfn (size(gfn_v), L_MAX, dtau)
       call write_rot_gfn(gfn_v)
     end if
+    !@-node:gcross.20090626131222.1710:<< Seed random number generator >>
+    !@nl
 
+    !@  << Set the physical system to its initial state >>
+    !@+node:gcross.20090626131222.1715:<< Set the physical system to its initial state >>
+    !@<< Set up the positional degrees of freedom >>
+    !@+node:gcross.20090626131222.1711:<< Set up the positional degrees of freedom >>
     q0 = 0.0
     q1 = 0.0
+
     !print *, q0(1,:,:)
     !print *, "pfunc = ", pfunc(q0(1,:,:),N_PARTICLE, N_DIM)
     !print *, "test: ", test_fvar(q0,pfunc)
 
-    print *, "*** INITIALIZE ***"
-
     write(my_fname,"(a14,i4.4)")"last_path.dat.",my_rank
     inquire(file=my_fname, exist=ex)
     if ( ex ) then
+      !@  << Read initial path from file with same rank as myself >>
+      !@+node:gcross.20090626131222.1712:<< Read initial path from file with same rank as myself >>
       open(10, file=my_fname, action="read")
       do i = 1,N_SLICE
         read(UNIT=10 ,END=111 ,FMT=* ) q0(i,:,:)
         !print *, q0(i,:,:)
       end do
-111   close(10)
+      111   close(10)
       if(i .lt. N_SLICE) then
         do j = 1, N_SLICE
           k = j*float(i-1)/float(N_SLICE)
@@ -507,17 +526,22 @@ program Test_VPI
           endif
         end do
         q0 = q1
-      endif 
+      endif
+
+      !@-node:gcross.20090626131222.1712:<< Read initial path from file with same rank as myself >>
+      !@nl
     else
       write(my_fname,"(a14,i4.4)")"last_path.dat.",0
       inquire(file=my_fname, exist=ex)
       if ( ex ) then
+        !@    << Read initial path from file tagged with rank 0 >>
+        !@+node:gcross.20090626131222.1714:<< Read initial path from file tagged with rank 0 >>
         open(10, file=my_fname, action="read")
         do i = 1,N_SLICE
           read(UNIT=10 ,END=113 ,FMT=* ) q0(i,:,:)
           !print *, q0(i,:,:)
         end do
-113     close(10)
+        113     close(10)
         if(i .lt. N_SLICE) then
           do j = 1, N_SLICE
             k = j*float(i-1)/float(N_SLICE)
@@ -538,17 +562,27 @@ program Test_VPI
           end do
           q0 = q1
         endif 
+        !@nonl
+        !@-node:gcross.20090626131222.1714:<< Read initial path from file tagged with rank 0 >>
+        !@nl
       else
+        !@    << Generate initial path >>
+        !@+node:gcross.20090626131222.1713:<< Generate initial path >>
         call vpi_make_lattice( q0, real(p_pbc_l), LATTICE_FILL)
         do ii =1, n_particle
           if( .not.((ii .eq. od_pnum) .and. eval_off_diagonal) ) then  
             q0(cslice+1,ii,:) = q0(cslice,ii,:)
           endif
         end do
+        !@-node:gcross.20090626131222.1713:<< Generate initial path >>
+        !@nl
       end if
     end if
+    !@-node:gcross.20090626131222.1711:<< Set up the positional degrees of freedom >>
+    !@nl
 
-
+    !@<< Set up the rotational degrees of freedom >>
+    !@+node:gcross.20090626131222.1716:<< Set up the rotational degrees of freedom >>
     if (eval_rotation) then
       write(my_fname,"(a18,i4.4)")"last_rot_path.dat.",my_rank
       inquire(file=my_fname, exist=ex)
@@ -558,7 +592,7 @@ program Test_VPI
           read(UNIT=10, END=112, FMT=*) q_rot0(i,:,:)
           !print *, q0(i,:,:)
         end do
-112     close(10)
+    112     close(10)
 
       else
         q_rot0(:,:,1) = 0.0_b8
@@ -567,6 +601,8 @@ program Test_VPI
       end if
       q_rot1 = q_rot0
     end if
+    !@-node:gcross.20090626131222.1716:<< Set up the rotational degrees of freedom >>
+    !@nl
 
     if(force_space_flip) then
       q0(CSLICE+2:N_SLICE,:,3) = -q0(CSLICE+2:N_SLICE,:,3)
@@ -580,6 +616,8 @@ program Test_VPI
       qobs(:,:,:) = q0(:,:,:)
     end if
 
+    !@<< Update displacement matrix >>
+    !@+node:gcross.20090626131222.1717:<< Update displacement matrix >>
     do ii = 1, N_PARTICLE
       if(use_pbc) then
         call vpi_update_xij_pbc( xij2_0, q0, 1, N_SLICE, ii, N_SLICE, N_PARTICLE, N_DIM  )
@@ -587,12 +625,36 @@ program Test_VPI
         call vpi_update_xij( xij2_0, q0, 1, N_SLICE, ii, N_SLICE, N_PARTICLE, N_DIM  )
       end if
     end do
+    !@nonl
+    !@-node:gcross.20090626131222.1717:<< Update displacement matrix >>
+    !@nl
 
+    !@<< Update the phase >>
+    !@+node:gcross.20090626131222.1718:<< Update the phase >>
     if( use_eval_phase ) then
       call update_phase( phase_0, 1, N_SLICE, qobs, xij2_0 )
     end if
     phase_1 = phase_0
+    !@nonl
+    !@-node:gcross.20090626131222.1718:<< Update the phase >>
+    !@nl
+    !@-node:gcross.20090626131222.1715:<< Set the physical system to its initial state >>
+    !@nl
 
+    !@  << Update the phase >>
+    !@+middle:gcross.20090626131222.1715:<< Set the physical system to its initial state >>
+    !@+node:gcross.20090626131222.1718:<< Update the phase >>
+    if( use_eval_phase ) then
+      call update_phase( phase_0, 1, N_SLICE, qobs, xij2_0 )
+    end if
+    phase_1 = phase_0
+    !@nonl
+    !@-node:gcross.20090626131222.1718:<< Update the phase >>
+    !@-middle:gcross.20090626131222.1715:<< Set the physical system to its initial state >>
+    !@nl
+
+    !@  << Compute initial values of some physical quantities >>
+    !@+node:gcross.20090626131222.1719:<< Compute initial values of some physical quantities >>
     acc_flag = .true.
     do ii = 1, N_SLICE
       do jj = 1, N_PARTICLE
@@ -614,25 +676,37 @@ program Test_VPI
       gradU2_0(ii) = sum( grad_U(:,1)**2 + grad_U(:,2)**2 + grad_U(:,3)**2 )
     end do
 
+    !@@raw
 #ifdef USE_SWFN
+    !@@end_raw
     lntfn0 = 2.0_b8*( tfunc(q0, CSLICE, N_SLICE, N_PARTICLE, N_DIM) + &
                       jas_tfun( q0, xij2_0, CSLICE, N_SLICE, N_PARTICLE, N_DIM) )
+    !@@raw
 #else
+    !@@end_raw
     lntfn0 = tfunc(q0, 1, N_SLICE, N_PARTICLE, N_DIM) + &
              tfunc(q0, N_SLICE, N_SLICE, N_PARTICLE, N_DIM) + &
              jas_tfun(q0, xij2_0, 1, N_SLICE, N_PARTICLE, N_DIM) + &
              jas_tfun(q0, xij2_0, N_SLICE, N_SLICE, N_PARTICLE, N_DIM)
+    !@@raw
 #endif
+    !@@end_raw
 
     U_1(:,:) = U_0(:,:)
     gradU2_1(:) = gradU2_0(:)
     xij2_1(:,:,:) = xij2_0(:,:,:)
+    !@-node:gcross.20090626131222.1719:<< Compute initial values of some physical quantities >>
+    !@nl
 
     qsq_sum = 0.0
+  !@-node:gcross.20090623152316.8:<< Initialization >>
+  !@nl
 
     !@    << Main iteration >>
     !@+node:gcross.20090623152316.33:<< Main iteration >>
     do i = 1,nblocks
+      !@  << Initialize accumulating variables to zero >>
+      !@+node:gcross.20090626131222.1720:<< Initialize accumulating variables to zero >>
       n_moves_pb = 0
       dE = 0.0_b8
       dn_rms = 0.0_b8
@@ -640,6 +714,9 @@ program Test_VPI
       E_left = 0.0_b8
       E_center = 0.0_b8
       E_right = 0.0_b8
+      !@-node:gcross.20090626131222.1720:<< Initialize accumulating variables to zero >>
+      !@nl
+
       !@  << Start the timer >>
       !@+node:gcross.20090626091217.1689:<< Start the timer >>
       !@@raw
