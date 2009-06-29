@@ -190,8 +190,6 @@ program Test_VPI
 
   !@  << Initialization >>
   !@+node:gcross.20090623152316.8:<< Initialization >>
-  print *, "*** INITIALIZE ***"
-
   !@@raw
 #ifdef USE_MPI
   !@@end_raw
@@ -216,6 +214,8 @@ program Test_VPI
   !@@raw
 #endif
   !@@end_raw
+
+  print *, "*** INITIALIZE ***"
 
   !@<< Read in configuration >>
   !@+node:gcross.20090623152316.10:<< Read in configuration >>
