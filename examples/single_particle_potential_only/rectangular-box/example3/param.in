@@ -1,0 +1,47 @@
+&CONFIGURATION
+N_PARTICLE = 2,
+N_SLICE = 46,
+dM = 11,
+dtau = 0.01,
+dnu = 0.3,
+dswap = 0.0,
+ntol_eps = 1e-6,
+PROB_BBRIDGE_MOVE = 0.9,
+PROB_RIGID_MOVE = 0.1,
+PROB_SWAP_MOVE = 0.0,
+PROB_OD_PNUM = 0.0,
+OD_PNUM = 1,
+nblocks = 10,
+nsteps = 10000
+N_BINS = 51,
+N_BINS_ROT = 51,
+N_BINS_full = 51,
+N_BINS_GOFR = 51,
+size_x = 2.0 2.0 2.0,
+size_r = 2.5,
+size_x_gofr = 2.5,
+size_rot = 2.5,
+eval_off_diagonal = F,
+write_paths = F,
+eval_column_density = T,
+eval_full_density = F,
+eval_qsq_sum = T,
+use_eval_cfn = T,
+use_HS_gfn = F,
+use_HW_gfn = T,
+hard_wall_locations = 0.5 0.5 0.5,
+use_pbc = F,
+p_pbc_L = 1.0,
+use_lattice_file = F,
+use_expot_file = F
+/
+&single_particle_potential_parameters
+x_length = 1,
+y_length = 1,
+z_length = 1
+/
+&single_particle_trial_function_parameters
+x_length = 0.5,
+y_length = 0.5,
+z_length = 0.5
+/

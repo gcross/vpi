@@ -1,7 +1,7 @@
-VPI_ROOT = ../../..
+VPI_ROOT = ../../../..
 
 OBJS =  \
-	${VPI_ROOT}/src/potentials/single_particle/sp_rectangular_box_potential.o \
+	${VPI_ROOT}/src/potentials/single_particle/sp_harmonic_oscillator_3D_potential.o \
 	${VPI_ROOT}/src/potentials/two_body/tb_null_potential.o \
 	${VPI_ROOT}/src/potentials/rotational/rot_undefined_potential.o \
 	${VPI_ROOT}/src/trials/single_particle/sp_box_trial.o \

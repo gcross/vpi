@@ -1,8 +1,8 @@
 &CONFIGURATION
 N_PARTICLE = 1,
-N_SLICE = 2002,
-dM = 1000,
-dtau = 0.001,
+N_SLICE = 22,
+dM = 11,
+dtau = 0.1,
 dnu = 0.3,
 dswap = 0.0,
 ntol_eps = 1e-6,
@@ -12,7 +12,7 @@ PROB_SWAP_MOVE = 0.0,
 PROB_OD_PNUM = 0.0,
 OD_PNUM = 1,
 nblocks = 10,
-nsteps = 40000
+nsteps = 10000,
 N_BINS = 51,
 N_BINS_ROT = 51,
 N_BINS_full = 51,
@@ -36,9 +36,9 @@ use_lattice_file = F,
 use_expot_file = F
 /
 &single_particle_potential_parameters
-x_length = 1,
-y_length = 1,
-z_length = 1
+x_coefficient = 1,
+y_coefficient = 1,
+z_coefficient = 1
 /
 &single_particle_trial_function_parameters
 x_length = 1.0,
