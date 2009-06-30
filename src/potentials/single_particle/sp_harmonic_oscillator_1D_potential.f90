@@ -1,7 +1,7 @@
 !@+leo-ver=4-thin
 !@+node:gcross.20090624094338.1396:@thin sp_harmonic_oscillator_1D_potential.f90
 !@@language fortran90
-module sp_harmonic_oscillator_1D_potential
+module vpi_single_particle_potential
 
   !@  << Imported modules >>
   !@+node:gcross.20090624094338.1397:<< Imported modules >>
@@ -62,6 +62,6 @@ contains
   !@-node:gcross.20090624094338.1399:<< Subroutines >>
   !@nl
 
-end module sp_harmonic_oscillator_1D_potential
+end module vpi_single_particle_potential
 !@-node:gcross.20090624094338.1396:@thin sp_harmonic_oscillator_1D_potential.f90
 !@-leo

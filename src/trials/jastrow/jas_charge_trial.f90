@@ -1,7 +1,7 @@
 !@+leo-ver=4-thin
 !@+node:gcross.20090624144408.2024:@thin jas_charge_trial.f90
 !@@language fortran90
-module jas_charge_trial
+module vpi_jastrow_trial
 
   !@  << Imported modules >>
   !@+node:gcross.20090624144408.2025:<< Imported modules >>
@@ -76,6 +76,6 @@ contains
   !@-node:gcross.20090624144408.2027:<< Subroutines >>
   !@nl
 
-end module jas_charge_trial
+end module vpi_jastrow_trial
 !@-node:gcross.20090624144408.2024:@thin jas_charge_trial.f90
 !@-leo

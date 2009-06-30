@@ -1,7 +1,7 @@
 !@+leo-ver=4-thin
 !@+node:gcross.20090624144408.1866:@thin sp_anharmonic_trial.f90
 !@@language fortran90
-module sp_anharmonic_trial
+module vpi_single_particle_trial
 
   !@  << Imported modules >>
   !@+node:gcross.20090624144408.1867:<< Imported modules >>
@@ -66,6 +66,6 @@ contains
   !@-node:gcross.20090624144408.1869:<< Subroutines >>
   !@nl
 
-end module sp_anharmonic_trial
+end module vpi_single_particle_trial
 !@-node:gcross.20090624144408.1866:@thin sp_anharmonic_trial.f90
 !@-leo

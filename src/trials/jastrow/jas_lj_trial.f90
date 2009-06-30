@@ -1,7 +1,7 @@
 !@+leo-ver=4-thin
 !@+node:gcross.20090624144408.2010:@thin jas_lj_trial.f90
 !@@language fortran90
-module jas_lj_trial
+module vpi_jastrow_trial
 
   !@  << Imported modules >>
   !@+node:gcross.20090624144408.2011:<< Imported modules >>
@@ -101,6 +101,6 @@ contains
   !@-node:gcross.20090624144408.2013:<< Subroutines >>
   !@nl
 
-end module jas_lj_trial
+end module vpi_jastrow_trial
 !@-node:gcross.20090624144408.2010:@thin jas_lj_trial.f90
 !@-leo

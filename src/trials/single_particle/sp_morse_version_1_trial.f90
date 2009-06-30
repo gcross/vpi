@@ -1,7 +1,7 @@
 !@+leo-ver=4-thin
 !@+node:gcross.20090624144408.1882:@thin sp_morse_version_1_trial.f90
 !@@language fortran90
-module sp_morse_version_1_trial
+module vpi_single_particle_trial
 
   !@  << Imported modules >>
   !@+node:gcross.20090624144408.1883:<< Imported modules >>
@@ -93,6 +93,6 @@ contains
   !@-node:gcross.20090624144408.1885:<< Subroutines >>
   !@nl
 
-end module sp_morse_version_1_trial
+end module vpi_single_particle_trial
 !@-node:gcross.20090624144408.1882:@thin sp_morse_version_1_trial.f90
 !@-leo

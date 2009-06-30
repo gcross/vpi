@@ -2,7 +2,7 @@
 !@+node:gcross.20090624144408.1838:@thin sp_box_trial.f90
 !@@language fortran90
 !@@tabwidth -2
-module sp_box_trial
+module vpi_single_particle_trial
 
   !@  << Imported modules >>
   !@+node:gcross.20090624144408.1839:<< Imported modules >>
@@ -91,6 +91,6 @@ contains
   !@-node:gcross.20090624144408.1841:<< Subroutines >>
   !@nl
 
-end module sp_box_trial
+end module vpi_single_particle_trial
 !@-node:gcross.20090624144408.1838:@thin sp_box_trial.f90
 !@-leo

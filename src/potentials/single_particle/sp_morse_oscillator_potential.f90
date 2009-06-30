@@ -1,7 +1,7 @@
 !@+leo-ver=4-thin
 !@+node:gcross.20090624144408.1441:@thin sp_morse_oscillator_potential.f90
 !@@language fortran90
-module sp_morse_oscillator_potential
+module vpi_single_particle_potential
 
   !@  << Imported modules >>
   !@+node:gcross.20090624144408.1442:<< Imported modules >>
@@ -101,6 +101,6 @@ contains
   !@-node:gcross.20090624144408.1444:<< Subroutines >>
   !@nl
 
-end module sp_morse_oscillator_potential
+end module vpi_single_particle_potential
 !@-node:gcross.20090624144408.1441:@thin sp_morse_oscillator_potential.f90
 !@-leo

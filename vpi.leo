@@ -91,11 +91,18 @@
 <v t="gcross.20090624144408.2038"><vh>@thin jas_independent_trial.f90</vh></v>
 </v>
 </v>
+<v t="gcross.20090626170642.1723"><vh>Output file descriptions</vh>
+<v t="gcross.20090626170642.1724"><vh>od__</vh></v>
+</v>
 <v t="gcross.20090623152316.2"><vh>@path src</vh>
-<v t="gcross.20090623152316.4"><vh>&lt;&lt; Choice of trial / potential functions &gt;&gt;</vh></v>
 <v t="gcross.20090624144408.1462"><vh>@thin constants.f90</vh></v>
 <v t="gcross.20090623152316.3"><vh>@thin vpi_main.f90</vh></v>
 <v t="gcross.20090623152316.73"><vh>@thin vpi_sample.f90</vh></v>
+<v t="gcross.20090629153134.1738"><vh>@thin vpi_single_particle_potential.f90</vh></v>
+<v t="gcross.20090629153134.1740"><vh>@thin vpi_two_body_potential.f90</vh></v>
+<v t="gcross.20090629153134.1743"><vh>@thin vpi_rotational_potential.f90</vh></v>
+<v t="gcross.20090629153134.1745"><vh>@thin vpi_single_particle_trial.f90</vh></v>
+<v t="gcross.20090629153134.1747"><vh>@thin vpi_jastrow_trial.f90</vh></v>
 <v t="gcross.20090624144408.1798"><vh>@thin vpi_gfn.f90</vh></v>
 <v t="gcross.20090624144408.2046"><vh>@thin vpi_lattice.f90</vh></v>
 <v t="gcross.20090626112946.1710"><vh>@thin vpi_defines.f90</vh></v>
@@ -104,13 +111,6 @@
 <tnodes>
 <t tx="gcross.20090623152316.1"></t>
 <t tx="gcross.20090623152316.2"></t>
-<t tx="gcross.20090623152316.4">use sp_rectangular_box_potential
-use tb_NULL_potential
-use rot_undefined_potential
-
-use sp_box_trial
-use jas_independent_trial
-</t>
 <t tx="gcross.20090624094338.1366"></t>
 <t tx="gcross.20090624144408.1608"></t>
 <t tx="gcross.20090624144408.1750"></t>

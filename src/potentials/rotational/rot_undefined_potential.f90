@@ -1,7 +1,7 @@
 !@+leo-ver=4-thin
 !@+node:gcross.20090624144408.1772:@thin rot_undefined_potential.f90
 !@@language fortran90
-module rot_undefined_potential
+module vpi_rotational_potential
 
   !@  << Imported modules >>
   !@+node:gcross.20090624144408.1773:<< Imported modules >>
@@ -59,6 +59,6 @@ contains
   !@-node:gcross.20090624144408.1775:<< Subroutines >>
   !@nl
 
-end module rot_undefined_potential
+end module vpi_rotational_potential
 !@-node:gcross.20090624144408.1772:@thin rot_undefined_potential.f90
 !@-leo

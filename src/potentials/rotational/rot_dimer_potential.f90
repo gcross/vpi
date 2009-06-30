@@ -1,7 +1,7 @@
 !@+leo-ver=4-thin
 !@+node:gcross.20090624144408.1758:@thin rot_dimer_potential.f90
 !@@language fortran90
-module rot_dimer_potential
+module vpi_rotational_potential
 
   !@  << Imported modules >>
   !@+node:gcross.20090624144408.1759:<< Imported modules >>
@@ -85,6 +85,6 @@ contains
   !@-node:gcross.20090624144408.1761:<< Subroutines >>
   !@nl
 
-end module rot_dimer_potential
+end module vpi_rotational_potential
 !@-node:gcross.20090624144408.1758:@thin rot_dimer_potential.f90
 !@-leo

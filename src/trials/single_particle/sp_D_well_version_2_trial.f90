@@ -1,7 +1,7 @@
 !@+leo-ver=4-thin
 !@+node:gcross.20090624144408.1953:@thin sp_D_well_version_2_trial.f90
 !@@language fortran90
-module sp_D_well_version_2_trial
+module vpi_single_particle_trial
 
   !@  << Imported modules >>
   !@+node:gcross.20090624144408.1954:<< Imported modules >>
@@ -50,6 +50,6 @@ contains
   !@-node:gcross.20090624144408.1955:<< Subroutines >>
   !@nl
 
-end module sp_D_well_version_2_trial
+end module vpi_single_particle_trial
 !@-node:gcross.20090624144408.1953:@thin sp_D_well_version_2_trial.f90
 !@-leo

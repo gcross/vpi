@@ -1,7 +1,7 @@
 !@+leo-ver=4-thin
 !@+node:gcross.20090624144408.1601:@thin sp_lattice_3D_with_HO_potential.f90
 !@@language fortran90
-module sp_lattice_3D_with_HO_potential
+module vpi_single_particle_potential
 
   !@  << Imported modules >>
   !@+node:gcross.20090624144408.1602:<< Imported modules >>
@@ -85,6 +85,6 @@ contains
   !@-node:gcross.20090624144408.1604:<< Subroutines >>
   !@nl
 
-end module sp_lattice_3D_with_HO_potential
+end module vpi_single_particle_potential
 !@-node:gcross.20090624144408.1601:@thin sp_lattice_3D_with_HO_potential.f90
 !@-leo

@@ -1,7 +1,7 @@
 !@+leo-ver=4-thin
 !@+node:gcross.20090624144408.1966:@thin sp_N_well_trial.f90
 !@@language fortran90
-module sp_N_well_trial
+module vpi_single_particle_trial
 
   !@  << Imported modules >>
   !@+node:gcross.20090624144408.1967:<< Imported modules >>
@@ -67,6 +67,6 @@ contains
   !@-node:gcross.20090624144408.1969:<< Subroutines >>
   !@nl
 
-end module sp_N_well_trial
+end module vpi_single_particle_trial
 !@-node:gcross.20090624144408.1966:@thin sp_N_well_trial.f90
 !@-leo

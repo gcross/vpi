@@ -1,5 +1,3 @@
-all: kinds.o constants.o vpi_defines.o vpi_xij.o trials/single_particle/sp_morse_trial_common.o vpi
-
 MODULE_PATH = potentials/single_particle:potentials/two_body:potentials/rotational:trials/single_particle:trials/jastrow:.
 
 ################################################################################
@@ -147,14 +145,36 @@ TRIAL_OBJS = ${SINGLE_BODY_TRIAL_OBJS} ${JASTROW_TRIAL_OBJS}
 
 OBJS = ${POTENTIAL_OBJS} ${TRIAL_OBJS} ${PROGRAM_OBJS}
 
+INTERFACE_OBJS = \
+	vpi_single_particle_potential.o \
+	vpi_two_body_potential.o \
+	vpi_rotational_potential.o \
+	vpi_single_particle_trial.o \
+	vpi_jastrow_trial.o
+
 %.o: %.f90
 	${FC} ${F90FLAGS} ${MYFFLAGS} -c $< -o $@
+
+all: kinds.o constants.o vpi_defines.o vpi_xij.o \
+	potentials/single_particle/sp_annulus_common.o \
+	trials/single_particle/sp_morse_trial_common.o \
+	trials/single_particle/sp_D_well_trial_common.o \
+	trials/single_particle/sp_trial_numeric_differentiator.o \
+	trials/jastrow/jas_trial_numeric_differentiator.o \
+	../lib/vpi.a ${OBJS}
+
+vpi_main.f90 : ${INTERFACE_OBJS}
+
+.Default: all
 
 vpi_rand_utils.f90: timers.o
 
 # Final executables
 vpi :: ${OBJS}
 	${FC} ${OBJS}  -o ../bin/vpi ${MYLIBS}
+
+../lib/vpi.a : ${PROGRAM_OBJS} ${INTERFACE_OBJS}
+	ar r ../lib/vpi.a ${OBJS}
 
 hnode :: vpi_hnode_defines.o vpi_rand_utils.o vpi_xij.o vpi_hnode_potential.o vpi_gfn.o vpi_hnode_trial_func.o vpi_bisect.o vpi_hnode_lattice.o vpi_obdm.o hnode_main.f90
 	${FC} ${F90FLAGS} ${MYFFLAGS} vpi_hnode_defines.o vpi_rand_utils.o vpi_xij.o vpi_hnode_potential.o vpi_gfn.o vpi_hnode_trial_func.o vpi_bisect.o vpi_hnode_lattice.o vpi_obdm.o hnode_main.f90 -o ../bin/hnode-test

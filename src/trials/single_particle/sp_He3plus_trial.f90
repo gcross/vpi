@@ -1,7 +1,7 @@
 !@+leo-ver=4-thin
 !@+node:gcross.20090624144408.1809:@thin sp_He3plus_trial.f90
 !@@language fortran90
-module sp_He3plus_trial
+module vpi_single_particle_trial
 
   !@  << Imported modules >>
   !@+node:gcross.20090624144408.1810:<< Imported modules >>
@@ -71,6 +71,6 @@ contains
   !@-node:gcross.20090624144408.1812:<< Subroutines >>
   !@nl
 
-end module sp_He3plus_trial
+end module vpi_single_particle_trial
 !@-node:gcross.20090624144408.1809:@thin sp_He3plus_trial.f90
 !@-leo

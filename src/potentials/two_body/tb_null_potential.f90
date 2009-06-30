@@ -1,7 +1,7 @@
 !@+leo-ver=4-thin
 !@+node:gcross.20090624144408.1630:@thin tb_null_potential.f90
 !@@language fortran90
-module tb_null_potential
+module vpi_two_body_potential
 
   !@  << Imported modules >>
   !@+node:gcross.20090624144408.1631:<< Imported modules >>
@@ -57,6 +57,6 @@ contains
   !@-node:gcross.20090624144408.1633:<< Subroutines >>
   !@nl
 
-end module tb_null_potential
+end module vpi_two_body_potential
 !@-node:gcross.20090624144408.1630:@thin tb_null_potential.f90
 !@-leo

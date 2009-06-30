@@ -1,7 +1,7 @@
 !@+leo-ver=4-thin
 !@+node:gcross.20090624094338.1381:@thin sp_cylindrical_box_potential.f90
 !@@language fortran90
-module sp_cylindrical_box_potential
+module vpi_single_particle_potential
 
   !@  << Imported modules >>
   !@+node:gcross.20090624094338.1382:<< Imported modules >>
@@ -65,6 +65,6 @@ contains
   !@-node:gcross.20090624094338.1384:<< Subroutines >>
   !@nl
 
-end module sp_cylindrical_box_potential
+end module vpi_single_particle_potential
 !@-node:gcross.20090624094338.1381:@thin sp_cylindrical_box_potential.f90
 !@-leo

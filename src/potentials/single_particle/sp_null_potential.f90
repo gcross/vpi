@@ -1,7 +1,7 @@
 !@+leo-ver=4-thin
 !@+node:gcross.20090624144408.1411:@thin sp_null_potential.f90
 !@@language fortran90
-module sp_null_potential
+module vpi_single_particle_potential
 
   !@  << Imported modules >>
   !@+node:gcross.20090624144408.1412:<< Imported modules >>
@@ -55,6 +55,6 @@ contains
   !@-node:gcross.20090624144408.1414:<< Subroutines >>
   !@nl
 
-end module sp_null_potential
+end module vpi_single_particle_potential
 !@-node:gcross.20090624144408.1411:@thin sp_null_potential.f90
 !@-leo

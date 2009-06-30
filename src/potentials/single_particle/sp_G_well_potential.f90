@@ -1,7 +1,7 @@
 !@+leo-ver=4-thin
 !@+node:gcross.20090624144408.1455:@thin sp_G_well_potential.f90
 !@@language fortran90
-module sp_G_well_potential
+module vpi_single_particle_potential
 
   !@  << Imported modules >>
   !@+node:gcross.20090624144408.1456:<< Imported modules >>
@@ -87,6 +87,6 @@ contains
   !@-node:gcross.20090624144408.1458:<< Subroutines >>
   !@nl
 
-end module sp_G_well_potential
+end module vpi_single_particle_potential
 !@-node:gcross.20090624144408.1455:@thin sp_G_well_potential.f90
 !@-leo

@@ -21,16 +21,14 @@ program Test_VPI
   use vpi_obdm
   use timers
 
-  !@<< Choice of trial / potential functions >>
-  !@+node:gcross.20090623152316.4:<< Choice of trial / potential functions >>
-  use sp_rectangular_box_potential
-  use tb_NULL_potential
-  use rot_undefined_potential
+  use vpi_single_particle_potential
+  use vpi_two_body_potential
+  use vpi_rotational_potential
+  use vpi_single_particle_trial
+  use vpi_jastrow_trial
 
-  use sp_box_trial
-  use jas_independent_trial
-  !@-node:gcross.20090623152316.4:<< Choice of trial / potential functions >>
-  !@nl
+  use kinds
+  use constants
   !@-node:gcross.20090623152316.5:<< Imported modules >>
   !@nl
 
@@ -1931,34 +1929,18 @@ program Test_VPI
 !@+others
 !@+node:gcross.20090623152316.13:Subroutines
 !@+others
-!@+node:gcross.20090624144408.2048:Evaluators
-!@+node:gcross.20090623152316.14:vpi_eval_density_cheb
-subroutine vpi_eval_density_cheb( rho, x, nbins, size_x, dndx )
-  real(kind=b8), dimension( nbins , N_DIM ), intent(out):: rho
-  real(kind=b8), dimension( N_PARTICLE , N_DIM ) :: x
-  integer nbins
-  real, dimension(N_DIM) :: size_x, dndx
-
-  real, dimension(nbins) :: yy
-
-  integer bin
-  integer :: i,j,n
-
-
-  do i = 1, N_PARTICLE
-   do j = 1, N_DIM
-     yy(1) = 1
-     yy(2) = x(i,j)
-     do n = 3, nbins
-       yy(n) = 2.0*x(i,j)*yy(n-1)/size_x(j) - yy(n-2)
-     end do
-     rho(:,j) = rho(:,j) + yy(:)
-   end do
- end do
-end subroutine vpi_eval_density_cheb
-!@nonl
-!@-node:gcross.20090623152316.14:vpi_eval_density_cheb
+!@+node:gcross.20090624144408.2048:Evaluators of physical quantities
+!@+node:gcross.20090626170642.1720:Number density
 !@+node:gcross.20090623152316.15:vpi_eval_density
+!@+at
+! For each coordinate axis in position space, vpi_eval_density evaluates the 
+! number density as a function of the coordinate on that axis, integrating 
+! over the other axes.
+! 
+! That is to say, rho(:,n) is the number density as a function of the n-th 
+! coordinate, integrating over the other coordinates.
+!@-at
+!@@c
 subroutine vpi_eval_density( rho, x, nbins, size_x, dndx )
   real(kind=b8), dimension( nbins , N_DIM ), intent(out):: rho
   real(kind=b8), dimension( N_PARTICLE , N_DIM ) :: x
@@ -1978,28 +1960,41 @@ subroutine vpi_eval_density( rho, x, nbins, size_x, dndx )
   end do
 end subroutine vpi_eval_density
 !@-node:gcross.20090623152316.15:vpi_eval_density
-!@+node:gcross.20090623152316.16:vpi_eval_dphase
-subroutine vpi_eval_dphase( rho, x, nbins, size_x, dndx )
-  real(kind=b8), dimension( : , : ), intent(out):: rho
+!@+node:gcross.20090626170642.1721:vpi_eval_full_density
+!@+at
+! Evaluates the number density as a function of the first three position-space 
+! coordinates, integrating over the others.
+!@-at
+!@@c
+subroutine vpi_eval_full_density( od, x, nbins, size_x, dndx )
+  real(kind=b8), dimension( : , : , : ), intent(out):: od
   real(kind=b8), dimension( : , : ) :: x
-  integer nbins
-  real :: size_x, dndx
-  integer bin
+  integer :: nbins
+  real, dimension(N_DIM) :: size_x, dndx
 
-  integer :: i,j
+  integer :: xb, yb, zb
 
-  do i = 1, size(x,1)
-    do j = 1, size(x,2)
-      bin = floor((x(i,j)+size_x)*dndx)+1
-      if ( (bin .le. nbins) .and. (bin .ge. 1) ) then
-        rho(bin,j) = rho(bin,j) + 1
-      end if 
-    end do
+  integer :: i
+
+  do i = 1, N_PARTICLE
+    xb = anint((x(i,1)+size_x(1))*dndx(1))+1
+    if ( (xb .le. nbins) .and. (xb .ge. 1) ) then
+      yb = anint((x(i,2)+size_x(2))*dndx(2))+1
+      if ( (yb .le. nbins) .and. (yb .ge. 1) ) then
+        zb = anint((x(i,3)+size_x(3))*dndx(3))+1
+        if ( (zb .le. nbins) .and. (zb .ge. 1) ) then
+          od(xb,yb,zb) = od(xb,yb,zb) + 1
+        end if
+      end if
+    end if 
   end do
-end subroutine vpi_eval_dphase
-!@nonl
-!@-node:gcross.20090623152316.16:vpi_eval_dphase
+end subroutine vpi_eval_full_density
+!@-node:gcross.20090626170642.1721:vpi_eval_full_density
 !@+node:gcross.20090623152316.17:vpi_eval_radial_density
+!@+at
+! Evaluates number density of particles as a function of the radius.
+!@-at
+!@@c
 subroutine vpi_eval_radial_density( rho, x, nbins, dndx )
   real(kind=b8), dimension( : ), intent(out):: rho
   real(kind=b8), dimension( : , : ) :: x
@@ -2020,24 +2015,34 @@ subroutine vpi_eval_radial_density( rho, x, nbins, dndx )
   end do
 end subroutine vpi_eval_radial_density
 !@-node:gcross.20090623152316.17:vpi_eval_radial_density
-!@+node:gcross.20090623152316.18:vpi_eval_density_sp
-subroutine vpi_eval_density_sp( rho, x, nbins, size_x, dndx )
-  real(kind=b8), dimension( nbins , N_DIM ), intent(out):: rho
-  real(kind=b8), dimension( N_DIM ) :: x
+!@+node:gcross.20090623152316.16:vpi_eval_dphase
+!@+at
+! For each particle, evaluates the number density as a function of radial 
+! distance from the particle.
+!@-at
+!@@c
+subroutine vpi_eval_dphase( rho, x, nbins, size_x, dndx )
+  real(kind=b8), dimension( : , : ), intent(out):: rho
+  real(kind=b8), dimension( : , : ) :: x
   integer nbins
-  real, dimension(N_DIM) :: size_x, dndx
+  real :: size_x, dndx
   integer bin
 
-  integer :: j
+  integer :: i,j
 
-  do j = 1, N_DIM
-    bin = anint((x(j)+size_x(j))*dndx(j))+1
-    if ( (bin .le. nbins) .and. (bin .ge. 1) ) then
-      rho(bin,j) = rho(bin,j) + 1
-    end if 
+  do i = 1, size(x,1)
+    do j = 1, size(x,2)
+      bin = floor((x(i,j)+size_x)*dndx)+1
+      if ( (bin .le. nbins) .and. (bin .ge. 1) ) then
+        rho(bin,j) = rho(bin,j) + 1
+      end if 
+    end do
   end do
-end subroutine vpi_eval_density_sp
-!@-node:gcross.20090623152316.18:vpi_eval_density_sp
+end subroutine vpi_eval_dphase
+!@nonl
+!@-node:gcross.20090623152316.16:vpi_eval_dphase
+!@-node:gcross.20090626170642.1720:Number density
+!@+node:gcross.20090626170642.1725:Optical density?
 !@+node:gcross.20090623152316.19:vpi_eval_optical_density
 subroutine vpi_eval_optical_density( od, od_avg, od_sig, x, id1, id2, nbins, size_x, dndx )
   real(kind=b8), dimension( : , : ), intent(out):: od
@@ -2065,31 +2070,6 @@ subroutine vpi_eval_optical_density( od, od_avg, od_sig, x, id1, id2, nbins, siz
   od = od + tod
   od_sig(:,:) = od_sig(:,:) + (tod(:,:) - od_avg(:,:))**2
 end subroutine vpi_eval_optical_density
-
-subroutine vpi_eval_full_density( od, x, nbins, size_x, dndx )
-  real(kind=b8), dimension( : , : , : ), intent(out):: od
-  real(kind=b8), dimension( : , : ) :: x
-  integer :: nbins
-  real, dimension(N_DIM) :: size_x, dndx
-
-  integer :: xb, yb, zb
-
-  integer :: i
-
-  do i = 1, N_PARTICLE
-    xb = anint((x(i,1)+size_x(1))*dndx(1))+1
-    if ( (xb .le. nbins) .and. (xb .ge. 1) ) then
-      yb = anint((x(i,2)+size_x(2))*dndx(2))+1
-      if ( (yb .le. nbins) .and. (yb .ge. 1) ) then
-        zb = anint((x(i,3)+size_x(3))*dndx(3))+1
-        if ( (zb .le. nbins) .and. (zb .ge. 1) ) then
-          od(xb,yb,zb) = od(xb,yb,zb) + 1
-        end if
-      end if
-    end if 
-  end do
-end subroutine vpi_eval_full_density
-!@nonl
 !@-node:gcross.20090623152316.19:vpi_eval_optical_density
 !@+node:gcross.20090623152316.20:vpi_eval_optical_density2
 subroutine vpi_eval_optical_density2( od, od_avg, od_sig, x, nbins, size_x, dndx )
@@ -2119,6 +2099,126 @@ subroutine vpi_eval_optical_density2( od, od_avg, od_sig, x, nbins, size_x, dndx
   od_sig(:,:) = od_sig(:,:) + (tod(:,:) - od_avg(:,:))**2
 end subroutine vpi_eval_optical_density2
 !@-node:gcross.20090623152316.20:vpi_eval_optical_density2
+!@-node:gcross.20090626170642.1725:Optical density?
+!@+node:gcross.20090626170642.1727:Correlators
+!@+node:gcross.20090623152316.23:vpi_eval_corr_x
+subroutine vpi_eval_corr_x( corr_x, move_start, move_end, x )
+  real(kind=b8), dimension( N_SLICE, N_DIM ), intent(inout):: corr_x 
+  integer :: move_start, move_end
+  real(kind=b8), dimension( N_SLICE, N_PARTICLE, N_DIM ) :: x
+
+  integer :: i,j
+
+  do i = move_start+1, move_end-1
+    do j = 1, N_DIM
+      corr_x(i,j) = corr_x(i,j) + sum( x(1,:,j)*x(i,:,j) )
+      corr_x(N_SLICE-i+1,j) = corr_x(N_SLICE-i+1,j) + sum( x(N_SLICE,:,j)*x(N_SLICE-i+1,:,j) )
+    end do
+  end do
+
+end subroutine vpi_eval_corr_x
+!@-node:gcross.20090623152316.23:vpi_eval_corr_x
+!@+node:gcross.20090623152316.24:vpi_eval_corr_phase
+subroutine vpi_eval_corr_phase( corr_phase, phase, move_start, move_end )
+  real(kind=b8), dimension( N_SLICE ), intent(inout):: corr_phase
+  real(kind=b8), dimension( N_SLICE ), intent(in) :: phase
+  integer :: move_start, move_end
+
+  integer :: i
+
+  do i = move_start+1, move_end-1
+    corr_phase(i) = corr_phase(i) + phase(1)*phase(i)
+    corr_phase(N_SLICE-i+1) = corr_phase(N_SLICE-i+1) + phase(N_SLICE)*phase(N_SLICE-i+1)
+  end do
+
+end subroutine vpi_eval_corr_phase
+!@-node:gcross.20090623152316.24:vpi_eval_corr_phase
+!@+node:gcross.20090623152316.25:vpi_eval_corr_r
+subroutine vpi_eval_corr_r( corr_r, move_start, move_end, x )
+  real(kind=b8), dimension( N_SLICE ), intent(inout):: corr_r
+  real(kind=b8), dimension( N_SLICE, N_PARTICLE, N_DIM ) :: x
+  integer :: move_start, move_end
+
+  integer :: i
+  real(kind=b8) :: r1,rM,tmp
+
+  r1 = sum( (x(1,:,1)**2 + x(1,:,2)**2) ) - N_PARTICLE
+  rM = sum( (x(N_SLICE,:,1)**2 + x(N_SLICE,:,2)**2) ) - N_PARTICLE
+  do i = move_start+1, move_end-1
+    tmp = sum( ( x(i,:,1)**2 + x(i,:,2)**2 ) ) - N_PARTICLE
+    corr_r(i) = corr_r(i) + r1*tmp
+    tmp = sum( ( x(N_SLICE-i+1,:,1)**2 + x(N_SLICE-i+1,:,2)**2 ) ) - N_PARTICLE
+    corr_r(N_SLICE-i+1) = corr_r(N_SLICE-i+1) + rM*tmp
+  end do
+
+end subroutine vpi_eval_corr_r
+!@-node:gcross.20090623152316.25:vpi_eval_corr_r
+!@+node:gcross.20090623152316.26:vpi_eval_corr_xz
+subroutine vpi_eval_corr_xz( corr_xz, move_start, move_end, x )
+  real(kind=b8), dimension( N_SLICE, 2 ), intent(inout):: corr_xz
+  real(kind=b8), dimension( N_SLICE, N_PARTICLE, N_DIM ) :: x
+  integer :: move_start, move_end
+
+  integer :: i,j
+  real(kind=b8) :: r1,rM,tmp
+
+  do i = move_start+1, move_end-1
+    do j = 1, 2
+      corr_xz(i,j) = corr_xz(i,j) + sum( x(1,:,j)*x(1,:,3)*x(i,:,j)*x(i,:,3) )
+      corr_xz(N_SLICE-i+1,j) = corr_xz(N_SLICE-i+1,j) + sum( x(N_SLICE,:,j)*x(N_SLICE,:,3)*x(N_SLICE-i+1,:,j)*x(N_SLICE-i+1,:,3) )
+    end do
+  end do
+
+end subroutine vpi_eval_corr_xz
+!@-node:gcross.20090623152316.26:vpi_eval_corr_xz
+!@-node:gcross.20090626170642.1727:Correlators
+!@+node:gcross.20090626170642.1726:Miscellaneous
+!@-node:gcross.20090626170642.1726:Miscellaneous
+!@+node:gcross.20090626170642.1722:No idea what these do
+!@+node:gcross.20090623152316.14:vpi_eval_density_cheb
+subroutine vpi_eval_density_cheb( rho, x, nbins, size_x, dndx )
+  real(kind=b8), dimension( nbins , N_DIM ), intent(out):: rho
+  real(kind=b8), dimension( N_PARTICLE , N_DIM ) :: x
+  integer nbins
+  real, dimension(N_DIM) :: size_x, dndx
+
+  real, dimension(nbins) :: yy
+
+  integer bin
+  integer :: i,j,n
+
+
+  do i = 1, N_PARTICLE
+   do j = 1, N_DIM
+     yy(1) = 1
+     yy(2) = x(i,j)
+     do n = 3, nbins
+       yy(n) = 2.0*x(i,j)*yy(n-1)/size_x(j) - yy(n-2)
+     end do
+     rho(:,j) = rho(:,j) + yy(:)
+   end do
+ end do
+end subroutine vpi_eval_density_cheb
+!@nonl
+!@-node:gcross.20090623152316.14:vpi_eval_density_cheb
+!@+node:gcross.20090623152316.18:vpi_eval_density_sp
+subroutine vpi_eval_density_sp( rho, x, nbins, size_x, dndx )
+  real(kind=b8), dimension( nbins , N_DIM ), intent(out):: rho
+  real(kind=b8), dimension( N_DIM ) :: x
+  integer nbins
+  real, dimension(N_DIM) :: size_x, dndx
+  integer bin
+
+  integer :: j
+
+  do j = 1, N_DIM
+    bin = anint((x(j)+size_x(j))*dndx(j))+1
+    if ( (bin .le. nbins) .and. (bin .ge. 1) ) then
+      rho(bin,j) = rho(bin,j) + 1
+    end if 
+  end do
+end subroutine vpi_eval_density_sp
+!@-node:gcross.20090623152316.18:vpi_eval_density_sp
 !@+node:gcross.20090623152316.21:vpi_eval_N_R
 subroutine vpi_eval_N_R( N_R, dn_rms, x, islice, dslice )
   real(kind=b8), dimension( : ), intent(inout):: N_R 
@@ -2178,76 +2278,6 @@ subroutine vpi_eval_N_z2( N_zs,N_za, x )
   N_za((tr_cnt-tl_cnt)+N_PARTICLE2+1) = N_za((tr_cnt-tl_cnt)+N_PARTICLE2+1) + 1
 end subroutine vpi_eval_N_z2
 !@-node:gcross.20090623152316.22:vpi_eval_B_z2
-!@+node:gcross.20090623152316.23:vpi_eval_corr_X
-subroutine vpi_eval_corr_x( corr_x, move_start, move_end, x )
-  real(kind=b8), dimension( N_SLICE, N_DIM ), intent(inout):: corr_x 
-  integer :: move_start, move_end
-  real(kind=b8), dimension( N_SLICE, N_PARTICLE, N_DIM ) :: x
-
-  integer :: i,j
-
-  do i = move_start+1, move_end-1
-    do j = 1, N_DIM
-      corr_x(i,j) = corr_x(i,j) + sum( x(1,:,j)*x(i,:,j) )
-      corr_x(N_SLICE-i+1,j) = corr_x(N_SLICE-i+1,j) + sum( x(N_SLICE,:,j)*x(N_SLICE-i+1,:,j) )
-    end do
-  end do
-
-end subroutine vpi_eval_corr_x
-!@-node:gcross.20090623152316.23:vpi_eval_corr_X
-!@+node:gcross.20090623152316.24:vpi_eval_corr_phase
-subroutine vpi_eval_corr_phase( corr_phase, phase, move_start, move_end )
-  real(kind=b8), dimension( N_SLICE ), intent(inout):: corr_phase
-  real(kind=b8), dimension( N_SLICE ), intent(in) :: phase
-  integer :: move_start, move_end
-
-  integer :: i
-
-  do i = move_start+1, move_end-1
-    corr_phase(i) = corr_phase(i) + phase(1)*phase(i)
-    corr_phase(N_SLICE-i+1) = corr_phase(N_SLICE-i+1) + phase(N_SLICE)*phase(N_SLICE-i+1)
-  end do
-
-end subroutine vpi_eval_corr_phase
-!@-node:gcross.20090623152316.24:vpi_eval_corr_phase
-!@+node:gcross.20090623152316.25:vpi_eval_corr_r
-subroutine vpi_eval_corr_r( corr_r, move_start, move_end, x )
-  real(kind=b8), dimension( N_SLICE ), intent(inout):: corr_r
-  real(kind=b8), dimension( N_SLICE, N_PARTICLE, N_DIM ) :: x
-  integer :: move_start, move_end
-
-  integer :: i
-  real(kind=b8) :: r1,rM,tmp
-
-  r1 = sum( (x(1,:,1)**2 + x(1,:,2)**2) ) - N_PARTICLE
-  rM = sum( (x(N_SLICE,:,1)**2 + x(N_SLICE,:,2)**2) ) - N_PARTICLE
-  do i = move_start+1, move_end-1
-    tmp = sum( ( x(i,:,1)**2 + x(i,:,2)**2 ) ) - N_PARTICLE
-    corr_r(i) = corr_r(i) + r1*tmp
-    tmp = sum( ( x(N_SLICE-i+1,:,1)**2 + x(N_SLICE-i+1,:,2)**2 ) ) - N_PARTICLE
-    corr_r(N_SLICE-i+1) = corr_r(N_SLICE-i+1) + rM*tmp
-  end do
-
-end subroutine vpi_eval_corr_r
-!@-node:gcross.20090623152316.25:vpi_eval_corr_r
-!@+node:gcross.20090623152316.26:vpi_eval_corr_xz
-subroutine vpi_eval_corr_xz( corr_xz, move_start, move_end, x )
-  real(kind=b8), dimension( N_SLICE, 2 ), intent(inout):: corr_xz
-  real(kind=b8), dimension( N_SLICE, N_PARTICLE, N_DIM ) :: x
-  integer :: move_start, move_end
-
-  integer :: i,j
-  real(kind=b8) :: r1,rM,tmp
-
-  do i = move_start+1, move_end-1
-    do j = 1, 2
-      corr_xz(i,j) = corr_xz(i,j) + sum( x(1,:,j)*x(1,:,3)*x(i,:,j)*x(i,:,3) )
-      corr_xz(N_SLICE-i+1,j) = corr_xz(N_SLICE-i+1,j) + sum( x(N_SLICE,:,j)*x(N_SLICE,:,3)*x(N_SLICE-i+1,:,j)*x(N_SLICE-i+1,:,3) )
-    end do
-  end do
-
-end subroutine vpi_eval_corr_xz
-!@-node:gcross.20090623152316.26:vpi_eval_corr_xz
 !@+node:gcross.20090623152316.27:vpi_eval_gofr
 subroutine vpi_eval_gofr( gofr, xij2, nbins, dndx )
   integer :: nbins
@@ -2402,7 +2432,8 @@ subroutine vpi_eval_gof_rot( gof_rot, gof_rot_xyz, gof_rot_xyz_avg, gofr_rot, q,
 end subroutine vpi_eval_gof_rot
 !@nonl
 !@-node:gcross.20090623152316.31:vpi_eval_gofrot
-!@-node:gcross.20090624144408.2048:Evaluators
+!@-node:gcross.20090626170642.1722:No idea what these do
+!@-node:gcross.20090624144408.2048:Evaluators of physical quantities
 !@+node:gcross.20090624144408.2049:Input
 !@+node:gcross.20090624144408.2051:read_configuration_file
 subroutine read_configuration_file(pid)

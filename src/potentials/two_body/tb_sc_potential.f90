@@ -1,7 +1,7 @@
 !@+leo-ver=4-thin
 !@+node:gcross.20090624144408.1700:@thin tb_sc_potential.f90
 !@@language fortran90
-module tb_sc_potential
+module vpi_two_body_potential
 
   !@  << Imported modules >>
   !@+node:gcross.20090624144408.1701:<< Imported modules >>
@@ -105,6 +105,6 @@ contains
   !@-node:gcross.20090624144408.1703:<< Subroutines >>
   !@nl
 
-end module tb_sc_potential
+end module vpi_two_body_potential
 !@-node:gcross.20090624144408.1700:@thin tb_sc_potential.f90
 !@-leo

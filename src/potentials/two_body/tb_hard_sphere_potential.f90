@@ -1,7 +1,7 @@
 !@+leo-ver=4-thin
 !@+node:gcross.20090624144408.1714:@thin tb_hard_sphere_potential.f90
 !@@language fortran90
-module tb_hard_sphere_potential
+module vpi_two_body_potential
 
   !@  << Imported modules >>
   !@+node:gcross.20090624144408.1715:<< Imported modules >>
@@ -85,6 +85,6 @@ contains
   !@-node:gcross.20090624144408.1717:<< Subroutines >>
   !@nl
 
-end module tb_hard_sphere_potential
+end module vpi_two_body_potential
 !@-node:gcross.20090624144408.1714:@thin tb_hard_sphere_potential.f90
 !@-leo

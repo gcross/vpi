@@ -1,7 +1,7 @@
 !@+leo-ver=4-thin
 !@+node:gcross.20090624144408.1791:@thin sp_atomic_trial.f90
 !@@language fortran90
-module sp_atomic_trial
+module vpi_single_particle_trial
 
   !@  << Imported modules >>
   !@+node:gcross.20090624144408.1792:<< Imported modules >>
@@ -86,6 +86,6 @@ contains
   !@-node:gcross.20090624144408.1794:<< Subroutines >>
   !@nl
 
-end module sp_atomic_trial
+end module vpi_single_particle_trial
 !@-node:gcross.20090624144408.1791:@thin sp_atomic_trial.f90
 !@-leo

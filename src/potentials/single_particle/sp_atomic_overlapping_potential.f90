@@ -1,7 +1,7 @@
 !@+leo-ver=4-thin
 !@+node:gcross.20090624144408.1573:@thin sp_atomic_overlapping_potential.f90
 !@@language fortran90
-module sp_atomic_overlapping_potential
+module vpi_single_particle_potential
 
   !@  << Imported modules >>
   !@+node:gcross.20090624144408.1574:<< Imported modules >>
@@ -87,6 +87,6 @@ contains
   !@-node:gcross.20090624144408.1576:<< Subroutines >>
   !@nl
 
-end module sp_atomic_overlapping_potential
+end module vpi_single_particle_potential
 !@-node:gcross.20090624144408.1573:@thin sp_atomic_overlapping_potential.f90
 !@-leo

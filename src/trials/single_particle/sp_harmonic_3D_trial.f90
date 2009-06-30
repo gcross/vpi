@@ -1,7 +1,7 @@
 !@+leo-ver=4-thin
 !@+node:gcross.20090624144408.1852:@thin sp_harmonic_3D_trial.f90
 !@@language fortran90
-module sp_harmonic_3D_trial
+module vpi_single_particle_trial
 
   !@  << Imported modules >>
   !@+node:gcross.20090624144408.1853:<< Imported modules >>
@@ -70,6 +70,6 @@ contains
   !@-node:gcross.20090624144408.1855:<< Subroutines >>
   !@nl
 
-end module sp_harmonic_3D_trial
+end module vpi_single_particle_trial
 !@-node:gcross.20090624144408.1852:@thin sp_harmonic_3D_trial.f90
 !@-leo

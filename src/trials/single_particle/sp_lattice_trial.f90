@@ -1,7 +1,7 @@
 !@+leo-ver=4-thin
 !@+node:gcross.20090624144408.1981:@thin sp_lattice_trial.f90
 !@@language fortran90
-module sp_lattice_trial
+module vpi_single_particle_trial
 
   !@  << Imported modules >>
   !@+node:gcross.20090624144408.1982:<< Imported modules >>
@@ -83,6 +83,6 @@ contains
   !@-node:gcross.20090624144408.1984:<< Subroutines >>
   !@nl
 
-end module sp_lattice_trial
+end module vpi_single_particle_trial
 !@-node:gcross.20090624144408.1981:@thin sp_lattice_trial.f90
 !@-leo

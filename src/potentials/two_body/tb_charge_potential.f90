@@ -1,7 +1,7 @@
 !@+leo-ver=4-thin
 !@+node:gcross.20090624144408.1644:@thin tb_charge_potential.f90
 !@@language fortran90
-module tb_charge_potential
+module vpi_two_body_potential
 
   !@  << Imported modules >>
   !@+node:gcross.20090624144408.1645:<< Imported modules >>
@@ -81,6 +81,6 @@ contains
   !@-node:gcross.20090624144408.1647:<< Subroutines >>
   !@nl
 
-end module tb_charge_potential
+end module vpi_two_body_potential
 !@-node:gcross.20090624144408.1644:@thin tb_charge_potential.f90
 !@-leo
