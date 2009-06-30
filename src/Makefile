@@ -57,7 +57,7 @@ FC = mpif90
 F90FLAGS = -cpp
 #MYFFLAGS =  -O3 -funroll-loops -fomit-frame-pointer -finline-functions -D USE_MPI  -D USE_IMAGE_HSGFN -D EXPERIMENTAL
 #MYFFLAGS =  -p -O3 -funroll-loops -fomit-frame-pointer -finline-functions -D USE_MPI  -D USE_IMAGE_HSGFN -prof-genx 
-MYFFLAGS =  -O3 -funroll-loops -fomit-frame-pointer -finline-functions -D USE_MPI -D USE_IMAGE_HSGFN -Jmods
+MYFFLAGS =  -O3 -funroll-loops -fomit-frame-pointer -finline-functions -D USE_MPI -D USE_IMAGE_HSGFN -Jmods -Imods -x f95-cpp-input
 #MYFFLAGS =  -g -D USE_MPI -D USE_IMAGE_HSGFN
 #zeus
 #MYLIBS =  -Wl,-rpath=/usr/local/tools/mkl/lib/ -L/usr/local/tools/mkl/lib/ -lmkl -lmkl_lapack64 -lguide -lpthread
@@ -161,7 +161,8 @@ all: kinds.o constants.o vpi_defines.o vpi_xij.o \
 	trials/single_particle/sp_D_well_trial_common.o \
 	trials/single_particle/sp_trial_numeric_differentiator.o \
 	trials/jastrow/jas_trial_numeric_differentiator.o \
-	../lib/vpi.a ${OBJS}
+	../lib/libvpi.a ${OBJS} \
+	../lib/vpi_main.o \
 
 vpi_main.f90 : ${INTERFACE_OBJS}
 
@@ -173,8 +174,11 @@ vpi_rand_utils.f90: timers.o
 vpi :: ${OBJS}
 	${FC} ${OBJS}  -o ../bin/vpi ${MYLIBS}
 
-../lib/vpi.a : ${PROGRAM_OBJS} ${INTERFACE_OBJS}
-	ar r ../lib/vpi.a ${OBJS}
+../lib/libvpi.a : ${PROGRAM_OBJS} ${INTERFACE_OBJS}
+	ar r ../lib/libvpi.a ${PROGRAM_OBJS}
+
+../lib/vpi_main.o: vpi_main.o
+	cp vpi_main.o ../lib
 
 hnode :: vpi_hnode_defines.o vpi_rand_utils.o vpi_xij.o vpi_hnode_potential.o vpi_gfn.o vpi_hnode_trial_func.o vpi_bisect.o vpi_hnode_lattice.o vpi_obdm.o hnode_main.f90
 	${FC} ${F90FLAGS} ${MYFFLAGS} vpi_hnode_defines.o vpi_rand_utils.o vpi_xij.o vpi_hnode_potential.o vpi_gfn.o vpi_hnode_trial_func.o vpi_bisect.o vpi_hnode_lattice.o vpi_obdm.o hnode_main.f90 -o ../bin/hnode-test
