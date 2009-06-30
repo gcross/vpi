@@ -35,7 +35,7 @@ contains
   end subroutine init_sp_potential
   !@-node:gcross.20090624094338.1414:init_sp_potential
   !@+node:gcross.20090624094338.1415:Usp
-  function vpi_Usp_HO( x, slice, ip, nslice, np, ndim ) result ( Usp )
+  function Usp_func( x, slice, ip, nslice, np, ndim ) result ( Usp )
     integer :: nslice, np, ndim
     integer :: slice, ip
     real(kind=b8), dimension ( nslice, np , ndim ) :: x
@@ -47,8 +47,7 @@ contains
           + z_coefficient*x(slice,ip,3)**2 &
           ) / 2.0_b8
 
-  end function vpi_Usp_HO
-  !@nonl
+  end function Usp_func
   !@-node:gcross.20090624094338.1415:Usp
   !@+node:gcross.20090624094338.1416:gUsp
   function gUsp_func( x, slice, nslice, np, ndim ) result ( gUsp )
