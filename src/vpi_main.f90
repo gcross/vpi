@@ -2142,12 +2142,12 @@ subroutine vpi_eval_corr_r( corr_r, move_start, move_end, x )
   integer :: i
   real(kind=b8) :: r1,rM,tmp
 
-  r1 = sum( (x(1,:,1)**2 + x(1,:,2)**2) ) - N_PARTICLE
-  rM = sum( (x(N_SLICE,:,1)**2 + x(N_SLICE,:,2)**2) ) - N_PARTICLE
+  r1 = sum(x(1,:,1:3)**2)
+  rM = sum(x(N_SLICE,:,1:3)**2)
   do i = move_start+1, move_end-1
-    tmp = sum( ( x(i,:,1)**2 + x(i,:,2)**2 ) ) - N_PARTICLE
+    tmp = sum(x(i,:,1:3)**2)
     corr_r(i) = corr_r(i) + r1*tmp
-    tmp = sum( ( x(N_SLICE-i+1,:,1)**2 + x(N_SLICE-i+1,:,2)**2 ) ) - N_PARTICLE
+    tmp = sum(x(N_SLICE-i+1,:,1:3)**2)
     corr_r(N_SLICE-i+1) = corr_r(N_SLICE-i+1) + rM*tmp
   end do
 
