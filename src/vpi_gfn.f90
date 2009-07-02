@@ -81,8 +81,7 @@ function vpi_hw_gfn( sl_start, sl_end, ip, q, nslice, np, ndim, dt ) result ( hw
 
 end function vpi_hw_gfn
 !@-node:dubois9.20090625101848.1680:hard wall
-!@-others
-
+!@+node:gcross.20090701101352.1736:(disabled)
 !@+at
 ! ! image approximation
 ! function vpi_hs_gfn( sl_start, sl_end, ip, xij2, nslice, np, ndim, dt ) 
@@ -178,6 +177,8 @@ end function vpi_hw_gfn
 ! 
 !@-at
 !@@c
+!@-node:gcross.20090701101352.1736:(disabled)
+!@-others
 
 end module vpi_gfn
 !@-node:gcross.20090624144408.1798:@thin vpi_gfn.f90
