@@ -1,9 +1,9 @@
 &CONFIGURATION
 N_PARTICLE = 1,
-N_SLICE = 462,
-dM = 20,
-dtau = 0.01,
-dnu = 0.05,
+N_SLICE = 46,
+dM = 22,
+dtau = 0.1,
+dnu = 0.6,
 dswap = 0.0,
 ntol_eps = 1e-6,
 PROB_BBRIDGE_MOVE = 0.9,
@@ -12,7 +12,7 @@ PROB_SWAP_MOVE = 0.0,
 PROB_OD_PNUM = 0.0,
 OD_PNUM = 1,
 nblocks = 10,
-nsteps = 100000
+nsteps = 10000,
 N_BINS = 51,
 N_BINS_ROT = 51,
 N_BINS_full = 51,
@@ -28,7 +28,7 @@ eval_full_density = F,
 eval_qsq_sum = T,
 use_eval_cfn = T,
 use_HS_gfn = F,
-use_HW_gfn = T,
+use_HW_gfn = F,
 hard_wall_locations = 0.5 0.5 0.5,
 use_pbc = F,
 p_pbc_L = 1.0,
@@ -36,12 +36,11 @@ use_lattice_file = F,
 use_expot_file = F
 /
 &single_particle_potential_parameters
-x_length = 1,
-y_length = 1,
-z_length = 1
+x_coefficient = 1,
+y_coefficient = 1,
+z_coefficient = 1
 /
 &single_particle_trial_function_parameters
-x_length = 1.0,
-y_length = 1.0,
-z_length = 1.0
+coefficient_0 = 1,
+coefficient_1 = 1
 /
