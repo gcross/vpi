@@ -25,17 +25,14 @@ contains
     integer :: slice, ip, nslice, np, np2, ndim
     real(kind=b8) :: Usp
 
-    Usp = ( x(slice,ip,2)**2 + ap_lam*( x(slice,ip,1)**2  + x(slice,ip,3)**2) ) &
-          + ap_e_norm*exp(-( x(slice,ip,1)**2 + x(slice,ip,3)**2 )/ap_2asq)
+    Usp = dot_product(harmonic_oscillator_coefficients,x(slice,ip,:)**2) &
+          + normalized_hump_coefficient*exp(-( x(slice,ip,1)**2 + x(slice,ip,3)**2 )/hump_radius_squared_times_2)
 
-    if ( ip .gt. np-N_PARTICLE2 ) then 
-      if ( x(slice,ip,1) .gt. ab_x0 ) then 
-        Usp = Usp + ab_e_norm*exp(-( x(slice,ip,3)**2 )/ab_2asq)
-      end if
+    if ( (ip > np-N_PARTICLE2) .and. (x(slice,ip,1) > extra_hump_x_threshold_hack) ) then 
+      Usp = Usp + normalized_hump_coefficient*exp(-( x(slice,ip,3)**2 )/hump_radius_squared_times_2)
     end if
 
   end function Usp_func
-  !@nonl
   !@-node:gcross.20090624144408.1526:Usp
   !@+node:gcross.20090624144408.1527:gUsp
   function gUsp_func( x, slice, nslice, np, ndim ) result ( gUsp )
@@ -46,15 +43,19 @@ contains
 
     integer :: i
 
-    gUsp(:,1) = 2.0_b8*ap_lam*x(slice,:,1) - &
-      x(slice,:,1)*ap_e_norm*exp(-(x(slice,:,1)**2+x(slice,:,3)**2)/ap_2asq)/ap_asq 
-    gUsp(:,2) = 2.0_b8*x(slice,:,2)
-    gUsp(:,3) = 2.0_b8*ap_lam*x(slice,:,3) - &
-      x(slice,:,3)*ap_e_norm*exp(-(x(slice,:,2)**2+x(slice,:,3)**2)/ap_2asq)/ap_asq 
+    gUsp(:,1) = 2.0_b8*harmonic_oscillator_coefficients(1)*x(slice,:,1) &
+                 - normalized_hump_coefficient/hump_radius_squared*x(slice,:,1) &
+                      * exp(-(x(slice,:,1)**2+x(slice,:,3)**2)/hump_radius_squared_times_2)
+    gUsp(:,2) = 2.0_b8*harmonic_oscillator_coefficients(2)*x(slice,:,2)
+    gUsp(:,3) = 2.0_b8*harmonic_oscillator_coefficients(3)*x(slice,:,3) &
+                 - normalized_hump_coefficient/hump_radius_squared*x(slice,:,3) &
+                      * exp(-(x(slice,:,1)**2+x(slice,:,3)**2)/hump_radius_squared_times_2)
 
     do i = (np-N_PARTICLE2)+1, np
-      if ( x(slice,i,1) .gt. ab_x0 ) then 
-        gUsp(i,3) = gUsp(i,3) + x(slice,i,3)*ab_e_norm*exp(-(x(slice,i,3)**2)/ab_2asq)/ab_asq 
+      if ( x(slice,i,1) > extra_hump_x_threshold_hack ) then 
+        gUsp(i,3) = gUsp(i,3) - x(slice,i,3) &
+                                      * normalized_hump_coefficient/hump_radius_squared &
+                                      * exp(-(x(slice,i,3)**2)/hump_radius_squared_times_2)
       end if
     end do
 

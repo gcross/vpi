@@ -14,20 +14,22 @@ module sp_annulus_common
 
   !@  << Variables >>
   !@+node:gcross.20090624144408.1502:<< Variables >>
-  real :: ab_e = 0
-  real :: ab_a = 0.1
-  real :: ab_asq 
-  real :: ab_2asq
-  real :: ab_e_norm
-  real :: ab_x0 = -100
+  !@+at
+  ! Input quantities.
+  !@-at
+  !@@c
+  real (kind=b8), dimension(3) :: harmonic_oscillator_coefficients
+  real (kind=b8) :: hump_coefficient, hump_characteristic_radius
+  real (kind=b8) :: extra_hump_x_threshold_hack
+  real (kind=b8) :: species_2_attraction_coefficient
 
-  real :: ap_e = 20
-  real :: ap_a = 1.5
-  real :: ap_asq 
-  real :: ap_2asq
-  real :: ap_e_norm
-  real :: ap_lam = 1.0
-  real :: ae3 = 4  ! extra harmonic confinment for second species in Annulus3
+  !@+at
+  ! Derived quantities.
+  !@-at
+  !@@c
+
+  real (kind=b8) :: normalized_hump_coefficient
+  real (kind=b8) :: hump_radius_squared, hump_radius_squared_times_2
   !@-node:gcross.20090624144408.1502:<< Variables >>
   !@nl
 
@@ -38,17 +40,17 @@ contains
   !@+others
   !@+node:gcross.20090624144408.1504:init_sp_potential
   subroutine init_sp_potential ()
-    namelist /single_particle_potential_parameters/ ab_e, ab_a, ab_x0, ap_e, ap_a, ap_lam
+    namelist /single_particle_potential_parameters/ &
+      harmonic_oscillator_coefficients, &
+      hump_coefficient, hump_characteristic_radius, &
+      extra_hump_x_threshold_hack
 
     read(unit=10,nml=single_particle_potential_parameters)
 
-    ab_asq = ab_a*ab_a
-    ab_2asq = 2.0*ab_asq
-    ab_e_norm = ab_e/(M_SQRT2PI*ab_a)
+    hump_radius_squared = hump_characteristic_radius * hump_characteristic_radius
+    hump_radius_squared_times_2 = 2.0_b8 * hump_radius_squared
 
-    ap_asq = ap_a*ap_a
-    ap_2asq = 2.0*ap_asq
-    ap_e_norm = ap_e/(M_SQRT2PI*ap_a)
+    normalized_hump_coefficient = hump_coefficient/(M_SQRT2PI*hump_characteristic_radius)
 
     write(*,*) "Using single particle annulus potential with"
     write(*,nml=single_particle_potential_parameters)
