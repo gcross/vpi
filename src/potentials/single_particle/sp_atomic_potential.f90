@@ -6,6 +6,7 @@ module vpi_single_particle_potential
   !@  << Imported modules >>
   !@+node:gcross.20090624144408.1560:<< Imported modules >>
   use kinds
+  use constants
   !@-node:gcross.20090624144408.1560:<< Imported modules >>
   !@nl
 
@@ -14,6 +15,7 @@ module vpi_single_particle_potential
   !@  << Variables >>
   !@+node:gcross.20090624144408.1561:<< Variables >>
   real (kind=b8), private :: coefficient = 1.0_b8
+  real (kind=b8), private :: cap = realbignumber
   !@-node:gcross.20090624144408.1561:<< Variables >>
   !@nl
 
@@ -24,11 +26,11 @@ contains
   !@+others
   !@+node:gcross.20090624144408.1563:init_sp_potential
   subroutine init_sp_potential ()
-    namelist /single_particle_potential_parameters/ coefficient
+    namelist /single_particle_potential_parameters/ coefficient, cap
 
     read(unit=10,nml=single_particle_potential_parameters)
 
-    write(*,*) "Using single particle atomic (1/r) potential with"
+    write(*,*) "Using single particle atomic (-1/r) potential with"
     write(*,nml=single_particle_potential_parameters)
   end subroutine init_sp_potential
   !@nonl
@@ -44,10 +46,13 @@ contains
 
     ri = dot_product(x(slice,ip,:),x(slice,ip,:))**(-0.5_b8)
 
-    Usp = coefficient * ri
+    if (abs(coefficient) * ri > cap) then
+      Usp = - coefficient * cap
+    else
+      Usp = - coefficient * ri
+    end if
 
   end function Usp_func
-  !@nonl
   !@-node:gcross.20090624144408.1564:Usp
   !@+node:gcross.20090624144408.1565:gUsp
   function gUsp_func( x, slice, nslice, np, ndim ) result ( gUsp )
