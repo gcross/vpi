@@ -1954,7 +1954,7 @@ subroutine vpi_eval_density( rho, x, nbins, size_x, dndx )
   do i = 1, N_PARTICLE
     do j = 1, N_DIM
       bin = floor((x(i,j)+size_x(j))*dndx(j))+1
-      if ( (bin .le. nbins) .and. (bin .ge. 1) ) then
+      if ( within_bins(bin,nbins) ) then
         rho(bin,j) = rho(bin,j) + 1
       end if
     end do
@@ -1978,7 +1978,7 @@ subroutine vpi_eval_density_single_particle( rho, x, nbins, size_x, dndx )
 
   do j = 1, N_DIM
     bin = anint((x(j)+size_x(j))*dndx(j))+1
-    if ( (bin .le. nbins) .and. (bin .ge. 1) ) then
+    if ( within_bins(bin,nbins) ) then
       rho(bin,j) = rho(bin,j) + 1
     end if 
   end do
@@ -2003,11 +2003,11 @@ subroutine vpi_eval_full_density( od, x, nbins, size_x, dndx )
 
   do i = 1, N_PARTICLE
     xb = anint((x(i,1)+size_x(1))*dndx(1))+1
-    if ( (xb .le. nbins) .and. (xb .ge. 1) ) then
+    if ( within_bins(xb,nbins) ) then
       yb = anint((x(i,2)+size_x(2))*dndx(2))+1
-      if ( (yb .le. nbins) .and. (yb .ge. 1) ) then
+      if ( within_bins(yb,nbins) ) then
         zb = anint((x(i,3)+size_x(3))*dndx(3))+1
-        if ( (zb .le. nbins) .and. (zb .ge. 1) ) then
+        if ( within_bins(zb,nbins) ) then
           od(xb,yb,zb) = od(xb,yb,zb) + 1
         end if
       end if
@@ -2034,7 +2034,7 @@ subroutine vpi_eval_radial_density( rho, x, nbins, dndx )
   do i = 1, size(x,1)
     r = sqrt(dot_product(x(i,:),x(i,:)))
     bin = floor(r*dndx)+1
-    if ( (bin .le. nbins) .and. (bin .ge. 1) ) then
+    if ( within_bins(bin,nbins) ) then
       rho(bin) = rho(bin) + 1
     end if 
   end do
@@ -2094,9 +2094,9 @@ subroutine vpi_eval_density_in_plane( od, od_avg, od_sig, x, id1, id2, nbins, si
 
   do i = 1, N_PARTICLE-N_PARTICLE2
     xbin = anint((x(i,id1)+size_x(id1))*dndx(id1))+1
-    if ( (xbin .le. nbins) .and. (xbin .ge. 1) ) then
+    if ( within_bins(xbin,nbins) ) then
       zbin = anint((x(i,id2)+size_x(id2))*dndx(id2))+1
-      if ( (zbin .le. nbins) .and. (zbin .ge. 1) ) then
+      if ( within_bins(zbin,nbins) ) then
         tod(xbin,zbin) = tod(xbin,zbin) + 1
       end if
     end if 
@@ -2129,9 +2129,9 @@ subroutine vpi_eval_density_in_plane2( od, od_avg, od_sig, x, nbins, size_x, dnd
 
   do i = N_PARTICLE - N_PARTICLE2 + 1, N_PARTICLE
     xbin = anint((x(i,1)+size_x(1))*dndx(1))+1
-    if ( (xbin .le. nbins) .and. (xbin .ge. 1) ) then
+    if ( within_bins(xbin,nbins) ) then
       zbin = anint((x(i,3)+size_x(3))*dndx(3))+1
-      if ( (zbin .le. nbins) .and. (zbin .ge. 1) ) then
+      if ( within_bins(zbin,nbins) ) then
         tod(xbin,zbin) = tod(xbin,zbin) + 1
       end if
     end if 
@@ -2246,7 +2246,7 @@ subroutine vpi_eval_gfn_sep_in_full_space( gofr, xij2, nbins, dndx )
     do j = i + 1, N_PARTICLE
       r = sqrt(xij2(i,j))
       rbin = floor( r * dndx ) + 1
-      if( (rbin .ge. 1) .and. (rbin .le. nbins) ) then
+      if( within_bins(rbin,nbins) ) then
         gofr(rbin) = gofr(rbin) + 1
       end if
     end do
@@ -2276,7 +2276,7 @@ subroutine vpi_eval_gfn_sep_in_XY_plane( gofr, x, islice, nbins, dndx )
       end if
       r = sqrt(sum(dxij(1:2)**2))
       rbin = floor( r * dndx ) + 1
-      if( (rbin .ge. 1) .and. (rbin .le. nbins) ) then
+      if( within_bins(rbin,nbins) ) then
         gofr(rbin) = gofr(rbin) + 1
       end if
     end do
@@ -2306,7 +2306,7 @@ subroutine vpi_eval_gfn_sep_along_Z_axis( gofr, x, islice, nbins, dndx )
     do j = i + 1, N_PARTICLE
       r = abs(x(islice,i,3) - x(islice,j,3))
       rbin = floor( r * dndx ) + 1
-      if( (rbin .ge. 1) .and. (rbin .le. nbins) ) then
+      if( within_bins(rbin,nbins) ) then
         gofr(rbin) = gofr(rbin) + 1
       end if
     end do
@@ -2340,10 +2340,8 @@ subroutine vpi_eval_gfn_sep_in_Z_and_XY( gofr, x, islice, nbins, dndx )
       ! separation along the Z axis
       z = abs(dxij(3))*2
       zbin = floor( z * dndx(3) ) + 1
-      if( (rbin .ge. 1) .and. (rbin .le. nbins) ) then
-        if( (zbin .ge. 1) .and. (zbin .le. nbins) ) then
-          gofr(zbin,rbin) = gofr(zbin,rbin) + 1
-        end if
+      if( within_bins(rbin,nbins) .and. within_bins(zbin,nbins) ) then
+        gofr(zbin,rbin) = gofr(zbin,rbin) + 1
       end if
     end do
   end do
@@ -2386,13 +2384,12 @@ subroutine vpi_eval_gof_rot( gof_rot, gof_rot_xyz, gof_rot_xyz_avg, gofr_rot, q,
       br = floor((r + 1.0)*nbins_rot/2.0)+1
       if( (br .ge. 1) .and. (br .le. nbins_rot) ) then
         gof_rot(br) = gof_rot(br) + 1
-        if( (bx .ge. 1) .and. (bx .le. nbins_xyz) ) then
-          if( (by .ge. 1) .and. (by .le. nbins_xyz) ) then
-            if( (bz .ge. 1) .and. (bz .le. nbins_xyz) ) then
+        if( within_bins(bx,nbins_xyz) .and. &
+            within_bins(by,nbins_xyz) .and. &
+            within_bins(bz,nbins_xyz) &
+          ) then
               gof_rot_xyz(bx,by,bz,br) = gof_rot_xyz(bx,by,bz,br) + 1
               gof_rot_xyz_avg(bx,by,bz) = gof_rot_xyz_avg(bx,by,bz) + r
-            end if
-          end if
         end if
       end if
     end do
@@ -2413,7 +2410,7 @@ subroutine vpi_eval_dphase( rho, x, nbins, size_x, dndx )
   do i = 1, size(x,1)
     do j = 1, size(x,2)
       bin = floor((x(i,j)+size_x)*dndx)+1
-      if ( (bin .le. nbins) .and. (bin .ge. 1) ) then
+      if ( within_bins(bin,nbins) ) then
         rho(bin,j) = rho(bin,j) + 1
       end if 
     end do
@@ -2571,6 +2568,14 @@ end subroutine read_expot_file
 !@-node:gcross.20090624144408.2053:read_expot_file
 !@-node:gcross.20090624144408.2049:Input
 !@+node:gcross.20090624144408.2050:Misc
+!@+node:gcross.20090706131953.1749:within_bins
+function within_bins(index,nbins)
+  integer :: index, nbins
+  logical :: within_bins
+
+  within_bins = (index >= 1) .and. (index <= nbins)
+end function within_bins
+!@-node:gcross.20090706131953.1749:within_bins
 !@+node:gcross.20090623152316.32:vpi_accept_path
 function vpi_accept_path( lngfn0, lngfn1, dphase ) result( accept )
   real(kind = b8) :: lngfn0, lngfn1
