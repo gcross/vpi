@@ -75,7 +75,7 @@ MYLIBS =  -Wl -llapack -lpthread
 #thunder
 #MYLIBS = -L/usr/local/intel/mkl/lib/64 -lmkl -lmkl_lapack64 -lguide -lpthread
 
-PROGRAM_OBJS = kinds.o constants.o vpi_defines.o vpi_rand_utils.o vpi_xij.o vpi_aziz.o vpi_gfn.o vpi_bisect.o vpi_bbridge.o vpi_sample.o vpi_lattice.o vpi_obdm.o vpi_coordinate_utils.o vpi_phase_maps.o vpi_rotation.o timers.o vpi_main.o
+PROGRAM_OBJS = kinds.o constants.o vpi_defines.o vpi_rand_utils.o vpi_xij.o vpi_aziz.o vpi_gfn.o vpi_bisect.o vpi_bbridge.o vpi_sample.o vpi_lattice.o vpi_coordinate_utils.o vpi_phase_maps.o vpi_rotation.o timers.o vpi_main.o
 
 SINGLE_PARTICLE_POTENTIAL_OBJS = \
 	potentials/single_particle/sp_null_potential.o \
@@ -180,7 +180,7 @@ vpi :: ${OBJS}
 ../lib/vpi_main.o: vpi_main.o
 	cp vpi_main.o ../lib
 
-hnode :: vpi_hnode_defines.o vpi_rand_utils.o vpi_xij.o vpi_hnode_potential.o vpi_gfn.o vpi_hnode_trial_func.o vpi_bisect.o vpi_hnode_lattice.o vpi_obdm.o hnode_main.f90
+hnode :: vpi_hnode_defines.o vpi_rand_utils.o vpi_xij.o vpi_hnode_potential.o vpi_gfn.o vpi_hnode_trial_func.o vpi_bisect.o vpi_hnode_lattice.o hnode_main.f90
 	${FC} ${F90FLAGS} ${MYFFLAGS} vpi_hnode_defines.o vpi_rand_utils.o vpi_xij.o vpi_hnode_potential.o vpi_gfn.o vpi_hnode_trial_func.o vpi_bisect.o vpi_hnode_lattice.o vpi_obdm.o hnode_main.f90 -o ../bin/hnode-test
 
 clean : 

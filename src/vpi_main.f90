@@ -18,7 +18,6 @@ program Test_VPI
 
   use vpi_lattice
   use vpi_xij
-  use vpi_obdm
   use timers
 
   use vpi_single_particle_potential
@@ -1246,9 +1245,9 @@ program Test_VPI
           if(eval_rdm) then
             do ii = 1, N_PARTICLE
               do jj = ii+1, N_PARTICLE
-                call vpi_eval_obdm_cut( rdm2_z, qobs(CSLICE,ii,3), qobs(CSLICE,jj,3), N_BINS, N_DIM, size_x(3)/2, dndx(3))
+                call vpi_eval_obdm_single_axis( rdm2_z, qobs(CSLICE,ii,3), qobs(CSLICE,jj,3), N_BINS, N_DIM, size_x(3)/2, dndx(3))
                 if(eval_rdm2_ring) then
-                  call vpi_eval_obdm_ring( rdm2_theta, qobs(CSLICE,ii,:), qobs(CSLICE,jj,:), N_BINS, N_DIM)
+                  call vpi_eval_obdm_angle_in_XZ_plane( rdm2_theta, qobs(CSLICE,ii,:), qobs(CSLICE,jj,:), N_BINS, N_DIM)
                 end if
               end do
             end do
@@ -1256,14 +1255,17 @@ program Test_VPI
           if(eval_rdm22_ring) then
             do ii = N_PARTICLE-N_PARTICLE2+1, N_PARTICLE
               do jj = ii+1, N_PARTICLE
-                call vpi_eval_obdm_ring( rdm22_theta, qobs(CSLICE,ii,:), qobs(CSLICE,jj,:), N_BINS, N_DIM)
+                call vpi_eval_obdm_angle_in_XZ_plane( rdm22_theta, qobs(CSLICE,ii,:), qobs(CSLICE,jj,:), N_BINS, N_DIM)
               end do
             end do
           end if
           if( eval_off_diagonal ) then
-            call vpi_eval_obdm_cut( obdm_x, qobs(CSLICE,od_pnum,1), qobs(CSLICE+1,od_pnum,1), N_BINS, N_DIM, size_x(1)/2, dndx(1))
-            call vpi_eval_obdm_cut( obdm_y, qobs(CSLICE,od_pnum,2), qobs(CSLICE+1,od_pnum,2), N_BINS, N_DIM, size_x(2)/2, dndx(2))
-            call vpi_eval_obdm_cut( obdm_z, qobs(CSLICE,od_pnum,3), qobs(CSLICE+1,od_pnum,3), N_BINS, N_DIM, size_x(3)/2, dndx(3))
+            call vpi_eval_obdm_single_axis( obdm_x, qobs(CSLICE,od_pnum,1), qobs(CSLICE+1,od_pnum,1), &
+                                            N_BINS, N_DIM, size_x(1)/2, dndx(1))
+            call vpi_eval_obdm_single_axis( obdm_y, qobs(CSLICE,od_pnum,2), qobs(CSLICE+1,od_pnum,2), &
+                                            N_BINS, N_DIM, size_x(2)/2, dndx(2))
+            call vpi_eval_obdm_single_axis( obdm_z, qobs(CSLICE,od_pnum,3), qobs(CSLICE+1,od_pnum,3), &
+                                            N_BINS, N_DIM, size_x(3)/2, dndx(3))
             if(eval_obdm_full) then
               call vpi_eval_obdm_full( obdm_full, qobs(CSLICE,od_pnum,:), qobs(CSLICE+1,od_pnum,:), &
                                        N_BINS_full, N_DIM, size_x(:)/2, dndx(:))
@@ -1284,10 +1286,10 @@ program Test_VPI
               end if
             end if
             if(eval_obdm_ring) then
-              call vpi_eval_obdm_ring( obdm_theta, qobs(CSLICE,od_pnum,:), qobs(CSLICE+1,od_pnum,:), N_BINS, N_DIM)
+              call vpi_eval_obdm_angle_in_XZ_plane( obdm_theta, qobs(CSLICE,od_pnum,:), qobs(CSLICE+1,od_pnum,:), N_BINS, N_DIM)
             endif
             if( eval_rotation ) then
-              call vpi_eval_obdm_cut( obdm_rot_z, q_rot0(CSLICE,od_pnum,2), q_rot0(CSLICE+1,od_pnum,2), &
+              call vpi_eval_obdm_single_axis( obdm_rot_z, q_rot0(CSLICE,od_pnum,2), q_rot0(CSLICE+1,od_pnum,2), &
                                       N_BINS, N_DIM, 1.0, real(N_BINS)/2.0)
             end if
           end if
@@ -2350,7 +2352,105 @@ end subroutine vpi_eval_gfn_sep_in_Z_and_XY
 !@nonl
 !@-node:gcross.20090623152316.28:vpi_eval_gfn_sep_in_Z_and_XY
 !@-node:gcross.20090706131953.1744:Green's functions
-!@+node:gcross.20090626170642.1722:No idea what these do
+!@+node:gcross.20090706131953.1750:Off-diagonal elements
+!@+node:gcross.20090706131953.1751:vpi_eval_obdm_single_axis
+!@+at
+! Evaluates the single-particle reduced density matrix (not to be confused 
+! with the number density) along a single axis in position space.
+!@-at
+!@@c
+subroutine vpi_eval_obdm_single_axis( obdm, x1, x2, nbins, ndim, xsize, dndx)
+  integer :: id, nbins, ndim
+  real(kind=b8), dimension ( nbins, nbins ) :: obdm
+  real(kind=b8) :: x1, x2
+  real :: xsize, dndx
+
+  integer :: bx1, bx2
+
+!  print *, xsize, dndx
+!  print *, x1, x2
+  bx1 = floor((x1 + xsize)*dndx)+1
+  bx2 = floor((x2 + xsize)*dndx)+1
+!  print *, bx1,bx2
+  if ( within_bins(bx1,nbins) .and. within_bins(bx2,nbins) ) then
+    obdm(bx1,bx2) = obdm(bx1,bx2) + 1
+  end if
+
+end subroutine vpi_eval_obdm_single_axis
+!@-node:gcross.20090706131953.1751:vpi_eval_obdm_single_axis
+!@+node:gcross.20090706131953.1752:vpi_eval_obdm_angle_in_XZ_plane
+!@+at
+! Evaluates the single-particle reduced density matrix (not to be confused 
+! with the number density) for the angle in the XZ plane.
+!@-at
+!@@c
+subroutine vpi_eval_obdm_angle_in_XZ_plane( obdm, x1, x2, nbins, ndim)
+  integer :: id, nbins, ndim
+  real(kind=b8), dimension ( nbins, nbins ) :: obdm
+  real(kind=b8), dimension( 3 ) :: x1, x2
+  real :: xsize, dndx
+  real :: t1,t2
+
+  integer :: bx1, bx2
+
+!  print *, xsize, dndx
+!  print *, x1, x2
+  if( x1(1) .gt. 0 ) then
+    t1 = (atan(x1(3)/x1(1))/M_2PI) + 0.25
+  else
+    t1 = (atan(x1(3)/x1(1))/M_2PI) + 0.75
+  end if
+
+  if( x2(1) .gt. 0 ) then
+    t2 = (atan(x2(3)/x2(1))/M_2PI) + 0.25
+  else
+    t2 = (atan(x2(3)/x2(1))/M_2PI) + 0.75
+  end if
+
+  bx1 = floor(t1*nbins)+1
+  bx2 = floor(t2*nbins)+1
+!  print *, bx1,bx2
+  if ( within_bins(bx1,nbins) .and. within_bins(bx2,nbins) ) then
+    obdm(bx1,bx2) = obdm(bx1,bx2) + 1
+  end if
+
+end subroutine vpi_eval_obdm_angle_in_XZ_plane
+!@-node:gcross.20090706131953.1752:vpi_eval_obdm_angle_in_XZ_plane
+!@+node:gcross.20090706131953.1753:vpi_eval_obdm_full
+!@+at
+! Compute the full N-dimensional single-particle reduced density matrix, 
+! flattening the multi-dimensional coordinates into a single index so that the 
+! result can be expressed as a matrix instead of a 2N-dimensional tensor.
+!@-at
+!@@c
+subroutine vpi_eval_obdm_full( obdmf, x1, x2, nbins, ndim, xsize, dndx)
+  integer :: nbins, ndim
+  real(kind=b8), dimension ( nbins**ndim, nbins**ndim ) :: obdmf
+  real(kind=b8), dimension( ndim ) :: x1, x2
+  real,dimension(ndim) :: xsize, dndx
+
+  integer, dimension(ndim)  :: bx1, bx2
+  integer :: ii,i1,i2
+
+  bx1(:) = floor((x1(:) + xsize(:))*dndx)+1
+  bx2(:) = floor((x2(:) + xsize(:))*dndx)+1
+  i1 = 0
+  i2 = 0
+  do ii=1,ndim
+    i1 = i1 + bx1(ii)*nbins**(ii-1)
+    i2 = i2 + bx2(ii)*nbins**(ii-1)
+  enddo
+  print *, bx1(:)
+  print *, bx2(:)
+  print *, i1, i2
+  if ( within_bins(i1,nbins**ndim) .and. within_bins(i2,nbins**ndim) ) then
+    obdmf(i1,i2) = obdmf(i1,i2) + 1
+  end if
+
+end subroutine vpi_eval_obdm_full
+!@-node:gcross.20090706131953.1753:vpi_eval_obdm_full
+!@-node:gcross.20090706131953.1750:Off-diagonal elements
+!@+node:gcross.20090626170642.1722:No idea what these do yet
 !@+node:gcross.20090623152316.31:vpi_eval_gof_rot
 subroutine vpi_eval_gof_rot( gof_rot, gof_rot_xyz, gof_rot_xyz_avg, gofr_rot, q, q_rot, xij2, &
                              slice, nbins_rr, dndx_rr, nbins_xyz, xsize, dndx, nbins_rot, dndx_rot )
@@ -2397,6 +2497,30 @@ subroutine vpi_eval_gof_rot( gof_rot, gof_rot_xyz, gof_rot_xyz_avg, gofr_rot, q,
 
 end subroutine vpi_eval_gof_rot
 !@-node:gcross.20090623152316.31:vpi_eval_gof_rot
+!@+node:gcross.20090706131953.1754:vpi_eval_nrdm
+subroutine vpi_eval_nrdm(nrdm, x1, x2)
+  integer :: id, nbins, ndim
+  real(kind=b8), dimension ( 2**N_OD_PARTICLE, 2**N_OD_PARTICLE ) :: nrdm
+  real(kind=b8), dimension ( N_PARTICLE ) :: x1, x2
+  real :: xsize, dndx
+
+  integer :: i,j,bx1, bx2
+
+  bx1 = 1
+  bx2 = 1
+  do i = 0, N_OD_PARTICLE-1
+    if(x1(i+1) > 0) then
+      bx1 = bx1 + 2**i
+    end if
+    if(x2(i+1) > 0) then
+      bx2 = bx2 + 2**i
+    end if
+  end do
+
+  nrdm(bx1,bx2) = nrdm(bx1,bx2) + 1
+
+end subroutine vpi_eval_nrdm
+!@-node:gcross.20090706131953.1754:vpi_eval_nrdm
 !@+node:gcross.20090623152316.16:vpi_eval_dphase
 subroutine vpi_eval_dphase( rho, x, nbins, size_x, dndx )
   real(kind=b8), dimension( : , : ), intent(out):: rho
@@ -2476,7 +2600,7 @@ subroutine vpi_eval_N_z2( N_zs,N_za, x )
   N_za((tr_cnt-tl_cnt)+N_PARTICLE2+1) = N_za((tr_cnt-tl_cnt)+N_PARTICLE2+1) + 1
 end subroutine vpi_eval_N_z2
 !@-node:gcross.20090623152316.22:vpi_eval_B_z2
-!@-node:gcross.20090626170642.1722:No idea what these do
+!@-node:gcross.20090626170642.1722:No idea what these do yet
 !@-node:gcross.20090624144408.2048:Evaluators of physical quantities
 !@+node:gcross.20090624144408.2049:Input
 !@+node:gcross.20090624144408.2051:read_configuration_file
