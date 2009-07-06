@@ -3,3 +3,7 @@
 bin
 .DS_Store
 *.dat*
+vpi
+out
+*~
+lib
