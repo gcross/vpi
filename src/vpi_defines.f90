@@ -71,7 +71,7 @@ module vpi_defines
 
   logical :: eval_off_diagonal = .false.
   logical :: eval_obdm_full = .false.
-  logical :: eval_obdm_rz = .true.
+  logical :: eval_obdm_rz = .false.
   logical, parameter :: xz_oda = .false.
   logical, parameter :: eval_nrdm = .false.
   logical, parameter :: eval_rdm = .false.
@@ -102,7 +102,7 @@ module vpi_defines
 
   logical, parameter :: eval_rdm2_ring = .false.
   logical, parameter :: eval_rdm22_ring = .false.
-  logical, parameter :: eval_obdm_ring = .false.
+  logical :: eval_obdm_angle_in_XZ_plane = .false.
   logical, parameter :: use_eval_N_R = .false.
 
   logical :: try_split_move = .false.
@@ -159,6 +159,9 @@ module vpi_defines
     eval_column_density, &
     eval_full_density, &
     eval_qsq_sum, &
+    eval_obdm_angle_in_XZ_plane, &
+    eval_obdm_full, &
+    eval_obdm_rz, &
     use_eval_cfn, &
     use_HS_gfn, &
     use_HW_gfn, &

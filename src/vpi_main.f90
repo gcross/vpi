@@ -1285,7 +1285,7 @@ program Test_VPI
                 call vpi_eval_obdm_full( obdm_rz, tx0, tx1, N_BINS_full, 2, tsize(:)/2, tdndx(:))
               end if
             end if
-            if(eval_obdm_ring) then
+            if(eval_obdm_angle_in_XZ_plane) then
               call vpi_eval_obdm_angle_in_XZ_plane( obdm_theta, qobs(CSLICE,od_pnum,:), qobs(CSLICE+1,od_pnum,:), N_BINS, N_DIM)
             endif
             if( eval_rotation ) then
