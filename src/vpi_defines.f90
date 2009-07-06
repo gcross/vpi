@@ -74,7 +74,7 @@ module vpi_defines
   logical :: eval_obdm_rz = .false.
   logical, parameter :: xz_oda = .false.
   logical, parameter :: eval_nrdm = .false.
-  logical, parameter :: eval_rdm = .false.
+  logical :: eval_rdm = .false.
   logical :: write_paths = .false.
 
   logical :: eval_column_density = .false.
@@ -159,6 +159,7 @@ module vpi_defines
     eval_column_density, &
     eval_full_density, &
     eval_qsq_sum, &
+    eval_rdm, &
     eval_obdm_angle_in_XZ_plane, &
     eval_obdm_full, &
     eval_obdm_rz, &
