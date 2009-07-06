@@ -363,7 +363,9 @@ program Test_VPI
       allocate( obdm_tmp(N_BINS, N_BINS ) )
   !  allocate( obdm_xyz(N_BINS, N_BINS, N_BINS, N_BINS, N_BINS, N_BINS ) )
       allocate( obdm_rot_z(N_BINS, N_BINS ) )
-      allocate( obdm_theta(N_BINS, N_BINS ) )
+      if(eval_obdm_angle_in_XZ_plane) then
+        allocate( obdm_theta(N_BINS, N_BINS ) )
+      end if
     end if
   !@nonl
   !@-node:gcross.20090623152316.12:<< Allocate memory for arrays >>
@@ -1627,8 +1629,8 @@ program Test_VPI
         end if
       end if
 
-      if(eval_obdm_ring) then
-        write(my_fname,"(a14,i4.4)")"obdm_ring.dat.",my_rank
+      if(eval_obdm_angle_in_XZ_plane) then
+        write(my_fname,"(a27,i4.4)")"obdm_angle_in_XZ_plane.dat.",my_rank
         open(12, file=my_fname, status="replace")
         do ii = 1, N_BINS
           do jj = 1, N_BINS
