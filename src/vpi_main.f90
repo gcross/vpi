@@ -1405,7 +1405,24 @@ program Test_VPI
             end if
           end if
         end if
-      end if
+
+        if(eval_obdm_angle_in_XZ_plane) then
+          call MPI_REDUCE(obdm_theta,obdm_tmp,n_bins*n_bins,mpi_double_precision,MPI_SUM,0,MPI_COMM_WORLD,ierr)
+          if(my_rank .eq. 0) then
+            write(my_fname,"(a26)")"obdm_angle_in_XZ_plane.dat"
+            open(12, file=my_fname, status="replace")
+            do ii = 1, N_BINS
+              do jj = 1, N_BINS
+                write(12, *) dxdn(3)*(ii-0.5) - size_x(3)/2.0, dxdn(3)*(jj-0.5) - size_x(3)/2.0, &
+                             obdm_tmp(ii,jj)/( num_procs*2*n_moves*dxdn(3) )
+              end do
+              write(12, *)
+            end do
+            close(12)
+          end if
+        end if
+
+      end if ! ( eval_off_diagonal )
 
       write(my_fname,"(a6,i4.4)")"U.dat.",my_rank
       open(12, file=my_fname,  POSITION="APPEND")
