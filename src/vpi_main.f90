@@ -1142,10 +1142,10 @@ program Test_VPI
         !@+node:gcross.20090626112946.1692:<< Compute quantities of interest >>
         corpcnt = corpcnt + 1
         if(corpcnt >= corper) then
-          call vpi_eval_gofr( gofr, xij2_0(CSLICE,:,:), N_BINS_GOFR, dndx_GOFR )
-          call vpi_eval_gofz( gofz, qobs, cslice, N_BINS_GOFR, dndx_GOFR )
-          call vpi_eval_gofrho( gofrho, qobs, cslice, N_BINS_GOFR, dndx_GOFR )
-          call vpi_eval_gofzrho( gofzrho, qobs, cslice, N_BINS, dndx )
+          call vpi_eval_gfn_sep_in_full_space( gofr, xij2_0(CSLICE,:,:), N_BINS_GOFR, dndx_GOFR )
+          call vpi_eval_gfn_sep_along_Z_axis( gofz, qobs, cslice, N_BINS_GOFR, dndx_GOFR )
+          call vpi_eval_gfn_sep_in_XY_plane( gofrho, qobs, cslice, N_BINS_GOFR, dndx_GOFR )
+          call vpi_eval_gfn_sep_in_Z_and_XY( gofzrho, qobs, cslice, N_BINS, dndx )
           corpcnt = 0
           n_moves = n_moves + 1
           n_moves_pb = n_moves_pb + 1
@@ -1196,7 +1196,7 @@ program Test_VPI
           call vpi_eval_density( rho, qobs(CSLICE,:,:), N_BINS, size_x/2, dndx )
           call vpi_eval_radial_density( rho_r, qobs(CSLICE,:,:), n_bins_gofr, dndr ) 
         !        if ( eval_off_diagonal ) then
-        !          call vpi_eval_density_sp( dxlxr, (qobs(CSLICE,od_pnum,:)-qobs(CSLICE+1,od_pnum,:)), N_BINS, size_x/2, dndx )
+        !          call vpi_eval_density_single_particle( dxlxr, (qobs(CSLICE,od_pnum,:)-qobs(CSLICE+1,od_pnum,:)), N_BINS, size_x/2, dndx )
         !        end if
           call vpi_eval_density( trial_rho_L, qobs(1,:,:), N_BINS, size_x/2, dndx )
           call vpi_eval_density( trial_rho_R, qobs(N_SLICE,:,:), N_BINS, size_x/2, dndx )
@@ -1210,11 +1210,11 @@ program Test_VPI
             if(N_PARTICLE2 > 0 ) then
               od2_avg = od2/( n_moves*N_PARTICLE2*dxdn(1)*dxdn(3) )
             endif
-            call vpi_eval_optical_density( odxy, odxy_avg, odxy_sig, qobs(CSLICE,:,:), 1, 2, N_BINS, size_x/2, dndx )
-            call vpi_eval_optical_density( odxz, odxz_avg, odxz_sig, qobs(CSLICE,:,:), 1, 3, N_BINS, size_x/2, dndx )
-            call vpi_eval_optical_density( odyz, odyz_avg, odyz_sig, qobs(CSLICE,:,:), 2, 3, N_BINS, size_x/2, dndx )
+            call vpi_eval_density_in_plane( odxy, odxy_avg, odxy_sig, qobs(CSLICE,:,:), 1, 2, N_BINS, size_x/2, dndx )
+            call vpi_eval_density_in_plane( odxz, odxz_avg, odxz_sig, qobs(CSLICE,:,:), 1, 3, N_BINS, size_x/2, dndx )
+            call vpi_eval_density_in_plane( odyz, odyz_avg, odyz_sig, qobs(CSLICE,:,:), 2, 3, N_BINS, size_x/2, dndx )
             if( N_PARTICLE2 .gt. 0 ) then 
-              call vpi_eval_optical_density2( od2, od2_avg, od2_sig, qobs(CSLICE,:,:), N_BINS, size_x/2, dndx )
+              call vpi_eval_density_in_plane2( od2, od2_avg, od2_sig, qobs(CSLICE,:,:), N_BINS, size_x/2, dndx )
             end if
             if (i .lt. nb_discard) then
               odxy_sig = 0 
@@ -1295,6 +1295,7 @@ program Test_VPI
             call vpi_eval_nrdm( nrdm_z, qobs(CSLICE,:,3), qobs(CSLICE+1,:,3) )
           end if
         end if
+        !@nonl
         !@-node:gcross.20090626112946.1692:<< Compute quantities of interest >>
         !@nl
 
@@ -1960,6 +1961,30 @@ subroutine vpi_eval_density( rho, x, nbins, size_x, dndx )
   end do
 end subroutine vpi_eval_density
 !@-node:gcross.20090623152316.15:vpi_eval_density
+!@+node:gcross.20090623152316.18:vpi_eval_density_single_particle
+!@+at
+! Same as vpi_eval_density, but only computes the density for a single given 
+! particle.
+!@-at
+!@@c
+subroutine vpi_eval_density_single_particle( rho, x, nbins, size_x, dndx )
+  real(kind=b8), dimension( nbins , N_DIM ), intent(out):: rho
+  real(kind=b8), dimension( N_DIM ) :: x
+  integer nbins
+  real, dimension(N_DIM) :: size_x, dndx
+  integer bin
+
+  integer :: j
+
+  do j = 1, N_DIM
+    bin = anint((x(j)+size_x(j))*dndx(j))+1
+    if ( (bin .le. nbins) .and. (bin .ge. 1) ) then
+      rho(bin,j) = rho(bin,j) + 1
+    end if 
+  end do
+end subroutine vpi_eval_density_single_particle
+!@nonl
+!@-node:gcross.20090623152316.18:vpi_eval_density_single_particle
 !@+node:gcross.20090626170642.1721:vpi_eval_full_density
 !@+at
 ! Evaluates the number density as a function of the first three position-space 
@@ -2015,40 +2040,49 @@ subroutine vpi_eval_radial_density( rho, x, nbins, dndx )
   end do
 end subroutine vpi_eval_radial_density
 !@-node:gcross.20090623152316.17:vpi_eval_radial_density
-!@+node:gcross.20090623152316.16:vpi_eval_dphase
+!@+node:gcross.20090623152316.14:vpi_eval_density_in_chebyshev_basis
 !@+at
-! For each particle, evaluates the number density as a function of radial 
-! distance from the particle.
+! Calculate number density independently along each dimension, like 
+! vpi_eval_density, but the result (in each dimension) is expressed in a 
+! Chebychev polynomial basis.
 !@-at
 !@@c
-subroutine vpi_eval_dphase( rho, x, nbins, size_x, dndx )
-  real(kind=b8), dimension( : , : ), intent(out):: rho
-  real(kind=b8), dimension( : , : ) :: x
+subroutine vpi_eval_density_in_chebyshev_basis( rho, x, nbins, size_x, dndx )
+  real(kind=b8), dimension( nbins , N_DIM ), intent(out):: rho
+  real(kind=b8), dimension( N_PARTICLE , N_DIM ) :: x
   integer nbins
-  real :: size_x, dndx
+  real, dimension(N_DIM) :: size_x, dndx
+
+  real, dimension(nbins) :: yy
+
   integer bin
+  integer :: i,j,n
 
-  integer :: i,j
 
-  do i = 1, size(x,1)
-    do j = 1, size(x,2)
-      bin = floor((x(i,j)+size_x)*dndx)+1
-      if ( (bin .le. nbins) .and. (bin .ge. 1) ) then
-        rho(bin,j) = rho(bin,j) + 1
-      end if 
-    end do
-  end do
-end subroutine vpi_eval_dphase
+  do i = 1, N_PARTICLE
+   do j = 1, N_DIM
+     yy(1) = 1
+     yy(2) = x(i,j)
+     do n = 3, nbins
+       yy(n) = 2.0*x(i,j)*yy(n-1)/size_x(j) - yy(n-2)
+     end do
+     rho(:,j) = rho(:,j) + yy(:)
+   end do
+ end do
+end subroutine vpi_eval_density_in_chebyshev_basis
 !@nonl
-!@-node:gcross.20090623152316.16:vpi_eval_dphase
-!@-node:gcross.20090626170642.1720:Number density
-!@+node:gcross.20090626170642.1725:Optical density?
-!@+node:gcross.20090623152316.19:vpi_eval_optical_density
-subroutine vpi_eval_optical_density( od, od_avg, od_sig, x, id1, id2, nbins, size_x, dndx )
-  real(kind=b8), dimension( : , : ), intent(out):: od
-  real(kind=b8), dimension( : , : ), intent(in):: od_avg
-  real(kind=b8), dimension( : , : ), intent(out):: od_sig
-  real(kind=b8), dimension( : , : ) :: x
+!@-node:gcross.20090623152316.14:vpi_eval_density_in_chebyshev_basis
+!@+node:gcross.20090623152316.19:vpi_eval_density_in_plane
+!@+at
+! Calculate number density as a function of position in a plane spanning the 
+! "id1" and "id2" axes, integrating over any remaining axes.
+!@-at
+!@@c
+subroutine vpi_eval_density_in_plane( od, od_avg, od_sig, x, id1, id2, nbins, size_x, dndx )
+  real(kind=b8), dimension( nbins , nbins ), intent(out):: od
+  real(kind=b8), dimension( nbins , nbins ), intent(in):: od_avg
+  real(kind=b8), dimension( nbins , nbins ), intent(out):: od_sig
+  real(kind=b8), dimension( N_PARTICLE , N_DIM ) :: x
   real(kind=b8), dimension( nbins , nbins ) :: tod
   integer nbins, id1, id2
   real, dimension(N_DIM) :: size_x, dndx
@@ -2069,14 +2103,21 @@ subroutine vpi_eval_optical_density( od, od_avg, od_sig, x, id1, id2, nbins, siz
   end do
   od = od + tod
   od_sig(:,:) = od_sig(:,:) + (tod(:,:) - od_avg(:,:))**2
-end subroutine vpi_eval_optical_density
-!@-node:gcross.20090623152316.19:vpi_eval_optical_density
-!@+node:gcross.20090623152316.20:vpi_eval_optical_density2
-subroutine vpi_eval_optical_density2( od, od_avg, od_sig, x, nbins, size_x, dndx )
-  real(kind=b8), dimension( : , : ), intent(out):: od
-  real(kind=b8), dimension( : , : ), intent(in):: od_avg
-  real(kind=b8), dimension( : , : ), intent(out):: od_sig
-  real(kind=b8), dimension( : , : ) :: x
+end subroutine vpi_eval_density_in_plane
+!@nonl
+!@-node:gcross.20090623152316.19:vpi_eval_density_in_plane
+!@+node:gcross.20090623152316.20:vpi_eval_density_in_plane2
+!@+at
+! Calculate number density as a function of position in a plane spanning the X 
+! and Z axes, integrating over any remaining axes, for the second particle 
+! species?
+!@-at
+!@@c
+subroutine vpi_eval_density_in_plane2( od, od_avg, od_sig, x, nbins, size_x, dndx )
+  real(kind=b8), dimension( nbins , nbins ), intent(out):: od
+  real(kind=b8), dimension( nbins , nbins ), intent(in):: od_avg
+  real(kind=b8), dimension( nbins , nbins ), intent(out):: od_sig
+  real(kind=b8), dimension( N_PARTICLE , N_DIM ) :: x
   real(kind=b8), dimension( nbins , nbins ) :: tod
   integer nbins
   real, dimension(N_DIM) :: size_x, dndx
@@ -2097,9 +2138,10 @@ subroutine vpi_eval_optical_density2( od, od_avg, od_sig, x, nbins, size_x, dndx
   end do
   od = od + tod
   od_sig(:,:) = od_sig(:,:) + (tod(:,:) - od_avg(:,:))**2
-end subroutine vpi_eval_optical_density2
-!@-node:gcross.20090623152316.20:vpi_eval_optical_density2
-!@-node:gcross.20090626170642.1725:Optical density?
+end subroutine vpi_eval_density_in_plane2
+!@nonl
+!@-node:gcross.20090623152316.20:vpi_eval_density_in_plane2
+!@-node:gcross.20090626170642.1720:Number density
 !@+node:gcross.20090626170642.1727:Correlators
 !@+node:gcross.20090623152316.23:vpi_eval_corr_x
 subroutine vpi_eval_corr_x( corr_x, move_start, move_end, x )
@@ -2172,53 +2214,212 @@ subroutine vpi_eval_corr_xz( corr_xz, move_start, move_end, x )
 end subroutine vpi_eval_corr_xz
 !@-node:gcross.20090623152316.26:vpi_eval_corr_xz
 !@-node:gcross.20090626170642.1727:Correlators
-!@+node:gcross.20090626170642.1726:Miscellaneous
-!@-node:gcross.20090626170642.1726:Miscellaneous
-!@+node:gcross.20090626170642.1722:No idea what these do
-!@+node:gcross.20090623152316.14:vpi_eval_density_cheb
-subroutine vpi_eval_density_cheb( rho, x, nbins, size_x, dndx )
-  real(kind=b8), dimension( nbins , N_DIM ), intent(out):: rho
-  real(kind=b8), dimension( N_PARTICLE , N_DIM ) :: x
-  integer nbins
-  real, dimension(N_DIM) :: size_x, dndx
+!@+node:gcross.20090706131953.1744:Green's functions
+!@+at
+! These functions compute distributions that relate to the correlations 
+! between particles.
+!@-at
+!@@c
+!@+node:gcross.20090623152316.27:vpi_eval_gfn_sep_in_full_space
+!@+at
+! Computes the number density as a function of the distance between 
+! particles;  i.e. given any particle this distribution gives information 
+! about how many particles you'd expect to see as a function of distance from 
+! said particle.
+! 
+! The "in_full_space" suffix indicates that this function considers the 
+! distance in the full N-dimensional physical space, in contrast to many 
+! others which consider the distance restricted to various axes and planes.
+!@-at
+!@@c
+subroutine vpi_eval_gfn_sep_in_full_space( gofr, xij2, nbins, dndx )
+  integer :: nbins
+  real :: dndx
+  real(kind=b8), dimension( nbins ), intent(inout):: gofr 
+  real(kind=b8), dimension( N_PARTICLE , N_PARTICLE ) :: xij2
 
-  real, dimension(nbins) :: yy
-
-  integer bin
-  integer :: i,j,n
-
+  integer :: i,j
+  integer :: rbin
+  real :: r
 
   do i = 1, N_PARTICLE
-   do j = 1, N_DIM
-     yy(1) = 1
-     yy(2) = x(i,j)
-     do n = 3, nbins
-       yy(n) = 2.0*x(i,j)*yy(n-1)/size_x(j) - yy(n-2)
-     end do
-     rho(:,j) = rho(:,j) + yy(:)
-   end do
- end do
-end subroutine vpi_eval_density_cheb
+    do j = i + 1, N_PARTICLE
+      r = sqrt(xij2(i,j))
+      rbin = floor( r * dndx ) + 1
+      if( (rbin .ge. 1) .and. (rbin .le. nbins) ) then
+        gofr(rbin) = gofr(rbin) + 1
+      end if
+    end do
+  end do
+
+end subroutine vpi_eval_gfn_sep_in_full_space
 !@nonl
-!@-node:gcross.20090623152316.14:vpi_eval_density_cheb
-!@+node:gcross.20090623152316.18:vpi_eval_density_sp
-subroutine vpi_eval_density_sp( rho, x, nbins, size_x, dndx )
-  real(kind=b8), dimension( nbins , N_DIM ), intent(out):: rho
-  real(kind=b8), dimension( N_DIM ) :: x
+!@-node:gcross.20090623152316.27:vpi_eval_gfn_sep_in_full_space
+!@+node:gcross.20090623152316.30:vpi_eval_gfn_sep_in_XY_plane
+subroutine vpi_eval_gfn_sep_in_XY_plane( gofr, x, islice, nbins, dndx )
+  integer :: nbins, islice
+  real :: dndx
+  real(kind=b8), dimension( nbins ), intent(inout):: gofr 
+  real(kind=b8), dimension( N_SLICE, N_PARTICLE, N_DIM ) :: x
+
+  integer :: i,j
+  integer :: rbin
+  real :: r
+
+  real(kind=b8), dimension ( 2 ) :: dxij
+
+  do i = 1, N_PARTICLE
+    do j = i + 1, N_PARTICLE
+      dxij(:) =  x(islice,i,1:2) - x(islice,j,1:2)
+      if (use_pbc) then
+        dxij(:) = dxij(:) - p_pbc_L*floor(dxij(:)/p_pbc_L - 0.5_b8) - p_pbc_L
+      end if
+      r = sqrt(sum(dxij(1:2)**2))
+      rbin = floor( r * dndx ) + 1
+      if( (rbin .ge. 1) .and. (rbin .le. nbins) ) then
+        gofr(rbin) = gofr(rbin) + 1
+      end if
+    end do
+  end do
+
+end subroutine vpi_eval_gfn_sep_in_XY_plane
+!@-node:gcross.20090623152316.30:vpi_eval_gfn_sep_in_XY_plane
+!@+node:gcross.20090623152316.29:vpi_eval_gfn_sep_along_Z_axis
+!@+at
+! Computes the number density as a function of the separation between 
+! particles along the Z axis;  i.e., like vpi_eval_gfn_sep_in_full_space, but 
+! expressed as a separate function of the distance along each axis rather than 
+! as the distance in the full N-dimensional space.
+!@-at
+!@@c
+subroutine vpi_eval_gfn_sep_along_Z_axis( gofr, x, islice, nbins, dndx )
+  integer :: nbins, islice
+  real :: dndx
+  real(kind=b8), dimension( nbins ), intent(inout):: gofr 
+  real(kind=b8), dimension( N_SLICE, N_PARTICLE, N_DIM ) :: x
+
+  integer :: i,j
+  integer :: rbin
+  real :: r
+
+  do i = 1, N_PARTICLE
+    do j = i + 1, N_PARTICLE
+      r = abs(x(islice,i,3) - x(islice,j,3))
+      rbin = floor( r * dndx ) + 1
+      if( (rbin .ge. 1) .and. (rbin .le. nbins) ) then
+        gofr(rbin) = gofr(rbin) + 1
+      end if
+    end do
+  end do
+
+end subroutine vpi_eval_gfn_sep_along_Z_axis
+!@nonl
+!@-node:gcross.20090623152316.29:vpi_eval_gfn_sep_along_Z_axis
+!@+node:gcross.20090623152316.28:vpi_eval_gfn_sep_in_Z_and_XY
+subroutine vpi_eval_gfn_sep_in_Z_and_XY( gofr, x, islice, nbins, dndx )
+  integer :: nbins, islice
+  real :: dndx(3)
+  real(kind=b8), dimension( nbins,nbins ), intent(inout):: gofr 
+  real(kind=b8), dimension( N_SLICE, N_PARTICLE, N_DIM ) :: x
+
+  integer :: i,j
+  integer :: zbin,rbin
+  real :: z,r
+
+  real(kind=b8), dimension ( 3 ) :: dxij
+
+  do i = 1, N_PARTICLE
+    do j = i + 1, N_PARTICLE
+      dxij(:) =  x(islice,i,:) - x(islice,j,:)
+      if(use_pbc) then
+        dxij(:) = dxij(:) - p_pbc_L*floor(dxij(:)/p_pbc_L - 0.5_b8) - p_pbc_L
+      end if
+      ! separation in the XY plane
+      r = sqrt(sum(dxij(1:2)**2))
+      rbin = floor( r * dndx(1)*2 ) + 1
+      ! separation along the Z axis
+      z = abs(dxij(3))*2
+      zbin = floor( z * dndx(3) ) + 1
+      if( (rbin .ge. 1) .and. (rbin .le. nbins) ) then
+        if( (zbin .ge. 1) .and. (zbin .le. nbins) ) then
+          gofr(zbin,rbin) = gofr(zbin,rbin) + 1
+        end if
+      end if
+    end do
+  end do
+
+end subroutine vpi_eval_gfn_sep_in_Z_and_XY
+!@nonl
+!@-node:gcross.20090623152316.28:vpi_eval_gfn_sep_in_Z_and_XY
+!@-node:gcross.20090706131953.1744:Green's functions
+!@+node:gcross.20090626170642.1722:No idea what these do
+!@+node:gcross.20090623152316.31:vpi_eval_gof_rot
+subroutine vpi_eval_gof_rot( gof_rot, gof_rot_xyz, gof_rot_xyz_avg, gofr_rot, q, q_rot, xij2, &
+                             slice, nbins_rr, dndx_rr, nbins_xyz, xsize, dndx, nbins_rot, dndx_rot )
+  integer :: nbins_xyz, nbins_rot, nbins_rr
+  integer :: slice
+  real(kind=b8), dimension( : ), intent(inout):: gof_rot 
+  real(kind=b8), dimension( : ), intent(inout):: gofr_rot 
+  real(kind=b8), dimension( : , : , : , : ), intent(inout):: gof_rot_xyz
+  real(kind=b8), dimension( : , : , : ), intent(inout):: gof_rot_xyz_avg
+  real(kind=b8), dimension( : , : , : ) :: q
+  real(kind=b8), dimension( : , : , : ) :: q_rot
+  real(kind=b8), dimension( N_SLICE, N_PARTICLE , N_PARTICLE ) :: xij2
+  real, dimension(3) :: xsize, dndx
+  real :: dndx_rot,dndx_rr
+
+  integer :: i,j
+  integer :: br, brr, bx, by, bz
+  real(kind=b8) :: r,rr
+
+  do i = 1, N_PARTICLE
+    do j = i + 1, N_PARTICLE
+      rr = sqrt(xij2(slice,i,j))
+      brr = floor( rr * dndx_rot ) + 1
+      if((brr .ge. 1) .and. (brr .le. nbins_rot) ) then
+        gofr_rot(brr) = gofr_rot(brr) + r
+      end if
+      bx = floor((q(slice,i,1) + xsize(1))*dndx(1))+1
+      by = floor((q(slice,i,2) + xsize(2))*dndx(2))+1
+      bz = floor((q(slice,i,3) + xsize(3))*dndx(3))+1
+      r = dot_product(q_rot(slice,i,:),q_rot(slice,j,:))
+      br = floor((r + 1.0)*nbins_rot/2.0)+1
+      if( (br .ge. 1) .and. (br .le. nbins_rot) ) then
+        gof_rot(br) = gof_rot(br) + 1
+        if( (bx .ge. 1) .and. (bx .le. nbins_xyz) ) then
+          if( (by .ge. 1) .and. (by .le. nbins_xyz) ) then
+            if( (bz .ge. 1) .and. (bz .le. nbins_xyz) ) then
+              gof_rot_xyz(bx,by,bz,br) = gof_rot_xyz(bx,by,bz,br) + 1
+              gof_rot_xyz_avg(bx,by,bz) = gof_rot_xyz_avg(bx,by,bz) + r
+            end if
+          end if
+        end if
+      end if
+    end do
+  end do
+
+end subroutine vpi_eval_gof_rot
+!@-node:gcross.20090623152316.31:vpi_eval_gof_rot
+!@+node:gcross.20090623152316.16:vpi_eval_dphase
+subroutine vpi_eval_dphase( rho, x, nbins, size_x, dndx )
+  real(kind=b8), dimension( : , : ), intent(out):: rho
+  real(kind=b8), dimension( : , : ) :: x
   integer nbins
-  real, dimension(N_DIM) :: size_x, dndx
+  real :: size_x, dndx
   integer bin
 
-  integer :: j
+  integer :: i,j
 
-  do j = 1, N_DIM
-    bin = anint((x(j)+size_x(j))*dndx(j))+1
-    if ( (bin .le. nbins) .and. (bin .ge. 1) ) then
-      rho(bin,j) = rho(bin,j) + 1
-    end if 
+  do i = 1, size(x,1)
+    do j = 1, size(x,2)
+      bin = floor((x(i,j)+size_x)*dndx)+1
+      if ( (bin .le. nbins) .and. (bin .ge. 1) ) then
+        rho(bin,j) = rho(bin,j) + 1
+      end if 
+    end do
   end do
-end subroutine vpi_eval_density_sp
-!@-node:gcross.20090623152316.18:vpi_eval_density_sp
+end subroutine vpi_eval_dphase
+!@-node:gcross.20090623152316.16:vpi_eval_dphase
 !@+node:gcross.20090623152316.21:vpi_eval_N_R
 subroutine vpi_eval_N_R( N_R, dn_rms, x, islice, dslice )
   real(kind=b8), dimension( : ), intent(inout):: N_R 
@@ -2278,160 +2479,6 @@ subroutine vpi_eval_N_z2( N_zs,N_za, x )
   N_za((tr_cnt-tl_cnt)+N_PARTICLE2+1) = N_za((tr_cnt-tl_cnt)+N_PARTICLE2+1) + 1
 end subroutine vpi_eval_N_z2
 !@-node:gcross.20090623152316.22:vpi_eval_B_z2
-!@+node:gcross.20090623152316.27:vpi_eval_gofr
-subroutine vpi_eval_gofr( gofr, xij2, nbins, dndx )
-  integer :: nbins
-  real :: dndx
-  real(kind=b8), dimension( nbins ), intent(inout):: gofr 
-  real(kind=b8), dimension( N_PARTICLE , N_PARTICLE ) :: xij2
-
-  integer :: i,j
-  integer :: rbin
-  real :: r
-
-  do i = 1, N_PARTICLE
-    do j = i + 1, N_PARTICLE
-      r = sqrt(xij2(i,j))
-      rbin = floor( r * dndx ) + 1
-      if( (rbin .ge. 1) .and. (rbin .le. nbins) ) then
-        gofr(rbin) = gofr(rbin) + 1
-      end if
-    end do
-  end do
-
-end subroutine vpi_eval_gofr
-!@-node:gcross.20090623152316.27:vpi_eval_gofr
-!@+node:gcross.20090623152316.29:vpi_eval_gofz
-subroutine vpi_eval_gofz( gofr, x, islice, nbins, dndx )
-  integer :: nbins, islice
-  real :: dndx
-  real(kind=b8), dimension( nbins ), intent(inout):: gofr 
-  real(kind=b8), dimension( N_SLICE, N_PARTICLE, N_DIM ) :: x
-
-  integer :: i,j
-  integer :: rbin
-  real :: r
-
-  do i = 1, N_PARTICLE
-    do j = i + 1, N_PARTICLE
-      r = abs(x(islice,i,3) - x(islice,j,3))
-      rbin = floor( r * dndx ) + 1
-      if( (rbin .ge. 1) .and. (rbin .le. nbins) ) then
-        gofr(rbin) = gofr(rbin) + 1
-      end if
-    end do
-  end do
-
-end subroutine vpi_eval_gofz
-!@-node:gcross.20090623152316.29:vpi_eval_gofz
-!@+node:gcross.20090623152316.30:vpi_eval_gofrho
-subroutine vpi_eval_gofrho( gofr, x, islice, nbins, dndx )
-  integer :: nbins, islice
-  real :: dndx
-  real(kind=b8), dimension( nbins ), intent(inout):: gofr 
-  real(kind=b8), dimension( N_SLICE, N_PARTICLE, N_DIM ) :: x
-
-  integer :: i,j
-  integer :: rbin
-  real :: r
-
-  real(kind=b8), dimension ( 2 ) :: dxij,pbc_dxij
-
-  do i = 1, N_PARTICLE
-    do j = i + 1, N_PARTICLE
-      dxij(:) =  x(islice,i,1:2) - x(islice,j,1:2)
-      pbc_dxij(:) = dxij(:) - p_pbc_L*floor(dxij(:)/p_pbc_L - 0.5_b8) - p_pbc_L
-      r = sqrt(pbc_dxij(1)**2+pbc_dxij(2)**2)
-      rbin = floor( r * dndx ) + 1
-      if( (rbin .ge. 1) .and. (rbin .le. nbins) ) then
-        gofr(rbin) = gofr(rbin) + 1
-      end if
-    end do
-  end do
-
-end subroutine vpi_eval_gofrho
-!@nonl
-!@-node:gcross.20090623152316.30:vpi_eval_gofrho
-!@+node:gcross.20090623152316.28:vpi_eval_gofzrho
-subroutine vpi_eval_gofzrho( gofr, x, islice, nbins, dndx )
-  integer :: nbins, islice
-  real :: dndx(3)
-  real(kind=b8), dimension( nbins,nbins ), intent(inout):: gofr 
-  real(kind=b8), dimension( N_SLICE, N_PARTICLE, N_DIM ) :: x
-
-  integer :: i,j
-  integer :: zbin,rbin
-  real :: z,r
-
-  real(kind=b8), dimension ( 3 ) :: dxij,pbc_dxij
-
-  do i = 1, N_PARTICLE
-    do j = i + 1, N_PARTICLE
-      dxij(:) =  x(islice,i,:) - x(islice,j,:)
-      pbc_dxij(:) = dxij(:) - p_pbc_L*floor(dxij(:)/p_pbc_L - 0.5_b8) - p_pbc_L
-      r = sqrt(pbc_dxij(1)**2+pbc_dxij(2)**2)
-      rbin = floor( r * dndx(1)*2 ) + 1
-      z = abs(pbc_dxij(3))*2
-      zbin = floor( z * dndx(3) ) + 1
-      if( (rbin .ge. 1) .and. (rbin .le. nbins) ) then
-        if( (zbin .ge. 1) .and. (zbin .le. nbins) ) then
-          gofr(zbin,rbin) = gofr(zbin,rbin) + 1
-        end if
-      end if
-    end do
-  end do
-
-end subroutine vpi_eval_gofzrho
-!@nonl
-!@-node:gcross.20090623152316.28:vpi_eval_gofzrho
-!@+node:gcross.20090623152316.31:vpi_eval_gofrot
-subroutine vpi_eval_gof_rot( gof_rot, gof_rot_xyz, gof_rot_xyz_avg, gofr_rot, q, q_rot, xij2, &
-                             slice, nbins_rr, dndx_rr, nbins_xyz, xsize, dndx, nbins_rot, dndx_rot )
-  integer :: nbins_xyz, nbins_rot, nbins_rr
-  integer :: slice
-  real(kind=b8), dimension( : ), intent(inout):: gof_rot 
-  real(kind=b8), dimension( : ), intent(inout):: gofr_rot 
-  real(kind=b8), dimension( : , : , : , : ), intent(inout):: gof_rot_xyz
-  real(kind=b8), dimension( : , : , : ), intent(inout):: gof_rot_xyz_avg
-  real(kind=b8), dimension( : , : , : ) :: q
-  real(kind=b8), dimension( : , : , : ) :: q_rot
-  real(kind=b8), dimension( N_SLICE, N_PARTICLE , N_PARTICLE ) :: xij2
-  real, dimension(3) :: xsize, dndx
-  real :: dndx_rot,dndx_rr
-
-  integer :: i,j
-  integer :: br, brr, bx, by, bz
-  real(kind=b8) :: r,rr
-
-  do i = 1, N_PARTICLE
-    do j = i + 1, N_PARTICLE
-      rr = sqrt(xij2(slice,i,j))
-      brr = floor( rr * dndx_rot ) + 1
-      if((brr .ge. 1) .and. (brr .le. nbins_rot) ) then
-        gofr_rot(brr) = gofr_rot(brr) + r
-      end if
-      bx = floor((q(slice,i,1) + xsize(1))*dndx(1))+1
-      by = floor((q(slice,i,2) + xsize(2))*dndx(2))+1
-      bz = floor((q(slice,i,3) + xsize(3))*dndx(3))+1
-      r = dot_product(q_rot(slice,i,:),q_rot(slice,j,:))
-      br = floor((r + 1.0)*nbins_rot/2.0)+1
-      if( (br .ge. 1) .and. (br .le. nbins_rot) ) then
-        gof_rot(br) = gof_rot(br) + 1
-        if( (bx .ge. 1) .and. (bx .le. nbins_xyz) ) then
-          if( (by .ge. 1) .and. (by .le. nbins_xyz) ) then
-            if( (bz .ge. 1) .and. (bz .le. nbins_xyz) ) then
-              gof_rot_xyz(bx,by,bz,br) = gof_rot_xyz(bx,by,bz,br) + 1
-              gof_rot_xyz_avg(bx,by,bz) = gof_rot_xyz_avg(bx,by,bz) + r
-            end if
-          end if
-        end if
-      end if
-    end do
-  end do
-
-end subroutine vpi_eval_gof_rot
-!@nonl
-!@-node:gcross.20090623152316.31:vpi_eval_gofrot
 !@-node:gcross.20090626170642.1722:No idea what these do
 !@-node:gcross.20090624144408.2048:Evaluators of physical quantities
 !@+node:gcross.20090624144408.2049:Input
