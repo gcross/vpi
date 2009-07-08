@@ -1646,7 +1646,7 @@ program Test_VPI
         end if
       end if
 
-      if(eval_obdm_angle_in_XZ_plane) then
+      if( eval_off_diagonal .and. eval_obdm_angle_in_XZ_plane) then
         write(my_fname,"(a27,i4.4)")"obdm_angle_in_XZ_plane.dat.",my_rank
         open(12, file=my_fname, status="replace")
         do ii = 1, N_BINS
