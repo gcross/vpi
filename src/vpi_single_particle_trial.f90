@@ -20,7 +20,7 @@ function tfunc( x, sl, nslice, np, ndim ) result( y )
 end function tfunc
 
 function grad_lap_sp_tfun( x, slice, np, ndim, nslice, grad_lntfn, lap_lntfn ) result (y)
-  real(kind=b8), dimension( : , : , : ), intent(in) :: x
+  real(kind=b8), dimension( nslice , np , ndim ), intent(in) :: x
   real(kind=b8), dimension( np , ndim ), intent(out) :: grad_lntfn
   real(kind=b8),intent(out) :: lap_lntfn
   integer, intent(in) :: np, ndim, nslice, slice
