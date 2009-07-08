@@ -54,14 +54,18 @@ contains
                  - normalized_hump_coefficient/hump_radius_squared*x(slice,:,3) &
                       * exp(-(x(slice,:,1)**2+x(slice,:,3)**2)/hump_radius_squared_times_2)
 
-    do i = 1, np
-      if ( x(slice,i,1) > extra_hump_x_threshold_hack ) then 
-        gUsp(i,3) = gUsp(i,3) - x(slice,i,3) &
-                                      * normalized_hump_coefficient/hump_radius_squared &
-                                      * exp(-(x(slice,i,3)**2)/hump_radius_squared_times_2)
-      end if
-    end do
-
+  !@+at
+  !   do i = 1, np
+  !     if ( x(slice,i,1) > extra_hump_x_threshold_hack ) then
+  !       gUsp(i,3) = gUsp(i,3) - x(slice,i,3) &
+  !                                     * 
+  ! normalized_hump_coefficient/hump_radius_squared &
+  !                                     * 
+  ! exp(-(x(slice,i,3)**2)/hump_radius_squared_times_2)
+  !     end if
+  !   end do
+  !@-at
+  !@@c
   end function gUsp_func
   !@-node:gcross.20090624144408.1517:gUsp
   !@-others
