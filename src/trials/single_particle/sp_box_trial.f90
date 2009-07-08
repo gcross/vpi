@@ -64,10 +64,7 @@ contains
           return
       endif
 
-      y = y + log(cos( M_PI*x(islice,i,1) / (x_length) ) &
-                 *cos( M_PI*x(islice,i,2) / (y_length) ) &
-                 *cos( M_PI*x(islice,i,3) / (z_length) ) &
-               )
+      y = y + log(sum(cos( M_PI * x(islice,i,:) / box_dimensions(:) )))
 
     end do
 
@@ -83,9 +80,7 @@ contains
 
     integer :: i, j
 
-    grad_lntfn(:,1) = -tan(x(sl,:,1))
-    grad_lntfn(:,2) = -tan(x(sl,:,2))
-    grad_lntfn(:,3) = -tan(x(sl,:,3))
+    grad_lntfn(:,:) = -tan(x(sl,:,:))
 
     lap_lntfn = -3.0*np - sum(grad_lntfn(:,:)**2)
     y = 1
