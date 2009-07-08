@@ -13,9 +13,10 @@ module vpi_two_body_potential
 
   !@  << Variables >>
   !@+node:gcross.20090624144408.1674:<< Variables >>
-  real (kind=b8), private :: coefficient = 2352.5_b8
-  real (kind=b8), private :: length_scale = 0.05_b8
-  real (kind=b8), private :: length_scale_squared
+  real (kind=b8), private :: coefficient = 1_b8
+  real (kind=b8), private :: potential_well_depth = 1_b8
+  real (kind=b8), private :: cross_over_point
+  real (kind=b8), private :: cross_over_point_squared
   !@-node:gcross.20090624144408.1674:<< Variables >>
   !@nl
 
@@ -26,11 +27,12 @@ contains
   !@+others
   !@+node:gcross.20090624144408.1676:init_tb_potential
   subroutine init_tb_potential ()
-    namelist /two_body_potential_parameters/ coefficient, length_scale
+    namelist /two_body_potential_parameters/ potential_well_depth, cross_over_point
 
     read(unit=10,nml=two_body_potential_parameters)
 
-    length_scale_squared = length_scale * length_scale
+    cross_over_point_squared = cross_over_point * cross_over_point
+    coefficient = 4*potential_well_depth
 
     write(*,*) "Using two-body L.J. potential with"
     write(*,nml=two_body_potential_parameters)
@@ -49,8 +51,8 @@ contains
 
     acc_flag = .true.
 
-    t6 = length_scale_squared**6 * (sum( xij2(slice,ip,1:ip-1)**(-6) ) + sum( xij2(slice,ip,ip+1:np)**(-6) ))
-    t3 = length_scale_squared**3 * (sum( xij2(slice,ip,1:ip-1)**(-3) ) + sum( xij2(slice,ip,ip+1:np)**(-3) ))
+    t6 = cross_over_point_squared**6 * (sum( xij2(slice,ip,1:ip-1)**(-6) ) + sum( xij2(slice,ip,ip+1:np)**(-6) ))
+    t3 = cross_over_point_squared**3 * (sum( xij2(slice,ip,1:ip-1)**(-3) ) + sum( xij2(slice,ip,ip+1:np)**(-3) ))
 
     Uij = coefficient * ( t6 - t3 )/2.0_b8
 
@@ -79,8 +81,8 @@ contains
     real(kind = b8) :: gc1,gc2
     integer :: i,j
 
-    gc1 =  -6.0_b8*length_scale_squared**6
-    gc2  =  3.0_b8*length_scale_squared**3
+    gc1 =  -6.0_b8*cross_over_point_squared**6
+    gc2  =  3.0_b8*cross_over_point_squared**3
 
     gUij = 0
 
