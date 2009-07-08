@@ -13,9 +13,8 @@ module vpi_single_particle_potential
 
   !@  << Variables >>
   !@+node:gcross.20090624094338.1412:<< Variables >>
-  real (kind=b8), private :: x_coefficient = 1.0_b8
-  real (kind=b8), private :: y_coefficient = 1.0_b8
-  real (kind=b8), private :: z_coefficient = 1.0_b8
+  real (kind=b8), dimension(3), private :: coefficients = (/1.0_b8,1.0_b8,1.0_b8/)
+
   !@-node:gcross.20090624094338.1412:<< Variables >>
   !@nl
 
@@ -26,7 +25,7 @@ contains
   !@+others
   !@+node:gcross.20090624094338.1414:init_sp_potential
   subroutine init_sp_potential ()
-    namelist /single_particle_potential_parameters/ x_coefficient, y_coefficient, z_coefficient
+    namelist /single_particle_potential_parameters/ coefficients
 
     read(unit=10,nml=single_particle_potential_parameters)
 
@@ -42,10 +41,7 @@ contains
 
     real(kind=b8) :: Usp
 
-    Usp = ( x_coefficient*x(slice,ip,1)**2 &
-          + y_coefficient*x(slice,ip,2)**2 &
-          + z_coefficient*x(slice,ip,3)**2 &
-          ) / 2.0_b8
+    Usp = dot_product(coefficients,x(slice,ip,:)**2) / 2.0_b8
 
   end function Usp_func
   !@-node:gcross.20090624094338.1415:Usp
@@ -53,15 +49,15 @@ contains
   function gUsp_func( x, slice, nslice, np, ndim ) result ( gUsp )
     real(kind=b8), dimension ( nslice, np , ndim ) ::  x
     integer :: slice, nslice, np, ndim
+    integer :: i
 
     real(kind=b8), dimension ( np, ndim ) :: gUsp
 
-    gUsp(:,1) = x_coefficient*x(slice,:,1)
-    gUsp(:,2) = y_coefficient*x(slice,:,2)
-    gUsp(:,3) = z_coefficient*x(slice,:,3)
+    do i=1,3
+      gUsp(:,i) = coefficients(i)*x(slice,:,i)
+    end do
 
   end function gUsp_func
-  !@nonl
   !@-node:gcross.20090624094338.1416:gUsp
   !@-others
   !@-node:gcross.20090624094338.1413:<< Subroutines >>

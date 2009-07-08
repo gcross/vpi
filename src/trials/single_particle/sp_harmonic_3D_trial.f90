@@ -13,9 +13,7 @@ module vpi_single_particle_trial
 
   !@  << Variables >>
   !@+node:gcross.20090624144408.1854:<< Variables >>
-  real (kind=b8), private :: x_coefficient = 1.0_b8
-  real (kind=b8), private :: y_coefficient = 1.0_b8
-  real (kind=b8), private :: z_coefficient = 1.0_b8
+  real (kind=b8), dimension(3), private :: coefficients = (/1.0_b8,1.0_b8,1.0_b8/)
   !@-node:gcross.20090624144408.1854:<< Variables >>
   !@nl
 
@@ -26,7 +24,7 @@ contains
   !@+others
   !@+node:gcross.20090624144408.1856:init_sp_tfunc
   subroutine init_sp_tfunc ()
-    namelist /single_particle_trial_function_parameters/ x_coefficient, y_coefficient, z_coefficient
+    namelist /single_particle_trial_function_parameters/ coefficients
 
     read(unit=10,nml=single_particle_trial_function_parameters)
 
@@ -40,12 +38,12 @@ contains
     real(kind=b8), dimension( nslice, np , ndim ) :: x
     real(kind=b8) :: y
     real, dimension( np ) :: psi_t
+    integer :: i
 
-    psi_t(:)  = -( x_coefficient*x(sl,:,1)**2 &
-                 + y_coefficient*x(sl,:,2)**2 &
-                 + z_coefficient*x(sl,:,3)**2 &
-                 )/2.0_b8
-    y = sum(psi_t)
+    y = 0
+    do i=1,np
+      y = y - dot_product(coefficients,x(sl,i,:)**2)/2.0_b8
+    end do
 
   end function tfunc
   !@-node:gcross.20090624144408.1857:tfunc
@@ -55,13 +53,13 @@ contains
     real(kind=b8), dimension( np , ndim ), intent(out) :: grad_lntfn 
     real(kind=b8),intent(out) :: lap_lntfn 
     integer, intent(in) :: np, ndim, nslice, slice
-    integer :: y
+    integer :: y, i
 
-    grad_lntfn(:,1) = -x_coefficient*x(slice,:,1)
-    grad_lntfn(:,2) = -y_coefficient*x(slice,:,2)
-    grad_lntfn(:,3) = -z_coefficient*x(slice,:,3)
+    do i=1,3
+      grad_lntfn(:,i) = -coefficients(i)*x(slice,:,i)
+    end do
 
-    lap_lntfn = -(x_coefficient + y_coefficient + z_coefficient)*dble(np) 
+    lap_lntfn = -sum(coefficients)*dble(np) 
     y = 1
 
   end function grad_lap_sp_tfun
