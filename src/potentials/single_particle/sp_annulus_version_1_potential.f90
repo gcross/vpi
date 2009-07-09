@@ -18,6 +18,11 @@ contains
   !@  << Subroutines >>
   !@+node:gcross.20090624144408.1515:<< Subroutines >>
   !@+others
+  !@+node:gcross.20090707121444.1782:init_sp_potential
+  subroutine init_sp_potential ()
+    call common_init_sp_potential
+  end subroutine init_sp_potential
+  !@-node:gcross.20090707121444.1782:init_sp_potential
   !@+node:gcross.20090624144408.1516:Usp
   function Usp_func( x, slice, ip, nslice, np, ndim ) result ( Usp )
     real(kind=b8), dimension ( nslice, np , ndim ) :: x

@@ -39,7 +39,7 @@ contains
   !@+node:gcross.20090624144408.1503:<< Subroutines >>
   !@+others
   !@+node:gcross.20090624144408.1504:init_sp_potential
-  subroutine init_sp_potential ()
+  subroutine common_init_sp_potential ()
     namelist /single_particle_potential_parameters/ &
       harmonic_oscillator_coefficients, &
       hump_coefficient, hump_characteristic_radius, &
@@ -55,7 +55,7 @@ contains
     write(*,*) "Using single particle annulus potential with"
     write(*,nml=single_particle_potential_parameters)
 
-  end subroutine init_sp_potential
+  end subroutine common_init_sp_potential
   !@-node:gcross.20090624144408.1504:init_sp_potential
   !@-others
   !@-node:gcross.20090624144408.1503:<< Subroutines >>
