@@ -1030,8 +1030,11 @@ program Test_VPI
             lngfn0 = lngfn0 + log(rotgfn0)
           end if
         end if
+        !@-node:gcross.20090626112946.1697:<< Compute contribution from propagators >>
+        !@nl
 
-
+        !@<< Compute contribution from trial functions >>
+        !@+node:gcross.20090721120825.1746:<< Compute contribution from trial functions >>
         lntfn1 = tfunc(q1, 1, N_SLICE, N_PARTICLE, N_DIM) + &
                  tfunc(q1, N_SLICE, N_SLICE, N_PARTICLE, N_DIM) + &
                  jas_tfun(q1, xij2_1, 1, N_SLICE, N_PARTICLE, N_DIM) + &
@@ -1040,13 +1043,14 @@ program Test_VPI
                  tfunc(q0, N_SLICE, N_SLICE, N_PARTICLE, N_DIM) + &
                  jas_tfun(q0, xij2_0, 1, N_SLICE, N_PARTICLE, N_DIM) + &
                  jas_tfun(q0, xij2_0, N_SLICE, N_SLICE, N_PARTICLE, N_DIM)
+        !@nonl
+        !@-node:gcross.20090721120825.1746:<< Compute contribution from trial functions >>
+        !@nl
 
         !        print "(2a20)", "lngfn0", "lngfn1"
         !        print *, lngfn0, lngfn1
         !        print "(2a20)", "lntfn0", "lntfn1"
         !        print *, lntfn0, lntfn1
-        !@-node:gcross.20090626112946.1697:<< Compute contribution from propagators >>
-        !@nl
         !@-node:gcross.20090626112946.1695:<< Compute probability of acceptance >>
         !@nl
 
