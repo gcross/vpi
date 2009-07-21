@@ -14,9 +14,10 @@ module vpi_single_particle_potential
 
   !@  << Variables >>
   !@+node:gcross.20090624094338.1372:<< Variables >>
-  real (kind=b8), private :: x_length = 1_b8, x_wall_location
-  real (kind=b8), private :: y_length = 1_b8, y_wall_location
-  real (kind=b8), private :: z_length = 1_b8, z_wall_location
+  real (kind=b8), private, dimension (3) :: box_dimensions = (/1_b8,1_b8,1_b8/)
+  real (kind=b8), private :: x_length, x_wall_location
+  real (kind=b8), private :: y_length, y_wall_location
+  real (kind=b8), private :: z_length, z_wall_location
   !@-node:gcross.20090624094338.1372:<< Variables >>
   !@nl
 
@@ -27,9 +28,13 @@ contains
   !@+others
   !@+node:gcross.20090624094338.1370:init_sp_potential
   subroutine init_sp_potential ()
-    namelist /single_particle_potential_parameters/ x_length, y_length, z_length
+    namelist /single_particle_potential_parameters/ box_dimensions
 
     read(unit=10,nml=single_particle_potential_parameters)
+
+    x_length = box_dimensions(1)
+    y_length = box_dimensions(2)
+    z_length = box_dimensions(3)
 
     x_wall_location = x_length/2  
     y_wall_location = y_length/2  

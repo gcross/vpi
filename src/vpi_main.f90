@@ -81,7 +81,6 @@ program Test_VPI
   real (kind=b8), allocatable, dimension( : , : ) :: corr_xz
   real (kind=b8), allocatable, dimension( : ) :: corr_r
   real (kind=b8), allocatable, dimension( : ) :: corr_phase
-  real (kind=b8), allocatable, dimension( :, : ) :: grad_Usp, grad_Uij, grad_U
   real (kind=b8), allocatable, dimension( : ) :: U_weight, gU2_weight
 
   real (kind=b8), allocatable, dimension( : ) :: N_R
@@ -132,8 +131,6 @@ program Test_VPI
   real (kind=b8), allocatable, dimension( : , : ) :: obdm_rot_z
   real (kind=b8), allocatable, dimension( : , : ) :: obdm_theta
 
-  real (kind=b8) :: U_sp, U_ij,Uij_rot
-
   real (kind=b8) :: t0,t1,t2,t3
 
   real (kind=b8) :: accr = 0.0
@@ -167,21 +164,18 @@ program Test_VPI
   integer :: dmfix = 1
   integer :: maxfix_iter = 10
 
-  real(kind=b8) :: lngfn0, lngfn1 
-  real(kind=b8) :: rotgfn0, rotgfn1 
-  real(kind=b8) :: hsgfn0, hsgfn1 
-  real(kind=b8) :: lntfn0, lntfn1 
   real(kind=b8), dimension(2) :: tx0,tx1
   real, dimension(2) :: tsize,tdxdn,tdndx
 
-  logical :: acc_flag = .true.
+  logical :: reject_flag = .true.
+  real(kind=b8) :: weight_0, weight_1
+
   integer :: ierr
   integer :: my_rank = 0
   logical :: ex
   double precision time0, time1
   character (len=50) :: my_fname
   INTEGER no_fn_evals,no_fn_evals_nl2sol
-  !@nonl
   !@-node:gcross.20090623152316.6:<< Global variables >>
   !@nl
 
@@ -237,8 +231,6 @@ program Test_VPI
   !@<< Initialize variables >>
   !@+node:gcross.20090623152316.11:<< Initialize variables >>
     dMfix = 16
-    lngfn0 = 0.0_b8
-    lngfn1  = 0.0_b8
 
     corpcnt = 0
     corper = N_PARTICLE*n_slice/dM
@@ -304,9 +296,6 @@ program Test_VPI
     allocate( N_zs( N_PARTICLE2 + 1 ) )
     allocate( N_za( N_PARTICLE2 + 1 ) )
     allocate( nrdm_z( N_OD_PARTICLE**2, N_OD_PARTICLE**2 ) )
-    allocate( grad_Usp( N_PARTICLE , N_DIM ) )
-    allocate( grad_Uij( N_PARTICLE , N_DIM ) )
-    allocate( grad_U( N_PARTICLE , N_DIM ) )
     allocate( U_weight( N_SLICE ) )
     allocate( gU2_weight( N_SLICE ) )
 
@@ -654,42 +643,19 @@ program Test_VPI
 
     !@  << Compute initial values of some physical quantities >>
     !@+node:gcross.20090626131222.1719:<< Compute initial values of some physical quantities >>
-    acc_flag = .true.
-    do ii = 1, N_SLICE
-      do jj = 1, N_PARTICLE
-        U_sp = Usp_func( qobs, ii, jj, N_SLICE, N_PARTICLE, N_DIM )
-        U_ij = Uij_func( qobs, xij2_0, ii, jj, N_SLICE, N_PARTICLE, N_DIM, acc_flag )
-        if( eval_rotation ) then
-          Uij_rot =  Uij_rot_func( qobs, q_rot0, xij2_0, ii, jj, N_SLICE, N_PARTICLE, N_DIM )
-          U_ij = U_ij + Uij_rot
-        end if
-        if(acc_flag .eqv. .false.) then
-          print *,"ERROR: particle overlap"
-          stop
-        end if
-        U_0(ii,jj) = ( U_sp + U_ij )
-      end do
-      grad_Usp = gUsp_func( qobs, ii, N_SLICE, N_PARTICLE, N_DIM )
-      grad_Uij = gUij_func( qobs, xij2_0, ii, N_SLICE, N_PARTICLE, N_DIM )
-      grad_U = grad_Usp + grad_Uij
-      gradU2_0(ii) = sum( grad_U(:,1)**2 + grad_U(:,2)**2 + grad_U(:,3)**2 )
-    end do
+    call compute_potential (&
+        qobs, xij2_0, q_rot0, &
+        1, N_SLICE, &
+        N_SLICE, N_PARTICLE, N_DIM, &
+        U_0, gradU2_0, &
+        reject_flag &
+        )
 
-    !@@raw
-#ifdef USE_SWFN
-    !@@end_raw
-    lntfn0 = 2.0_b8*( tfunc(q0, CSLICE, N_SLICE, N_PARTICLE, N_DIM) + &
-                      jas_tfun( q0, xij2_0, CSLICE, N_SLICE, N_PARTICLE, N_DIM) )
-    !@@raw
-#else
-    !@@end_raw
-    lntfn0 = tfunc(q0, 1, N_SLICE, N_PARTICLE, N_DIM) + &
-             tfunc(q0, N_SLICE, N_SLICE, N_PARTICLE, N_DIM) + &
-             jas_tfun(q0, xij2_0, 1, N_SLICE, N_PARTICLE, N_DIM) + &
-             jas_tfun(q0, xij2_0, N_SLICE, N_SLICE, N_PARTICLE, N_DIM)
-    !@@raw
-#endif
-    !@@end_raw
+    if (reject_flag) then
+      print *,"Unfortunately, the generated initial state is invalid because there are"
+      print *,"particles which overlap in a region forbidden by the 2-body potential."
+      stop
+    end if
 
     U_1(:,:) = U_0(:,:)
     gradU2_1(:) = gradU2_0(:)
@@ -890,168 +856,31 @@ program Test_VPI
         !@<< Determine whether the move should be accepted >>
         !@+node:gcross.20090626112946.1693:<< Determine whether the move should be accepted >>
         !@<< Compute probability of acceptance >>
-        !@+node:gcross.20090626112946.1695:<< Compute probability of acceptance >>
-        !@<< Compute contribution from potentials >>
-        !@+node:gcross.20090626112946.1696:<< Compute contribution from potentials >>
-        acc_flag = .true.
-        do ii = move_start, move_end
-          U_0(ii,:) = 0.0_b8
-          do jj = 1,n_particle
-            U_sp = Usp_func( q0, ii, jj, N_SLICE, N_PARTICLE, N_DIM )
-            U_ij = Uij_func( q0, xij2_0, ii, jj, N_SLICE, N_PARTICLE, N_DIM, acc_flag )
-            if(acc_flag .eqv. .false.) then
-              stop "ERROR, overlap in supposedly clean path"
-            end if
-            if( eval_rotation ) then
-              Uij_rot =  Uij_rot_func( q0, q_rot0, xij2_0, ii, jj, N_SLICE, N_PARTICLE, N_DIM )
-              U_ij = U_ij + Uij_rot
-            end if
-            U_0(ii,jj) = U_0(ii,jj) + ( U_sp + U_ij )
-          end do
+        !@+node:gcross.20090721121051.1755:<< Compute probability of acceptance >>
+        weight_0 = compute_log_acceptance_weight (&
+            q0, xij2_0, q_rot0, &
+            move_start, move_end, &
+            N_SLICE, N_PARTICLE, N_DIM, &
+            U_0, gradU2_0, &
+            reject_flag &
+            )
 
-          if ( gU2_weight(ii) .ne. 0 ) then
-            grad_Usp = gUsp_func( q0, ii, N_SLICE, N_PARTICLE, N_DIM )
-            grad_Uij = gUij_func( q0, xij2_0, ii, N_SLICE, N_PARTICLE, N_DIM )
-            grad_U = grad_Usp + grad_Uij
-            gradU2_0(ii) = sum( grad_U(:,1)**2 + grad_U(:,2)**2 + grad_U(:,3)**2 )
-          else
-            gradU2_0(ii) = 0
-          end if
-        end do
+        if(reject_flag) then
+          stop "ERROR, the path that was accepted before has just been rejected!"
+        end if
 
+        weight_1 = compute_log_acceptance_weight (&
+            q1, xij2_1, q_rot1, &
+            move_start, move_end, &
+            N_SLICE, N_PARTICLE, N_DIM, &
+            U_1, gradU2_1, &
+            reject_flag &
+            )
 
-        acc_flag = .true.
-        do ii = move_start, move_end
-          U_1(ii,:) = 0.0_b8
-          do jj = 1,n_particle
-            U_sp = Usp_func( q1, ii, jj, N_SLICE, N_PARTICLE, N_DIM )
-            U_ij = Uij_func( q1, xij2_1, ii, jj, N_SLICE, N_PARTICLE, N_DIM, acc_flag )
-            if(acc_flag .eqv. .false.) then
-        !            print *,"overlap", mtype
-              exit 
-            end if
-            if( eval_rotation ) then
-              Uij_rot =  Uij_rot_func( q1, q_rot1, xij2_1, ii, jj, N_SLICE, N_PARTICLE, N_DIM )
-              U_ij = U_ij + Uij_rot
-            end if
-            U_1(ii,jj) = U_1(ii,jj) + ( U_sp + U_ij )
-          end do
-
-          if ( gU2_weight(ii) .ne. 0 ) then
-            grad_Usp = gUsp_func( q1, ii, N_SLICE, N_PARTICLE, N_DIM )
-            grad_Uij = gUij_func( q1, xij2_1, ii, N_SLICE, N_PARTICLE, N_DIM )
-            grad_U = grad_Usp + grad_Uij
-            gradU2_1(ii) = sum( grad_U(:,1)**2 + grad_U(:,2)**2 + grad_U(:,3)**2 )
-          else
-            gradU2_1(ii) = 0
-          end if
-        end do
-
-        !@+at
-        ! If acc_flag is false then this move is rejected so we should skip 
-        ! past computing the rest of the contributions to the acceptance 
-        ! probability.
-        !@-at
-        !@@c
-
-        if(acc_flag .eqv. .false.) then
-          ccnt = ccnt + 1
+        if(reject_flag) then
           goto 10
         end if
-
-        !        print *, "U_1:", U_1
-        !        print *, "U_0:", U_0
-        !        print *, "gradU2_1:", gradU2_1
-        !        print *, "gradU2_0:", gradU2_0
-        !@-node:gcross.20090626112946.1696:<< Compute contribution from potentials >>
-        !@nl
-
-        !@<< Compute contribution from propagators >>
-        !@+node:gcross.20090626112946.1697:<< Compute contribution from propagators >>
-        if(move_start .le. 1) then
-          sl_start = 1
-        else
-          sl_start = move_start-1
-        end if
-        if(move_end .ge. N_SLICE) then
-          sl_end = N_SLICE
-        else
-          sl_end = move_end+1
-        end if
-
-
-        if( n_slice > 2 ) then 
-          if ( use_gfn4 ) then
-            lngfn1 = vpi_gfn4_sp( sl_start, sl_end, part_num, U_1, gradU2_1, U_weight, gU2_weight, &
-                                  N_SLICE, N_PARTICLE, N_DIM, lambda, dtau ) 
-            lngfn0 = vpi_gfn4_sp( sl_start, sl_end, part_num, U_0, gradU2_0, U_weight, gU2_weight, &
-                                  N_SLICE, N_PARTICLE, N_DIM, lambda, dtau ) 
-          else 
-            lngfn1 = vpi_gfn2_sp( sl_start, sl_end, part_num, U_1, N_SLICE, N_PARTICLE, N_DIM, dtau ) 
-            lngfn0 = vpi_gfn2_sp( sl_start, sl_end, part_num, U_0, N_SLICE, N_PARTICLE, N_DIM, dtau ) 
-          end if
-
-        !@+at
-        !   if ( use_HS_gfn ) then
-        ! #ifdef USE_IMAGE_HSGFN
-        !     hsgfn1 = vpi_hs_gfn( sl_start, sl_end, part_num, xij2_1, 
-        ! N_SLICE, N_PARTICLE, N_DIM, dtau*lambda )
-        !     hsgfn0 = vpi_hs_gfn( sl_start, sl_end, part_num, xij2_0, 
-        ! N_SLICE, N_PARTICLE, N_DIM, dtau*lambda )
-        ! #else
-        !     hsgfn1 = vpi_hs_gfn2( sl_start, sl_end, part_num, q1, N_SLICE, 
-        ! N_PARTICLE, N_DIM, dtau*lambda )
-        !     hsgfn0 = vpi_hs_gfn2( sl_start, sl_end, part_num, q0, N_SLICE, 
-        ! N_PARTICLE, N_DIM, dtau*lambda )
-        ! #endif
-        !     if( hsgfn0 > 0 .and. hsgfn1 > 0 ) then
-        !       lngfn1 = lngfn1 + log(hsgfn1)
-        !       lngfn0 = lngfn0 + log(hsgfn0)
-        !     else
-        !       print *, "****ERROR***** hsgfn < 0 ", hsgfn0, hsgfn1
-        !       lngfn1 = 0
-        !     endif
-        !   end if
-        !@-at
-        !@@c
-
-          if ( use_HW_gfn ) then
-            hsgfn1 = vpi_hw_gfn( sl_start, sl_end, part_num, q1, N_SLICE, N_PARTICLE, N_DIM, dtau )
-            hsgfn0 = vpi_hw_gfn( sl_start, sl_end, part_num, q0, N_SLICE, N_PARTICLE, N_DIM, dtau )
-            lngfn1 = lngfn1 + log(hsgfn1)
-            lngfn0 = lngfn0 + log(hsgfn0)
-          end if
-
-          if ( eval_rotation ) then
-            rotgfn1 =  gfn_rot(q_rot1,part_num,sl_start,sl_end,dtau)
-            rotgfn0 =  gfn_rot(q_rot0,part_num,sl_start,sl_end,dtau)
-        !          write (1000+my_rank,*) rotgfn0, rotgfn1
-            lngfn1 = lngfn1 + log(rotgfn1)
-            lngfn0 = lngfn0 + log(rotgfn0)
-          end if
-        end if
-        !@-node:gcross.20090626112946.1697:<< Compute contribution from propagators >>
-        !@nl
-
-        !@<< Compute contribution from trial functions >>
-        !@+node:gcross.20090721120825.1746:<< Compute contribution from trial functions >>
-        lntfn1 = tfunc(q1, 1, N_SLICE, N_PARTICLE, N_DIM) + &
-                 tfunc(q1, N_SLICE, N_SLICE, N_PARTICLE, N_DIM) + &
-                 jas_tfun(q1, xij2_1, 1, N_SLICE, N_PARTICLE, N_DIM) + &
-                 jas_tfun(q1, xij2_1, N_SLICE, N_SLICE, N_PARTICLE, N_DIM)
-        lntfn0 = tfunc(q0, 1, N_SLICE, N_PARTICLE, N_DIM) + &
-                 tfunc(q0, N_SLICE, N_SLICE, N_PARTICLE, N_DIM) + &
-                 jas_tfun(q0, xij2_0, 1, N_SLICE, N_PARTICLE, N_DIM) + &
-                 jas_tfun(q0, xij2_0, N_SLICE, N_SLICE, N_PARTICLE, N_DIM)
-        !@nonl
-        !@-node:gcross.20090721120825.1746:<< Compute contribution from trial functions >>
-        !@nl
-
-        !        print "(2a20)", "lngfn0", "lngfn1"
-        !        print *, lngfn0, lngfn1
-        !        print "(2a20)", "lntfn0", "lntfn1"
-        !        print *, lntfn0, lntfn1
-        !@-node:gcross.20090626112946.1695:<< Compute probability of acceptance >>
+        !@-node:gcross.20090721121051.1755:<< Compute probability of acceptance >>
         !@nl
 
         !@<< Optionally impose the fixed phase condition >>
@@ -1066,7 +895,7 @@ program Test_VPI
 
         !@<< Accept or reject the move >>
         !@+node:gcross.20090626112946.1706:<< Accept or reject the move >>
-        10 if ( vpi_accept_path( lngfn0 + lntfn0, lngfn1 + lntfn1, dphase) .and. acc_flag) then
+        10 if ( (.not. reject_flag) .and. vpi_accept_path( weight_0, weight_1, dphase)) then
           !@  << Accept the move >>
           !@+node:gcross.20090626112946.1699:<< Accept the move >>
           !          print *, "!!! ACCEPTED !!!"
@@ -1108,7 +937,6 @@ program Test_VPI
           !@+node:gcross.20090626112946.1703:<< Update statistics >>
           accr = accr + 1;
           accr_v(move_start:move_end) = accr_v(move_start:move_end) + 1
-          lntfn0 = lntfn1
           bi_accr = bi_accr + bi_try
           sp_accr = sp_accr + sp_try
           swap_accr = swap_accr + swap_try
@@ -1940,7 +1768,6 @@ program Test_VPI
     end do
     !@-node:gcross.20090623152316.33:<< Main iteration >>
     !@nl
-
 
 !    call nl2sno_driver()
 
@@ -2781,6 +2608,214 @@ subroutine eval_E_local(np,ndim,grad_lnspf, lap_lnspf, grad_lnjas, lap_lnjas, U,
 
 end subroutine  eval_E_local
 !@-node:gcross.20090623152316.115:eval_E_local
+!@+node:gcross.20090721121051.1756:compute_gradU2
+subroutine compute_potential (&
+! INPUT: particle position / rotation information
+    x, xij2, x_rot, &
+! INPUT: path slice to consider
+    move_start, move_end, &
+! INPUT: 
+    nslice, np, ndim, &
+! OUTPUT: potential and square gradients
+    U, gradU2, &
+! OUTPUT: whether the move should be rejected outright
+    reject_flag &
+    )
+  implicit none
+
+!@+at
+! Array dimensions / slicing
+!@-at
+!@@c
+  integer, intent(in) :: move_start, move_end, nslice, np, ndim
+
+!@+at
+! Function input
+!@-at
+!@@c
+
+  real(kind=b8), dimension ( nslice, np , ndim ), intent(in) :: x
+  real(kind=b8), dimension ( nslice, np , np ), intent(in) :: xij2
+  real(kind=b8), dimension ( nslice, np , N_DIM_ROT ), intent(in) :: x_rot
+
+!@+at
+! Function output
+!@-at
+!@@c
+  real(kind=b8), dimension( nslice, np ), intent(out) :: U
+  real(kind=b8), dimension( nslice ), intent(out) :: gradU2
+  logical, intent(out) :: reject_flag
+
+!@+at
+! Temporary variables.
+!@-at
+!@@c
+  real (kind=b8), dimension( np, ndim ) :: grad_Usp, grad_Uij, grad_U
+  real (kind=b8) :: U_sp, U_ij, U_ij_rot
+
+  reject_flag = .false.
+  do ii = move_start, move_end
+    U(ii,:) = 0.0_b8
+    do jj = 1,n_particle
+      U_sp = Usp_func( x, ii, jj, N_SLICE, N_PARTICLE, N_DIM )
+      U_ij = Uij_func( x, xij2, ii, jj, N_SLICE, N_PARTICLE, N_DIM, reject_flag )
+      if(reject_flag) then
+          return
+      end if
+      U_ij_rot=0
+      if( eval_rotation ) then
+        U_ij_rot = Uij_rot_func( x, x_rot, xij2, ii, jj, N_SLICE, N_PARTICLE, N_DIM )
+      end if
+      U(ii,jj) = U(ii,jj) + ( U_sp + U_ij + U_ij_rot )
+    end do
+
+    if ( gU2_weight(ii) .ne. 0 ) then
+      grad_Usp = gUsp_func( x, ii, N_SLICE, N_PARTICLE, N_DIM )
+      grad_Uij = gUij_func( x, xij2, ii, N_SLICE, N_PARTICLE, N_DIM )
+      grad_U = grad_Usp + grad_Uij
+      gradU2(ii) = sum( grad_U(:,1)**2 + grad_U(:,2)**2 + grad_U(:,3)**2 )
+    else
+      gradU2(ii) = 0
+    end if
+  end do
+
+  !        print *, "U_1:", U_1
+  !        print *, "U_0:", U_0
+  !        print *, "gradU2_1:", gradU2_1
+  !        print *, "gradU2_0:", gradU2_0
+
+end subroutine
+!@-node:gcross.20090721121051.1756:compute_gradU2
+!@+node:gcross.20090721121051.1746:compute_log_acceptance_weight
+function compute_log_acceptance_weight (&
+! INPUT: particle position / rotation information
+    x, xij2, x_rot, &
+! INPUT: path slice to consider
+    move_start, move_end, &
+! INPUT: 
+    nslice, np, ndim, &
+! OUTPUT: potential and square gradients
+    U, gradU2, &
+! OUTPUT: whether the move should be rejected outright
+    reject_flag &
+! OUTPUT: computed weight
+    ) result ( weight )
+
+!@+at
+! Array dimensions / slicing
+!@-at
+!@@c
+  integer, intent(in) :: move_start, move_end, nslice, np, ndim
+
+!@+at
+! Function input
+!@-at
+!@@c
+
+  real(kind=b8), dimension ( nslice, np , ndim ), intent(in) :: x
+  real(kind=b8), dimension ( nslice, np , np ), intent(in) :: xij2
+  real(kind=b8), dimension ( nslice, np , N_DIM_ROT ), intent(in) :: x_rot
+
+!@+at
+! Function output
+!@-at
+!@@c
+  real(kind=b8), dimension( nslice, np ), intent(out) :: U
+  real(kind=b8), dimension( nslice ), intent(out) :: gradU2
+  real(kind=b8) :: weight
+  logical, intent(out) :: reject_flag
+
+!@+at
+! Temporary variables.
+!@-at
+!@@c
+  real (kind=b8) :: lngfn, rotgfn, hsgfn, lntfn
+  integer :: sl_start, sl_end
+
+  !@  << Compute contribution from potentials >>
+  !@+node:gcross.20090626112946.1696:<< Compute contribution from potentials >>
+  call compute_potential (&
+      x, xij2, x_rot, &
+      move_start, move_end, &
+      nslice, np, ndim, &
+      U, gradU2, &
+      reject_flag &
+      )
+
+  if (reject_flag) then
+    return
+  endif
+  !@-node:gcross.20090626112946.1696:<< Compute contribution from potentials >>
+  !@nl
+
+  !@  << Compute contribution from propagators >>
+  !@+node:gcross.20090721121051.1752:<< Compute contribution from propagators >>
+  if(move_start .le. 1) then
+    sl_start = 1
+  else
+    sl_start = move_start-1
+  end if
+  if(move_end .ge. N_SLICE) then
+    sl_end = N_SLICE
+  else
+    sl_end = move_end+1
+  end if
+
+  if( n_slice > 2 ) then 
+    if ( use_gfn4 ) then
+      lngfn = vpi_gfn4_sp( sl_start, sl_end, part_num, U, gradU2, U_weight, gU2_weight, &
+                           N_SLICE, N_PARTICLE, N_DIM, lambda, dtau ) 
+    else 
+      lngfn = vpi_gfn2_sp( sl_start, sl_end, part_num, U, N_SLICE, N_PARTICLE, N_DIM, dtau ) 
+    end if
+
+  !@+at
+  !   if ( use_HS_gfn ) then
+  ! #ifdef USE_IMAGE_HSGFN
+  !     hsgfn = vpi_hs_gfn( sl_start, sl_end, part_num, xij2, N_SLICE, 
+  ! N_PARTICLE, N_DIM, dtau*lambda )
+  ! #else
+  !     hsgfn = vpi_hs_gfn2( sl_start, sl_end, part_num, x, N_SLICE, 
+  ! N_PARTICLE, N_DIM, dtau*lambda )
+  ! #endif
+  !     if( hsgfn <= 0 .and. hsgfn1 > 0 ) then
+  !       print *, "****ERROR***** hsgfn < 0 ", hsgfn0, hsgfn1
+  !     else
+  !       lngfn = lngfn + log(hsgfn)
+  !     else
+  !   end if
+  !@-at
+  !@@c
+
+    if ( use_HW_gfn ) then
+      hsgfn = vpi_hw_gfn( sl_start, sl_end, part_num, x, N_SLICE, N_PARTICLE, N_DIM, dtau )
+      lngfn = lngfn + log(hsgfn)
+    end if
+
+    if ( eval_rotation ) then
+      rotgfn =  gfn_rot(x_rot,part_num,sl_start,sl_end,dtau)
+  !          write (1000+my_rank,*) rotgfn
+      lngfn = lngfn + log(rotgfn)
+    end if
+  end if
+  !@-node:gcross.20090721121051.1752:<< Compute contribution from propagators >>
+  !@nl
+
+  !@  << Compute contribution from trial functions >>
+  !@+node:gcross.20090721121051.1754:<< Compute contribution from trial functions >>
+  lntfn = tfunc(x, 1, N_SLICE, N_PARTICLE, N_DIM) + &
+          tfunc(x, N_SLICE, N_SLICE, N_PARTICLE, N_DIM) + &
+          jas_tfun(x, xij2, 1, N_SLICE, N_PARTICLE, N_DIM) + &
+          jas_tfun(x, xij2, N_SLICE, N_SLICE, N_PARTICLE, N_DIM)
+  !@-node:gcross.20090721121051.1754:<< Compute contribution from trial functions >>
+  !@nl
+
+  weight = lngfn + lntfn
+
+  return
+
+end function
+!@-node:gcross.20090721121051.1746:compute_log_acceptance_weight
 !@-node:gcross.20090624144408.2050:Misc
 !@-others
 !@-node:gcross.20090623152316.13:Subroutines

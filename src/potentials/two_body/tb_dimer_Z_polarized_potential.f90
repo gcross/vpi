@@ -41,19 +41,18 @@ contains
   end subroutine init_tb_potential
   !@-node:gcross.20090624144408.1733:init_tb_potential
   !@+node:gcross.20090624144408.1734:Uij
-  function Uij_func( x, xij2, slice, ip, nslice, np, ndim, acc_flag ) result ( Uij )
+  function Uij_func( x, xij2, slice, ip, nslice, np, ndim, reject_flag ) result ( Uij )
     real(kind=b8), dimension ( nslice, np , ndim ) :: x
     real(kind=b8), dimension ( nslice, np , N_DIM_ROT ) :: x_rot
     real(kind=b8), dimension ( nslice, np , np ) :: xij2
     integer :: slice, ip, nslice, np, ndim
-    logical :: acc_flag
+    logical :: reject_flag
 
     real(kind=b8) :: Uij
     real(kind=b8) :: t3,tmp
 
     integer :: i,k
 
-    acc_flag = .true.
     t3 = 0.0_b8
     do i=1,ip-1
       tmp =  lj_coefficient*xij2(slice,ip,i)**(-6) &
@@ -82,7 +81,7 @@ contains
     real(kind=b8), dimension( nslice, np, np ) :: txij2
     real(kind=b8), dimension( ndim ) :: fhi,flo
     integer :: i, k
-    logical :: acc_flag
+    logical :: reject_flag
 
     gUij = 0.0
     do i = 1, np
@@ -95,7 +94,7 @@ contains
         else
           call vpi_update_xij( txij2, tx, sl, sl, i, nslice, np, ndim )
         end if
-        fhi(k) = vpi_Uij_z_polarized_dimer( tx, txij2, sl, i, nslice, np, ndim, acc_flag )
+        fhi(k) = vpi_Uij_z_polarized_dimer( tx, txij2, sl, i, nslice, np, ndim, reject_flag )
 
         tx(sl,i,k) = x(sl,i,k) - ntol_eps
         if(use_pbc) then
@@ -103,7 +102,7 @@ contains
         else
           call vpi_update_xij( txij2, tx, sl, sl, i, nslice, np, ndim )
         end if
-        flo(k) =  vpi_Uij_z_polarized_dimer( tx, txij2, sl, i, nslice, np, ndim, acc_flag )
+        flo(k) =  vpi_Uij_z_polarized_dimer( tx, txij2, sl, i, nslice, np, ndim, reject_flag )
         tx(sl,i,k) = x(sl,i,k)
       end do
       gUij(i,:) = fhi(:) - flo(:)

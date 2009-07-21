@@ -39,17 +39,15 @@ contains
   end subroutine init_tb_potential
   !@-node:gcross.20090624144408.1676:init_tb_potential
   !@+node:gcross.20090624144408.1677:Uij
-  function Uij_func( x, xij2, slice, ip, nslice, np, ndim, acc_flag ) result ( Uij )
+  function Uij_func( x, xij2, slice, ip, nslice, np, ndim, reject_flag ) result ( Uij )
     real(kind=b8), dimension ( nslice, np , ndim ) :: x
     real(kind=b8), dimension ( nslice, np , np ) :: xij2
     integer :: slice, ip, nslice, np, ndim
-    logical :: acc_flag
+    logical :: reject_flag
 
     real(kind=b8) :: Uij
 
     real(kind=b8) :: t3,t6
-
-    acc_flag = .true.
 
     t6 = cross_over_point_squared**6 * (sum( xij2(slice,ip,1:ip-1)**(-6) ) + sum( xij2(slice,ip,ip+1:np)**(-6) ))
     t3 = cross_over_point_squared**3 * (sum( xij2(slice,ip,1:ip-1)**(-3) ) + sum( xij2(slice,ip,ip+1:np)**(-3) ))

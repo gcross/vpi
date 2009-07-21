@@ -37,11 +37,11 @@ contains
   end subroutine init_tb_potential
   !@-node:gcross.20090624144408.1718:init_tb_potential
   !@+node:gcross.20090624144408.1719:Uij
-  function Uij_func( x, xij2, slice, ip, nslice, np, ndim, acc_flag ) result ( Uij )
+  function Uij_func( x, xij2, slice, ip, nslice, np, ndim, reject_flag ) result ( Uij )
     real(kind=b8), dimension ( nslice, np , ndim ) :: x
     real(kind=b8), dimension ( nslice, np , np ) :: xij2
     integer :: slice, ip, nslice, np, ndim
-    logical, intent(inout):: acc_flag
+    logical :: reject_flag
 
     integer k
     real(kind=b8) :: Uij
@@ -50,7 +50,7 @@ contains
 
     do k=1,ip-1
       if(xij2(slice, ip, k) .le. radius_squared) then
-        acc_flag = .false.
+        reject_flag = .true.
         Uij = realbignumber
         goto 111
       end if
@@ -58,7 +58,7 @@ contains
 
     do k=ip+1,np
       if(xij2(slice, ip, k) .le. radius_squared) then
-        acc_flag = .false.
+        reject_flag = .true.
         Uij = realbignumber
         goto 111
       end if
