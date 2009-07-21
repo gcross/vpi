@@ -39,7 +39,5 @@ use_expot_file = F
 coefficient = 1,
 /
 &single_particle_trial_function_parameters
-x_length = 1.0,
-y_length = 1.0,
-z_length = 1.0
+box_dimensions = 1.0 1.0 1.0
 /

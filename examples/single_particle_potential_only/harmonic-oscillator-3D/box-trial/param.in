@@ -41,7 +41,5 @@ y_coefficient = 1,
 z_coefficient = 1
 /
 &single_particle_trial_function_parameters
-x_length = 1,
-y_length = 2,
-z_length = 3
+box_dimensions = 1.0 2.0 3.0
 /
