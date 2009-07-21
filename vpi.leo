@@ -9,10 +9,7 @@
 <preferences/>
 <find_panel_settings/>
 <vnodes>
-<v t="gcross.20090623152316.1" str_leo_pos="4"><vh>@chapters</vh></v>
-<v t="gcross.20090624144408.2045"><vh>@path attic</vh>
-<v t="gcross.20090623152316.91"><vh>@thin vpi_trial_incomplete.f90</vh></v>
-</v>
+<v t="gcross.20090623152316.1" str_leo_pos="0"><vh>@chapters</vh></v>
 <v t="gcross.20090624144408.1779"><vh>Potentials</vh>
 <v t="gcross.20090624094338.1366"><vh>@path src/potentials/single_particle</vh>
 <v t="gcross.20090624144408.1411"><vh>@thin sp_null_potential.f90</vh></v>
