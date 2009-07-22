@@ -1,8 +1,8 @@
 &CONFIGURATION
-N_PARTICLE = 2,
-N_SLICE = 6,
-dM = 2,
-dtau = 0.01,
+N_PARTICLE = 8,
+N_SLICE = 254,
+dM = 20,
+dtau = 0.005,
 dnu = 0.6,
 dswap = 0.0,
 ntol_eps = 1e-6,
@@ -11,8 +11,8 @@ PROB_RIGID_MOVE = 0.1,
 PROB_SWAP_MOVE = 0.0,
 PROB_OD_PNUM = 0.0,
 OD_PNUM = 1,
-nblocks = 4,
-nsteps = 10000,
+nblocks = 10,
+nsteps = 100000,
 N_BINS = 51,
 N_BINS_ROT = 51,
 N_BINS_full = 51,
@@ -42,16 +42,16 @@ eval_2particle_angle_correlation = T,
 fixed_rotation_axis = 3
 /
 &single_particle_potential_parameters
-harmonic_oscillator_coefficients = 4 4 1,
+harmonic_oscillator_coefficients = 1 1 4,
 hump_coefficient = 4,
 hump_characteristic_radius = 4
 /
 &two_body_potential_parameters
-cross_over_point = 0.1
-potential_well_depth = 1
+cross_over_point = 4
+potential_well_depth = 8
 /
 &single_particle_trial_function_parameters
-coefficients = 4 4 1
+coefficients = 1 1 4
 /
 &jastrow_trial_parameters
 radius = 0

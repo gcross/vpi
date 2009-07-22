@@ -1,4 +1,4 @@
-VPI_ROOT = ../../..
+VPI_ROOT = ../../../..
 
 TB_POTENTIAL = ${VPI_ROOT}/src/potentials/two_body/tb_lj_potential.o
 #TB_POTENTIAL = ${VPI_ROOT}/src/potentials/two_body/tb_null_potential.o
