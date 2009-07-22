@@ -95,6 +95,8 @@ program Test_VPI
   real (kind=b8), allocatable, dimension( : ) :: gofr
   real (kind=b8), allocatable, dimension( : ) :: gofz
   real (kind=b8), allocatable, dimension( : ) :: gofrho
+  integer, allocatable, dimension( : ) :: goftheta
+  integer, allocatable, dimension( : ) :: goftheta_red
   real (kind=b8), allocatable, dimension( : ) :: gofr_red
   real (kind=b8), allocatable, dimension( : ) :: gofr_rot
   real (kind=b8), allocatable, dimension( : ) :: gof_rot
@@ -251,6 +253,8 @@ program Test_VPI
     dndr = 1.0/drdn
     dndx_GOFR = (N_BINS_GOFR-1) / size_x_GOFR
     dxdn_GOFR = size_x_GOFR / (N_BINS_GOFR-1)
+    dthetadn = M_PI / N_BINS
+    dndtheta = 1.0 / dthetadn
 
     if(nsteps < corper) then
       print *, "WARNING nsteps < corper : increase nsteps to collect stats in each block"
@@ -311,6 +315,12 @@ program Test_VPI
       allocate( gof_rot( N_BINS_ROT ) )
       allocate( gof_rot_xyz( N_BINS_ROT_XYZ, N_BINS_ROT_XYZ, N_BINS_ROT_XYZ, N_BINS_ROT ) )
       allocate( gof_rot_xyz_avg(N_BINS_ROT_XYZ, N_BINS_ROT_XYZ, N_BINS_ROT_XYZ ) )
+    end if
+    if(eval_2particle_angle_correlation) then
+      allocate( goftheta( N_BINS ) )
+      if(my_rank .eq. 0) then
+          allocate( goftheta_red( N_BINS ) )
+      end if
     end if
     allocate( trial_rho_L( N_BINS, N_DIM ) )
     allocate( trial_rho_R( N_BINS, N_DIM ) )
@@ -379,6 +389,9 @@ program Test_VPI
   if(eval_rotation) then
     gofr_rot = 0.0
     gof_rot = 0.0
+  end if
+  if(eval_2particle_angle_correlation) then
+    goftheta = 0
   end if
   trial_rho_L = 0.0
   trial_rho_R = 0.0
@@ -979,6 +992,9 @@ program Test_VPI
           call vpi_eval_gfn_sep_along_Z_axis( gofz, qobs, cslice, N_BINS_GOFR, dndx_GOFR )
           call vpi_eval_gfn_sep_in_XY_plane( gofrho, qobs, cslice, N_BINS_GOFR, dndx_GOFR )
           call vpi_eval_gfn_sep_in_Z_and_XY( gofzrho, qobs, cslice, N_BINS, dndx )
+          if(eval_2particle_angle_correlation) then
+            call vpi_eval_gfn_sep_angle( goftheta, qobs, cslice, N_BINS, dndtheta )
+          end if
           corpcnt = 0
           n_moves = n_moves + 1
           n_moves_pb = n_moves_pb + 1
@@ -1334,6 +1350,16 @@ program Test_VPI
         close(12)
       end if
 
+      if (eval_2particle_angle_correlation) then
+          call MPI_REDUCE(goftheta,goftheta_red,n_bins,mpi_integer,MPI_SUM,0,MPI_COMM_WORLD,ierr)
+          if(my_rank .eq. 0) then
+            open(12, file="goftheta.dat", status="replace")
+            do ii = 1,n_bins
+              write(12, "(2g12.3)") dthetadn*ii, float(goftheta_red(ii))/( n_moves*num_procs*n_particle )
+            end do
+            close(12)
+          end if
+      end if
 
       if ( eval_rotation ) then
         write(my_fname,"(a12,i4.4)")"gof_rot.dat.",my_rank
@@ -2201,6 +2227,41 @@ subroutine vpi_eval_gfn_sep_in_Z_and_XY( gofr, x, islice, nbins, dndx )
 end subroutine vpi_eval_gfn_sep_in_Z_and_XY
 !@nonl
 !@-node:gcross.20090623152316.28:vpi_eval_gfn_sep_in_Z_and_XY
+!@+node:gcross.20090721121051.1759:vpi_eval_gfn_sep_angle
+subroutine vpi_eval_gfn_sep_angle( goftheta, x, islice, nbins, dndtheta)
+  integer, intent(in) :: nbins, islice
+  integer, dimension( nbins ), intent(inout) :: goftheta
+  real(kind=b8), dimension( N_SLICE, N_PARTICLE, N_DIM ), intent(in) :: x
+  real, intent(in) :: dndtheta
+
+  integer :: plane_axis_1, plane_axis_2
+  integer :: zbin,rbin
+  real :: z,r
+
+  real(kind=b8), dimension( n_particle ) :: theta
+
+  real(kind=b8) :: dtheta
+  integer :: dthetabin
+
+  integer :: i, j
+
+  call get_rotation_plane_axes(fixed_rotation_axis,plane_axis_1,plane_axis_2)
+
+  theta(:) = atan2(x(islice,:,plane_axis_2),x(islice,:,plane_axis_1))
+
+  do i = 1, N_PARTICLE
+    do j = i + 1, N_PARTICLE
+      dtheta = abs(theta(i)-theta(j))
+      if(dtheta > m_pi) then
+        dtheta = 2*m_pi - dtheta
+      end if
+      dthetabin = floor( dtheta * dndtheta ) + 1
+      goftheta(dthetabin) = goftheta(dthetabin) + 1
+    end do
+  end do
+
+end subroutine vpi_eval_gfn_sep_angle
+!@-node:gcross.20090721121051.1759:vpi_eval_gfn_sep_angle
 !@-node:gcross.20090706131953.1744:Green's functions
 !@+node:gcross.20090706131953.1750:Off-diagonal elements
 !@+node:gcross.20090706131953.1751:vpi_eval_obdm_single_axis
@@ -2816,6 +2877,28 @@ function compute_log_acceptance_weight (&
 
 end function
 !@-node:gcross.20090721121051.1746:compute_log_acceptance_weight
+!@+node:gcross.20090721121051.1757:get_rotation_plane_axes
+subroutine get_rotation_plane_axes(rotation_axis,plane_axis_1,plane_axis_2)
+  integer, intent(in) :: rotation_axis
+  integer, intent(out) :: plane_axis_1, plane_axis_2
+
+  select case (rotation_axis)
+    case (x_axis_label)
+      plane_axis_1 = y_axis_label
+      plane_axis_2 = z_axis_label
+    case (y_axis_label)
+      plane_axis_1 = x_axis_label
+      plane_axis_2 = z_axis_label
+    case (z_axis_label)
+      plane_axis_1 = x_axis_label
+      plane_axis_2 = y_axis_label
+    case default
+      print *, "Rotation axis ", rotation_axis, " is invalid;  must be X (1), Y (2) or Z (3)."
+      stop
+  end select
+
+end subroutine get_rotation_plane_axes
+!@-node:gcross.20090721121051.1757:get_rotation_plane_axes
 !@-node:gcross.20090624144408.2050:Misc
 !@-others
 !@-node:gcross.20090623152316.13:Subroutines

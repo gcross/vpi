@@ -50,6 +50,8 @@ module vpi_defines
 
   real, dimension(N_DIM) :: dxdn
   real, dimension(N_DIM) :: dndx
+  real :: dthetadn
+  real :: dndtheta
   real, dimension(N_DIM) :: dxdn_rot_xyz
   real, dimension(N_DIM) :: dndx_rot_xyz
   real :: size_rot = 2.0
@@ -130,6 +132,9 @@ module vpi_defines
   logical :: use_pbc
   real(kind=b8) :: p_pbc_L
 
+  integer, parameter :: x_axis_label = 1, y_axis_label = 2, z_axis_label = 3
+  integer :: fixed_rotation_axis
+  logical :: eval_2particle_angle_correlation = .false.
 
   namelist /configuration/ &
     N_PARTICLE, &
@@ -171,7 +176,9 @@ module vpi_defines
     use_pbc, &
     p_pbc_L, &
     use_lattice_file, &
-    use_expot_file
+    use_expot_file, &
+    fixed_rotation_axis, &
+    eval_2particle_angle_correlation
 
 contains
 
