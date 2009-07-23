@@ -868,8 +868,8 @@ program Test_VPI
 
         !@<< Determine whether the move should be accepted >>
         !@+node:gcross.20090626112946.1693:<< Determine whether the move should be accepted >>
-        !@<< Compute probability of acceptance >>
-        !@+node:gcross.20090721121051.1755:<< Compute probability of acceptance >>
+        !@<< Compute logarithmic probability of acceptance >>
+        !@+node:gcross.20090721121051.1755:<< Compute logarithmic probability of acceptance >>
         weight_0 = compute_log_acceptance_weight (&
             q0, xij2_0, q_rot0, &
             move_start, move_end, &
@@ -893,7 +893,7 @@ program Test_VPI
         if(reject_flag) then
           goto 10
         end if
-        !@-node:gcross.20090721121051.1755:<< Compute probability of acceptance >>
+        !@-node:gcross.20090721121051.1755:<< Compute logarithmic probability of acceptance >>
         !@nl
 
         !@<< Optionally impose the fixed phase condition >>
@@ -904,6 +904,16 @@ program Test_VPI
           dphase = 1.0_b8
         end if
         !@-node:gcross.20090626112946.1698:<< Optionally impose the fixed phase condition >>
+        !@nl
+
+        !@<< Optionally include rotational interference effect >>
+        !@+node:gcross.20090723093414.1760:<< Optionally include rotational interference effect >>
+        if(fixed_angular_momentum /= 0) then
+          dphase = dphase * &
+             compute_angular_interference_amp(q1,move_start,move_end,n_slice,n_particle,n_dim) &
+           / compute_angular_interference_amp(q0,move_start,move_end,n_slice,n_particle,n_dim)
+        end if
+        !@-node:gcross.20090723093414.1760:<< Optionally include rotational interference effect >>
         !@nl
 
         !@<< Accept or reject the move >>
@@ -2812,6 +2822,89 @@ subroutine compute_physical_potential (&
 
 end subroutine
 !@-node:gcross.20090721121051.1764:compute_physical_potential
+!@+node:gcross.20090723093414.1759:compute_angular_interference
+!@+at
+! This function computers the effect of interference due to the effect that 
+! some particles have angular momentum and others do not, but which particles 
+! have this momentum is non-deterministic due to boson symmetry.  To see why 
+! this matters, consider two bosons in a periodic box, with one excited and 
+! the other in its ground state.  The (unnormalized) amplitude of the wave 
+! function is then $e^{x_1} + e^{x_2}$.
+! 
+! To generalize this, if there are m particles with one unit of angular 
+! momentum in our system, then we need to sum over all terms 
+! $e^{x_{i_1}+x_{i_2}+\dots+x_{i_m}}$ for all $i_1\ne i_2\ne \dots \ne i_m$.
+! 
+! This function employs a trick to carry out this.
+!@-at
+!@@c
+function compute_angular_interference_amp (&
+! INPUT: particle position information
+    x, &
+! INPUT: path slice to consider
+    move_start, move_end, &
+! INPUT: array dimensions
+    nslice, np, ndim &
+! OUTPUT: complex amplitude resulting from the interference
+  ) result ( weight )
+!@+at
+! Array dimensions / slicing
+!@-at
+!@@c
+  integer, intent(in) :: move_start, move_end, nslice, np, ndim
+!@+at
+! Function input
+!@-at
+!@@c
+  real(kind=b8), dimension ( nslice, np , ndim ), intent(in), target :: x
+!@+at
+! Function output
+!@-at
+!@@c
+  real(kind=b8) :: weight
+!@+at
+! Temporary variables
+!@-at
+!@@c
+  integer :: plane_axis_1, plane_axis_2
+  complex(kind=b8), dimension( move_end-move_start+1, np ) :: single_particle_amplitudes
+  complex(kind=b8), dimension( move_end-move_start+1, np-fixed_angular_momentum+1 ) :: interference_vector
+  real(kind=b8), dimension(:,:), pointer :: x_slice_1, x_slice_2
+  complex(kind=b8) :: amplitude
+  integer :: i, j
+!@+at
+! Code begins
+!@-at
+!@@c 
+  if(fixed_angular_momentum == 0 .or. move_end == move_start ) then
+    weight = 1.0_b8
+    return
+  end if
+
+  call get_rotation_plane_axes(fixed_rotation_axis,plane_axis_1,plane_axis_2)
+
+  x_slice_1 => x(move_start:move_end,:,plane_axis_1)
+  x_slice_2 => x(move_start:move_end,:,plane_axis_2)
+
+  single_particle_amplitudes(:,:) = &
+    (x_slice_1(:,:)*(1.0_b8,0) + x_slice_2(:,:)*(0,1.0_b8))/sqrt(x_slice_1(:,:)**2 + x_slice_2(:,:)**2)
+
+  interference_vector = single_particle_amplitudes(:,:size(interference_vector,2))
+
+  do i = 1, fixed_angular_momentum-1
+    do j = size(interference_vector,2), 1, -1
+      interference_vector(:,j) = sum(interference_vector(:,j:),dim=2)*single_particle_amplitudes(:,i+j)
+    end do
+  end do
+
+  weight = 1.0_b8
+  do i = 1, size(interference_vector,1)
+    amplitude = sum(interference_vector(i,:))/float(np)
+    weight = weight * (real(amplitude)**2 + imag(amplitude)**2)
+  end do
+
+end function
+!@-node:gcross.20090723093414.1759:compute_angular_interference
 !@+node:gcross.20090721121051.1746:compute_log_acceptance_weight
 function compute_log_acceptance_weight (&
 ! INPUT: particle position / rotation information
