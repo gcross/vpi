@@ -36,9 +36,7 @@ use_lattice_file = F,
 use_expot_file = F
 /
 &single_particle_potential_parameters
-x_coefficient = 1,
-y_coefficient = 1,
-z_coefficient = 1
+coefficients = 1 1 1
 /
 &single_particle_trial_function_parameters
 coefficient_0 = 1,
