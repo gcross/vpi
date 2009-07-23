@@ -133,7 +133,7 @@ module vpi_defines
   real(kind=b8) :: p_pbc_L
 
   integer, parameter :: x_axis_label = 1, y_axis_label = 2, z_axis_label = 3
-  integer :: fixed_rotation_axis
+  integer :: fixed_rotation_axis = 0, fixed_angular_momentum = 0
   logical :: eval_2particle_angle_correlation = .false.
 
   namelist /configuration/ &
@@ -178,6 +178,7 @@ module vpi_defines
     use_lattice_file, &
     use_expot_file, &
     fixed_rotation_axis, &
+    fixed_angular_momentum, &
     eval_2particle_angle_correlation
 
 contains

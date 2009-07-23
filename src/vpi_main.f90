@@ -656,7 +656,7 @@ program Test_VPI
 
     !@  << Compute initial values of some physical quantities >>
     !@+node:gcross.20090626131222.1719:<< Compute initial values of some physical quantities >>
-    call compute_potential (&
+    call compute_physical_potential (&
         qobs, xij2_0, q_rot0, &
         1, N_SLICE, &
         N_SLICE, N_PARTICLE, N_DIM, &
@@ -1352,7 +1352,7 @@ program Test_VPI
 
       if (eval_2particle_angle_correlation) then
           call MPI_REDUCE(goftheta,goftheta_red,n_bins,mpi_integer,MPI_SUM,0,MPI_COMM_WORLD,ierr)
-          if(my_rank .eq. 0) then
+           if(my_rank .eq. 0) then
             open(12, file="goftheta.dat", status="replace")
             do ii = 1,n_bins
               write(12, "(2g12.3)") dthetadn*ii, float(goftheta_red(ii))/( n_moves*num_procs*n_particle )
@@ -2602,6 +2602,30 @@ subroutine read_expot_file(pid)
 end subroutine read_expot_file
 !@-node:gcross.20090624144408.2053:read_expot_file
 !@-node:gcross.20090624144408.2049:Input
+!@+node:gcross.20090721121051.1762:Angular momentum
+!@+node:gcross.20090721121051.1757:get_rotation_plane_axes
+subroutine get_rotation_plane_axes(rotation_axis,plane_axis_1,plane_axis_2)
+  integer, intent(in) :: rotation_axis
+  integer, intent(out) :: plane_axis_1, plane_axis_2
+
+  select case (rotation_axis)
+    case (x_axis_label)
+      plane_axis_1 = y_axis_label
+      plane_axis_2 = z_axis_label
+    case (y_axis_label)
+      plane_axis_1 = x_axis_label
+      plane_axis_2 = z_axis_label
+    case (z_axis_label)
+      plane_axis_1 = x_axis_label
+      plane_axis_2 = y_axis_label
+    case default
+      print *, "Rotation axis ", rotation_axis, " is invalid;  must be X (1), Y (2) or Z (3)."
+      stop
+  end select
+
+end subroutine get_rotation_plane_axes
+!@-node:gcross.20090721121051.1757:get_rotation_plane_axes
+!@-node:gcross.20090721121051.1762:Angular momentum
 !@+node:gcross.20090624144408.2050:Misc
 !@+node:gcross.20090706131953.1749:within_bins
 function within_bins(index,nbins)
@@ -2611,26 +2635,6 @@ function within_bins(index,nbins)
   within_bins = (index >= 1) .and. (index <= nbins)
 end function within_bins
 !@-node:gcross.20090706131953.1749:within_bins
-!@+node:gcross.20090623152316.32:vpi_accept_path
-function vpi_accept_path( lngfn0, lngfn1, dphase ) result( accept )
-  real(kind = b8) :: lngfn0, lngfn1
-  real(kind = b8) :: dphase
-  logical :: accept
-
-  real :: Pa, Ptest 
-
-  Pa = dphase*exp(lngfn1 - lngfn0) 
-  call random_number( Ptest )
-!  print "(2a20)", "Pa", "Ptest"
-!  print *, Pa, Ptest
-  if ( Pa .gt. Ptest ) then
-    accept = .true.
-  else
-    accept = .false.
-  end if
-
-end function vpi_accept_path
-!@-node:gcross.20090623152316.32:vpi_accept_path
 !@+node:gcross.20090623152316.115:eval_E_local
 subroutine eval_E_local(np,ndim,grad_lnspf, lap_lnspf, grad_lnjas, lap_lnjas, U, E_l)
   integer, intent(in) :: np, ndim
@@ -2669,8 +2673,71 @@ subroutine eval_E_local(np,ndim,grad_lnspf, lap_lnspf, grad_lnjas, lap_lnjas, U,
 
 end subroutine  eval_E_local
 !@-node:gcross.20090623152316.115:eval_E_local
-!@+node:gcross.20090721121051.1756:compute_gradU2
-subroutine compute_potential (&
+!@-node:gcross.20090624144408.2050:Misc
+!@+node:gcross.20090721121051.1765:Path acceptence
+!@+node:gcross.20090623152316.32:vpi_accept_path
+function vpi_accept_path( lngfn0, lngfn1, dphase ) result( accept )
+  real(kind = b8) :: lngfn0, lngfn1
+  real(kind = b8) :: dphase
+  logical :: accept
+
+  real :: Pa, Ptest 
+
+  Pa = dphase*exp(lngfn1 - lngfn0) 
+  call random_number( Ptest )
+!  print "(2a20)", "Pa", "Ptest"
+!  print *, Pa, Ptest
+  if ( Pa .gt. Ptest ) then
+    accept = .true.
+  else
+    accept = .false.
+  end if
+
+end function vpi_accept_path
+!@-node:gcross.20090623152316.32:vpi_accept_path
+!@+node:gcross.20090721121051.1756:compute_effective_rotational_potential
+subroutine compute_effective_rotational_potential (&
+! INPUT: particle position information
+    x, &
+! INPUT: path slice to consider
+    move_start, move_end, &
+! INPUT: 
+    nslice, np, ndim, &
+! OUTPUT: effective rotational potential
+    U_rot &
+  )
+!@+at
+! Array dimensions / slicing
+!@-at
+!@@c
+  integer, intent(in) :: move_start, move_end, nslice, np, ndim
+!@+at
+! Function input
+!@-at
+!@@c
+  real(kind=b8), dimension ( nslice, np , ndim ), intent(in) :: x
+!@+at
+! Function output
+!@-at
+!@@c
+  real(kind=b8), dimension( nslice, np ), intent(out) :: U_rot
+!@+at
+! Temporary variables
+!@-at
+!@@c
+  integer :: plane_axis_1, plane_axis_2
+!@+at
+! Code begins
+!@-at
+!@@c
+  call get_rotation_plane_axes(fixed_rotation_axis,plane_axis_1,plane_axis_2)
+  U_rot(move_start:move_end,:) = abs(float(fixed_angular_momentum)) / &
+                                    ( x(move_start:move_end,:,plane_axis_1)**2 & 
+                                     +x(move_start:move_end,:,plane_axis_2)**2 )
+end subroutine compute_effective_rotational_potential
+!@-node:gcross.20090721121051.1756:compute_effective_rotational_potential
+!@+node:gcross.20090721121051.1764:compute_physical_potential
+subroutine compute_physical_potential (&
 ! INPUT: particle position / rotation information
     x, xij2, x_rot, &
 ! INPUT: path slice to consider
@@ -2683,22 +2750,18 @@ subroutine compute_potential (&
     reject_flag &
     )
   implicit none
-
 !@+at
 ! Array dimensions / slicing
 !@-at
 !@@c
   integer, intent(in) :: move_start, move_end, nslice, np, ndim
-
 !@+at
 ! Function input
 !@-at
 !@@c
-
   real(kind=b8), dimension ( nslice, np , ndim ), intent(in) :: x
   real(kind=b8), dimension ( nslice, np , np ), intent(in) :: xij2
   real(kind=b8), dimension ( nslice, np , N_DIM_ROT ), intent(in) :: x_rot
-
 !@+at
 ! Function output
 !@-at
@@ -2706,14 +2769,16 @@ subroutine compute_potential (&
   real(kind=b8), dimension( nslice, np ), intent(out) :: U
   real(kind=b8), dimension( nslice ), intent(out) :: gradU2
   logical, intent(out) :: reject_flag
-
 !@+at
 ! Temporary variables.
 !@-at
 !@@c
   real (kind=b8), dimension( np, ndim ) :: grad_Usp, grad_Uij, grad_U
   real (kind=b8) :: U_sp, U_ij, U_ij_rot
-
+!@+at
+! Code begins:
+!@-at
+!@@c
   reject_flag = .false.
   do ii = move_start, move_end
     U(ii,:) = 0.0_b8
@@ -2746,7 +2811,7 @@ subroutine compute_potential (&
   !        print *, "gradU2_0:", gradU2_0
 
 end subroutine
-!@-node:gcross.20090721121051.1756:compute_gradU2
+!@-node:gcross.20090721121051.1764:compute_physical_potential
 !@+node:gcross.20090721121051.1746:compute_log_acceptance_weight
 function compute_log_acceptance_weight (&
 ! INPUT: particle position / rotation information
@@ -2781,7 +2846,7 @@ function compute_log_acceptance_weight (&
 ! Function output
 !@-at
 !@@c
-  real(kind=b8), dimension( nslice, np ), intent(out) :: U
+  real(kind=b8), dimension( nslice, np ), target, intent(out) :: U
   real(kind=b8), dimension( nslice ), intent(out) :: gradU2
   real(kind=b8) :: weight
   logical, intent(out) :: reject_flag
@@ -2790,12 +2855,17 @@ function compute_log_acceptance_weight (&
 ! Temporary variables.
 !@-at
 !@@c
+  real (kind=b8), dimension( nslice, np ), target :: U_effective
+  real (kind=b8), dimension( :, : ), pointer :: U_total
   real (kind=b8) :: lngfn, rotgfn, hsgfn, lntfn
   integer :: sl_start, sl_end
-
+!@+at
+! Code begins:
+!@-at
+!@@c
   !@  << Compute contribution from potentials >>
   !@+node:gcross.20090626112946.1696:<< Compute contribution from potentials >>
-  call compute_potential (&
+  call compute_physical_potential (&
       x, xij2, x_rot, &
       move_start, move_end, &
       nslice, np, ndim, &
@@ -2806,6 +2876,20 @@ function compute_log_acceptance_weight (&
   if (reject_flag) then
     return
   endif
+
+  if (fixed_angular_momentum > 0) then
+    call compute_effective_rotational_potential (&
+      x, &
+      move_start, move_end, &
+      nslice, np, ndim, &
+      U_effective &
+      )
+    U_effective = U_effective + U
+    U_total => U_effective
+  else
+    U_total => U
+  end if
+
   !@-node:gcross.20090626112946.1696:<< Compute contribution from potentials >>
   !@nl
 
@@ -2824,10 +2908,10 @@ function compute_log_acceptance_weight (&
 
   if( n_slice > 2 ) then 
     if ( use_gfn4 ) then
-      lngfn = vpi_gfn4_sp( sl_start, sl_end, part_num, U, gradU2, U_weight, gU2_weight, &
+      lngfn = vpi_gfn4_sp( sl_start, sl_end, part_num, U_total, gradU2, U_weight, gU2_weight, &
                            N_SLICE, N_PARTICLE, N_DIM, lambda, dtau ) 
     else 
-      lngfn = vpi_gfn2_sp( sl_start, sl_end, part_num, U, N_SLICE, N_PARTICLE, N_DIM, dtau ) 
+      lngfn = vpi_gfn2_sp( sl_start, sl_end, part_num, U_total, N_SLICE, N_PARTICLE, N_DIM, dtau ) 
     end if
 
   !@+at
@@ -2859,6 +2943,7 @@ function compute_log_acceptance_weight (&
       lngfn = lngfn + log(rotgfn)
     end if
   end if
+
   !@-node:gcross.20090721121051.1752:<< Compute contribution from propagators >>
   !@nl
 
@@ -2877,29 +2962,7 @@ function compute_log_acceptance_weight (&
 
 end function
 !@-node:gcross.20090721121051.1746:compute_log_acceptance_weight
-!@+node:gcross.20090721121051.1757:get_rotation_plane_axes
-subroutine get_rotation_plane_axes(rotation_axis,plane_axis_1,plane_axis_2)
-  integer, intent(in) :: rotation_axis
-  integer, intent(out) :: plane_axis_1, plane_axis_2
-
-  select case (rotation_axis)
-    case (x_axis_label)
-      plane_axis_1 = y_axis_label
-      plane_axis_2 = z_axis_label
-    case (y_axis_label)
-      plane_axis_1 = x_axis_label
-      plane_axis_2 = z_axis_label
-    case (z_axis_label)
-      plane_axis_1 = x_axis_label
-      plane_axis_2 = y_axis_label
-    case default
-      print *, "Rotation axis ", rotation_axis, " is invalid;  must be X (1), Y (2) or Z (3)."
-      stop
-  end select
-
-end subroutine get_rotation_plane_axes
-!@-node:gcross.20090721121051.1757:get_rotation_plane_axes
-!@-node:gcross.20090624144408.2050:Misc
+!@-node:gcross.20090721121051.1765:Path acceptence
 !@-others
 !@-node:gcross.20090623152316.13:Subroutines
 !@-others
