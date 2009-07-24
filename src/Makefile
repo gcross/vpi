@@ -1,3 +1,7 @@
+#@+leo-ver=4-thin
+#@+node:gcross.20090724102123.1785:@thin Makefile
+#@@language Makefile
+#@@tabwidth 4
 MODULE_PATH = potentials/single_particle:potentials/two_body:potentials/rotational:trials/single_particle:trials/jastrow:.
 
 ################################################################################
@@ -80,7 +84,24 @@ MYLIBS =  -Wl -llapack -lpthread
 #thunder
 #MYLIBS = -L/usr/local/intel/mkl/lib/64 -lmkl -lmkl_lapack64 -lguide -lpthread
 
-PROGRAM_OBJS = kinds.o constants.o vpi_defines.o vpi_rand_utils.o vpi_xij.o vpi_aziz.o vpi_gfn.o vpi_bisect.o vpi_bbridge.o vpi_sample.o vpi_lattice.o vpi_coordinate_utils.o vpi_phase_maps.o vpi_rotation.o timers.o vpi_main.o
+PROGRAM_OBJS = \
+	kinds.o \
+	constants.o \
+	vpi_defines.o \
+	vpi_rand_utils.o \
+	vpi_xij.o \
+	vpi_aziz.o \
+	vpi_gfn.o \
+	vpi_bisect.o \
+	vpi_bbridge.o \
+	vpi_sample.o \
+	vpi_lattice.o \
+	vpi_coordinate_utils.o \
+	vpi_phase_maps.o \
+	vpi_rotation.o \
+	vpi_angular_momentum.o \
+	timers.o \
+	vpi_main.o
 
 SINGLE_PARTICLE_POTENTIAL_OBJS = \
 	potentials/single_particle/sp_null_potential.o \
@@ -199,3 +220,6 @@ clean :
 	rm -f *.vo
 	rm -f *~
 	rm -f *.stb
+
+#@-node:gcross.20090724102123.1785:@thin Makefile
+#@-leo
