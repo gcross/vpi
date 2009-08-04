@@ -36,133 +36,132 @@ subroutine get_rotation_plane_axes(rotation_axis,plane_axis_1,plane_axis_2)
 
 end subroutine get_rotation_plane_axes
 !@-node:gcross.20090721121051.1757:get_rotation_plane_axes
+!@+node:gcross.20090803153449.1835:perform_special_matmul
+subroutine perform_special_matmul(vector,amplitudes,size)
+  complex(kind=b8), dimension(size), intent(inout) :: vector
+  complex(kind=b8), dimension(size), intent(in) :: amplitudes
+  integer, intent(in) :: size
+
+  integer :: i
+  complex(kind=b8) :: partial_sum
+
+  partial_sum = 0_b8  
+  do i = 1,size
+    partial_sum = partial_sum + vector(i)
+    vector(i) = partial_sum * amplitudes(i)
+  end do
+
+end subroutine perform_special_matmul
+!@-node:gcross.20090803153449.1835:perform_special_matmul
+!@+node:gcross.20090803153449.1836:sum_over_symmetrizations
+function sum_over_symmetrizations(amplitudes,N_particles,N_excited)
+  ! Input variables
+  integer, intent(in) :: N_particles, N_excited
+  complex(kind=b8), dimension(N_particles), intent(in) :: amplitudes
+
+  ! Function Result
+  complex(kind=b8) :: sum_over_symmetrizations
+
+  ! Local variables
+  complex(kind=b8), dimension(N_particles-N_excited+1) :: vector
+  integer :: i
+
+
+  vector = amplitudes(1:N_particles-N_excited+1)
+  do i = 2, N_excited
+    call perform_special_matmul(vector,amplitudes(i:i+N_particles-N_excited),N_particles-N_excited+1)
+  end do
+  sum_over_symmetrizations = sum(vector)
+
+end function sum_over_symmetrizations
+!@-node:gcross.20090803153449.1836:sum_over_symmetrizations
+!@+node:gcross.20090803153449.1837:compute_angular_derivatives
+subroutine compute_angular_derivatives(&
+! INPUT: particle position information
+    x, &
+! INPUT: array dimensions
+    N_particles,N_dimensions, &
+! OUTPUT: partial derivatives of the phase function with respect to each coordinate
+    derivatives &
+  )
+
+  ! Input variables
+  integer, intent(in) :: N_particles, N_dimensions
+  real(kind=b8), dimension(N_particles,N_dimensions), target, intent(in) :: x
+
+  ! Output variables
+  real(kind=b8), dimension(N_particles), intent(out) :: derivatives
+
+  ! Local variables
+  integer :: plane_axis_1, plane_axis_2
+  real(kind=b8), dimension(:), pointer :: x_slice_1, x_slice_2
+  complex(kind=b8), dimension(N_particles) :: amplitudes, partial_sums
+  complex(kind=b8) :: amplitude
+  integer :: i
+
+
+  call get_rotation_plane_axes(fixed_rotation_axis,plane_axis_1,plane_axis_2)
+  x_slice_1 => x(:,plane_axis_1)
+  x_slice_2 => x(:,plane_axis_2)
+
+  amplitudes(:) = &
+    (x_slice_1(:)*(1.0_b8,0) + x_slice_2(:)*(0,1.0_b8))/sqrt(x_slice_1(:)**2 + x_slice_2(:)**2)
+
+!@+at
+! To get the partial sums, i.e. the the sums which are required to have a 
+! selected coordinate "i" appear, we compute the full sum but set the 
+! amplitude of the coordinate "i" to zero in order to get a sum over all sets 
+! of (m-1) coordinates which don't include "i"'s amplitude, then we multiply 
+! by "i"'s amplitude.
+!@-at
+!@@c
+  do i = 1, N_particles
+    amplitude = amplitudes(i)
+    amplitudes(i) = 0
+    partial_sums(i) = sum_over_symmetrizations(amplitudes,N_particles,fixed_angular_momentum-1)*amplitude
+    amplitudes(i) = amplitude
+  end do
+!@+at
+! The full sum over all sets of m coordinates is equal to the sum of all of 
+! the partial sums divided by m to account for the fact that each term appears 
+! m times, since the term for any given subset of m coordinates appears in m 
+! of the partial sums (one for each coordinate).
+!@-at
+!@@c
+  amplitude = sum(partial_sums)/fixed_angular_momentum
+  derivatives(:) = real(amplitude*conjg(partial_sums(:)))/(abs(amplitude)**2)
+
+end subroutine compute_angular_derivatives
+!@-node:gcross.20090803153449.1837:compute_angular_derivatives
 !@+node:gcross.20090721121051.1756:compute_effective_rotational_potential
 subroutine compute_effective_rotational_potential (&
 ! INPUT: particle position information
     x, &
 ! INPUT: path slice to consider
     move_start, move_end, &
-! INPUT: 
+! INPUT: array dimensions
     nslice, np, ndim, &
 ! OUTPUT: effective rotational potential
     U_rot &
   )
-!@+at
-! Array dimensions / slicing
-!@-at
-!@@c
+
+  ! Input variables
   integer, intent(in) :: move_start, move_end, nslice, np, ndim
-!@+at
-! Function input
-!@-at
-!@@c
   real(kind=b8), dimension ( nslice, np , ndim ), intent(in) :: x
-!@+at
-! Function output
-!@-at
-!@@c
+
+  ! Output variables
   real(kind=b8), dimension( nslice, np ), intent(out) :: U_rot
-!@+at
-! Temporary variables
-!@-at
-!@@c
-  integer :: plane_axis_1, plane_axis_2
-!@+at
-! Code begins
-!@-at
-!@@c
-  call get_rotation_plane_axes(fixed_rotation_axis,plane_axis_1,plane_axis_2)
-  U_rot(move_start:move_end,:) = abs(float(fixed_angular_momentum)) / &
-                                    ( x(move_start:move_end,:,plane_axis_1)**2 & 
-                                     +x(move_start:move_end,:,plane_axis_2)**2 )
+
+  ! Local variables
+  integer :: i
+  real(kind=b8), dimension( np ) :: derivatives
+
+  do i = move_start, move_end
+    call compute_angular_derivatives(x(i,:,:),np,ndim,derivatives)
+    U_rot(i,:) = derivatives(:)*(derivatives(:)-frame_angular_velocity)
+  end do
 end subroutine compute_effective_rotational_potential
 !@-node:gcross.20090721121051.1756:compute_effective_rotational_potential
-!@+node:gcross.20090723093414.1759:compute_angular_interference
-!@+at
-! This function computers the effect of interference due to the effect that 
-! some particles have angular momentum and others do not, but which particles 
-! have this momentum is non-deterministic due to boson symmetry.  To see why 
-! this matters, consider two bosons in a periodic box, with one excited and 
-! the other in its ground state.  The (unnormalized) amplitude of the wave 
-! function is then $e^{x_1} + e^{x_2}$.
-! 
-! To generalize this, if there are m particles with one unit of angular 
-! momentum in our system, then we need to sum over all terms 
-! $e^{x_{i_1}+x_{i_2}+\dots+x_{i_m}}$ for all $i_1\ne i_2\ne \dots \ne i_m$.
-! 
-! This function employs a trick to carry out this.
-!@-at
-!@@c
-function compute_angular_interference_amp (&
-! INPUT: particle position information
-    x, &
-! INPUT: path slice to consider
-    move_start, move_end, &
-! INPUT: array dimensions
-    nslice, np, ndim &
-! OUTPUT: complex amplitude resulting from the interference
-  ) result ( weight )
-!@+at
-! Array dimensions / slicing
-!@-at
-!@@c
-  integer, intent(in) :: move_start, move_end, nslice, np, ndim
-!@+at
-! Function input
-!@-at
-!@@c
-  real(kind=b8), dimension ( nslice, np , ndim ), intent(in), target :: x
-!@+at
-! Function output
-!@-at
-!@@c
-  real(kind=b8) :: weight
-!@+at
-! Temporary variables
-!@-at
-!@@c
-  integer :: plane_axis_1, plane_axis_2
-  complex(kind=b8), dimension( move_end-move_start+1, np ) :: single_particle_amplitudes
-  complex(kind=b8), dimension( move_end-move_start+1, np-fixed_angular_momentum+1 ) :: interference_vector
-  real(kind=b8), dimension(:,:), pointer :: x_slice_1, x_slice_2
-  complex(kind=b8) :: amplitude
-  integer :: i, j
-!@+at
-! Code begins
-!@-at
-!@@c 
-  if( fixed_angular_momentum == 0 .or. &
-      move_end == move_start .or. &
-      size(interference_vector,1) == 0 &
-      ) then
-    weight = 1.0_b8
-    return
-  end if
-
-  call get_rotation_plane_axes(fixed_rotation_axis,plane_axis_1,plane_axis_2)
-
-  x_slice_1 => x(move_start:move_end,:,plane_axis_1)
-  x_slice_2 => x(move_start:move_end,:,plane_axis_2)
-
-  single_particle_amplitudes(:,:) = &
-    (x_slice_1(:,:)*(1.0_b8,0) + x_slice_2(:,:)*(0,1.0_b8))/sqrt(x_slice_1(:,:)**2 + x_slice_2(:,:)**2)
-
-  interference_vector = single_particle_amplitudes(:,:size(interference_vector,2))
-
-  do i = 1, fixed_angular_momentum-1
-    do j = size(interference_vector,2), 1, -1
-      interference_vector(:,j) = sum(interference_vector(:,j:),dim=2)*single_particle_amplitudes(:,i+j)
-    end do
-  end do
-
-  weight = 1_b8
-  do i = 1, size(interference_vector,1)  
-    amplitude = sum(interference_vector(i,:))/float(np)
-    weight = weight + (real(amplitude)**2 + imag(amplitude)**2)
-  end do
-
-end function
-!@-node:gcross.20090723093414.1759:compute_angular_interference
 !@-others
 
 end module vpi_angular_momentum

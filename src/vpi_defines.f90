@@ -134,6 +134,7 @@ module vpi_defines
 
   integer, parameter :: x_axis_label = 1, y_axis_label = 2, z_axis_label = 3
   integer :: fixed_rotation_axis = 0, fixed_angular_momentum = 0
+  real(kind=b8) :: frame_angular_velocity = 0
   logical :: eval_2particle_angle_correlation = .false.
 
   namelist /configuration/ &
@@ -179,6 +180,7 @@ module vpi_defines
     use_expot_file, &
     fixed_rotation_axis, &
     fixed_angular_momentum, &
+    frame_angular_velocity, &
     eval_2particle_angle_correlation
 
 contains

@@ -907,16 +907,6 @@ program Test_VPI
         !@-node:gcross.20090626112946.1698:<< Optionally impose the fixed phase condition >>
         !@nl
 
-        !@<< Optionally include rotational interference effect >>
-        !@+node:gcross.20090723093414.1760:<< Optionally include rotational interference effect >>
-        if(fixed_angular_momentum /= 0) then
-          dphase = dphase * &
-             compute_angular_interference_amp(q1,move_start,move_end,n_slice,n_particle,n_dim) &
-           / compute_angular_interference_amp(q0,move_start,move_end,n_slice,n_particle,n_dim)
-        end if
-        !@-node:gcross.20090723093414.1760:<< Optionally include rotational interference effect >>
-        !@nl
-
         !@<< Accept or reject the move >>
         !@+node:gcross.20090626112946.1706:<< Accept or reject the move >>
         10 if ( (.not. reject_flag) .and. vpi_accept_path( weight_0, weight_1, dphase)) then
