@@ -1,5 +1,7 @@
-module vpi_rand_utils
-  use vpi_defines
+!@+leo-ver=4-thin
+!@+node:gcross.20090805153643.1852:@thin rand_utils.f90
+!@@language fortran90
+module rand_utils
   use timers
   implicit none
 
@@ -34,9 +36,9 @@ subroutine ru_init_seed_file(pid)
      call random_seed(get=seed)  ! get the current seeds
      print *, seed
      time0 = sec_timer()
-     seed(1) = simple_lcg(time0 + 100.0_b8*pid)
+     seed(1) = simple_lcg(time0 + 100.0D0*pid)
      do i = 2,seedsize
-       seed(i) = simple_lcg(1.0_b8*seed(i-1))
+       seed(i) = simple_lcg(1.0D0*seed(i-1))
      end do
      print *, seed
      call random_seed(put=seed)  ! initialize the random number generator
@@ -70,14 +72,14 @@ subroutine ru_write_seed_file( pid )
 end subroutine ru_write_seed_file
 
 subroutine ru_gasdev( nu )
-  real(b8), dimension( : ), intent(inout):: nu
+  double precision, dimension( : ), intent(inout):: nu
 
-  real(b8), dimension( 2 ) :: v
-  real(b8) :: fac,rsq
+  double precision, dimension( 2 ) :: v
+  double precision :: fac,rsq
   integer:: np
   integer:: i
 
-  real(b8), dimension( size(nu)+1 ):: tnu
+  double precision, dimension( size(nu)+1 ):: tnu
 
   np = size(nu)
 
@@ -98,14 +100,16 @@ subroutine ru_gasdev( nu )
 end subroutine ru_gasdev
 
 function simple_lcg(yin) result(yout)
-  real(b8) :: yin,yout
-  real(b8), parameter :: a = 273673163155d0
-  real(b8), parameter :: c = 13d0
-  real(b8), parameter :: m = 65000d0
+  double precision :: yin,yout
+  double precision, parameter :: a = 273673163155d0
+  double precision, parameter :: c = 13d0
+  double precision, parameter :: m = 65000d0
 
   yout = mod((a*yin +c),m)
-  
+
 end function simple_lcg
 
 
-end module vpi_rand_utils
+end module rand_utils
+!@-node:gcross.20090805153643.1852:@thin rand_utils.f90
+!@-leo

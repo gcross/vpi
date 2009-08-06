@@ -2,15 +2,14 @@
 <?xml-stylesheet ekr_test?>
 <leo_file>
 <leo_header file_format="2" tnodes="0" max_tnode_index="0" clone_windows="0"/>
-<globals body_outline_ratio="0.5">
-	<global_window_position top="22" left="10" height="852" width="694"/>
+<globals body_outline_ratio="0.792058516196">
+	<global_window_position top="10" left="308" height="957" width="972"/>
 	<global_log_window_position top="0" left="0" height="0" width="0"/>
 </globals>
 <preferences/>
 <find_panel_settings/>
 <vnodes>
-<v t="gcross.20090623152316.1" str_leo_pos="4"><vh>@chapters</vh></v>
-<v t="gcross.20090624144408.1779"><vh>Potentials</vh>
+<v t="gcross.20090624144408.1779" str_leo_pos="2"><vh>Potentials</vh>
 <v t="gcross.20090624094338.1366"><vh>@path src/potentials/single_particle</vh>
 <v t="gcross.20090624144408.1411"><vh>@thin sp_null_potential.f90</vh></v>
 <v t="gcross.20090624144408.1889"><vh>Boxes</vh>
@@ -88,27 +87,17 @@
 <v t="gcross.20090624144408.2038"><vh>@thin jas_independent_trial.f90</vh></v>
 </v>
 </v>
-<v t="gcross.20090626170642.1723"><vh>Output file descriptions</vh>
-<v t="gcross.20090626170642.1724"><vh>od__</vh></v>
-</v>
 <v t="gcross.20090623152316.2"><vh>@path src</vh>
-<v t="gcross.20090724102123.1785"><vh>@thin Makefile</vh></v>
+<v t="gcross.20090806151612.1842"><vh>@thin Makefile</vh></v>
 <v t="gcross.20090624144408.1462"><vh>@thin constants.f90</vh></v>
-<v t="gcross.20090623152316.3"><vh>@thin vpi_main.f90</vh></v>
-<v t="gcross.20090623152316.73"><vh>@thin vpi_sample.f90</vh></v>
-<v t="gcross.20090724102123.1771"><vh>@thin vpi_angular_momentum.f90</vh></v>
-<v t="gcross.20090629153134.1738"><vh>@thin vpi_single_particle_potential.f90</vh></v>
-<v t="gcross.20090629153134.1740"><vh>@thin vpi_two_body_potential.f90</vh></v>
-<v t="gcross.20090629153134.1743"><vh>@thin vpi_rotational_potential.f90</vh></v>
-<v t="gcross.20090629153134.1745"><vh>@thin vpi_single_particle_trial.f90</vh></v>
-<v t="gcross.20090629153134.1747"><vh>@thin vpi_jastrow_trial.f90</vh></v>
-<v t="gcross.20090624144408.1798"><vh>@thin vpi_gfn.f90</vh></v>
-<v t="gcross.20090624144408.2046"><vh>@thin vpi_lattice.f90</vh></v>
-<v t="gcross.20090626112946.1710"><vh>@thin vpi_defines.f90</vh></v>
+<v t="gcross.20090623152316.73"><vh>@thin sample.f90</vh></v>
+<v t="gcross.20090805153643.1852"><vh>@thin rand_utils.f90</vh></v>
+<v t="gcross.20090805093617.1832"><vh>@thin xij.f95</vh></v>
+<v t="gcross.20090805153643.1843"><vh>@thin thermalize.f90</vh></v>
+<v t="gcross.20090806151612.1841"><vh>@thin timers.f90</vh></v>
 </v>
 </vnodes>
 <tnodes>
-<t tx="gcross.20090623152316.1"></t>
 <t tx="gcross.20090623152316.2">@tabwidth -2
 </t>
 <t tx="gcross.20090624094338.1366"></t>
@@ -126,7 +115,5 @@
 <t tx="gcross.20090624144408.1895"></t>
 <t tx="gcross.20090624144408.1924"></t>
 <t tx="gcross.20090624144408.1988"></t>
-<t tx="gcross.20090626170642.1723"></t>
-<t tx="gcross.20090626170642.1724"></t>
 </tnodes>
 </leo_file>
