@@ -10,3 +10,6 @@ lib
 *core
 fit.log
 .nfs*
+*.so
+vpi-f2pywrappers2.f90
+vpimodule.c
