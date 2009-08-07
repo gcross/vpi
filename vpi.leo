@@ -95,7 +95,11 @@
 <v t="gcross.20090805093617.1832"><vh>@thin xij.f95</vh></v>
 <v t="gcross.20090805153643.1843"><vh>@thin thermalize.f90</vh></v>
 <v t="gcross.20090806151612.1841"><vh>@thin timers.f90</vh></v>
-<v t="gcross.20090806151612.1843"><vh>@thin test.py</vh></v>
+<v t="gcross.20090807144330.1675"><vh>@thin test.py</vh></v>
+</v>
+<v t="gcross.20090807144330.1673"><vh>@path src/tests</vh>
+<v t="gcross.20090807144330.1674"><vh>@thin __init__.py</vh></v>
+<v t="gcross.20090806151612.1843"><vh>@thin xij.py</vh></v>
 </v>
 </vnodes>
 <tnodes>
@@ -117,5 +121,6 @@
 <t tx="gcross.20090624144408.1924"></t>
 <t tx="gcross.20090624144408.1988"></t>
 <t tx="gcross.20090807144330.1670"></t>
+<t tx="gcross.20090807144330.1673"></t>
 </tnodes>
 </leo_file>
