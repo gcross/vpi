@@ -3,12 +3,12 @@
 #@@language Makefile
 all: vpi.so
 
-NUMPYDIR = ${HOME}/local/lib/python2.6/site-packages/numpy/core
+include paths.mk
 
 CC = gcc
 FC = gfortran
 FLAGS = -fPIC
-CFLAGS = -I ${NUMPYDIR}/include -I ${HOME}/local/include/python2.6
+CFLAGS = -I ${NUMPYDIR}/include -I ${PYTHONINCDIR} 
 FFLAGS = -cpp
 
 SOURCES = \
