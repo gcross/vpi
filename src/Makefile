@@ -12,7 +12,7 @@ CFLAGS = -I ${NUMPYDIR}/include -I ${PYTHONINCDIR}
 FFLAGS = -cpp
 
 SOURCES = \
-  angular_momentum.f90 \
+  angular_momentum.f95 \
 	timers.f90 \
 	rand_utils.f90 \
 	sample.f90 \
