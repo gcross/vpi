@@ -5,9 +5,11 @@
 
 import unittest
 from paycheck import with_checker
-from paycheck.generator import positive_float, non_negative_float
-from numpy import zeros, array, complex128
+from paycheck.generator import irange
+from numpy import zeros, array, complex128, exp, prod
+from numpy.random import rand
 from numpy.linalg import norm
+from itertools import imap, combinations
 from tests import particle_paths_type
 import vpi
 
@@ -40,11 +42,23 @@ class perform_special_matmul(unittest.TestCase):
             partial_sum += original_vector[i]
             self.assertEqual(vector[i],partial_sum*amplitudes[i])
 #@-node:gcross.20090807144330.2254:perform_special_matmul
+#@+node:gcross.20090807171924.1722:sum_over_symmetrizations
+class sum_over_symmetrizations(unittest.TestCase):
+    @with_checker(irange(1,6),irange(1,8))
+    def test_length(self,n1,n2):
+        number_of_particles = max(n1,n2)
+        number_excited = min(n1,n2)
+        amplitudes = exp(rand(number_of_particles)+1j*rand(number_of_particles))
+        result = vpi.angular_momentum.sum_over_symmetrizations(amplitudes,number_excited)
+        correct = sum(imap(prod,combinations(amplitudes,number_excited)))
+        self.assertAlmostEqual(result,correct)
+#@-node:gcross.20090807171924.1722:sum_over_symmetrizations
 #@-others
 
 tests = [
     get_rotation_plane_axes,
-    perform_special_matmul
+    perform_special_matmul,
+    sum_over_symmetrizations
     ]
 
 if __name__ == "__main__":
