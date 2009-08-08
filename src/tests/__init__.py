@@ -8,7 +8,8 @@ from numpy.random import rand
 import random
 import vpi
 
-
+#@+others
+#@+node:gcross.20090807144330.2153:ArrayGenerator
 # ------------------------------------------------------------------------------
 # NumPy Support
 # ------------------------------------------------------------------------------
@@ -22,15 +23,12 @@ class ArrayGenerator(generator.PayCheckGenerator):
         return array(rand(*[random.randint(1, generator.LIST_LEN) for _ in self.shape]),dtype=self.dtype)
 
 generator.container_generators[type(zeros(()))] = ArrayGenerator
-
+#@nonl
+#@-node:gcross.20090807144330.2153:ArrayGenerator
+#@+node:gcross.20090807144330.2155:specialized type generators
 particle_paths_type = zeros((0,0),dtype=double)
-
-from tests import xij
-
-modules = [
-    xij,
-    ]
-
+#@-node:gcross.20090807144330.2155:specialized type generators
+#@+node:gcross.20090807144330.2156:runner
 def run_tests():
     tests = []
     for module in modules:
@@ -41,5 +39,17 @@ def run_tests():
 
 if __name__ == "__main__":
     run_tests()
+#@-node:gcross.20090807144330.2156:runner
+#@+node:gcross.20090807144330.2154:tests
+from tests import xij, thermalize, angular_momentum
+
+modules = [
+    thermalize,
+    xij,
+    angular_momentum,
+    ]
+#@nonl
+#@-node:gcross.20090807144330.2154:tests
+#@-others
 #@-node:gcross.20090807144330.1674:@thin __init__.py
 #@-leo

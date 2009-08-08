@@ -12,17 +12,21 @@ CFLAGS = -I ${NUMPYDIR}/include -I ${PYTHONINCDIR}
 FFLAGS = -cpp
 
 SOURCES = \
+  angular_momentum.f90 \
 	timers.f90 \
 	rand_utils.f90 \
 	sample.f90 \
-	xij.f95
+	xij.f95 \
+  thermalize.f90
 
 OBJS = \
   constants.o \
+  angular_momentum.o \
 	timers.o \
 	rand_utils.o \
 	sample.o \
 	xij.o \
+  thermalize.o \
 	vpimodule.o \
 	vpi-f2pywrappers2.o \
 	fortranobject.o
