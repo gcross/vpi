@@ -42,6 +42,6 @@ vpimodule.c vpi-f2pywrappers2.f90: ${SOURCES} Makefile
 	${FC} ${FLAGS} ${FFLAGS} -c $< -o $@
 
 vpi.so: ${OBJS}
-	gfortran -shared -o vpi.so -lgfortran ${OBJS}
+	gfortran ${PYTHONLINK} -shared -o vpi.so -lgfortran ${OBJS}
 #@-node:gcross.20090806151612.1842:@thin Makefile
 #@-leo
