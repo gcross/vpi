@@ -2,14 +2,14 @@
 <?xml-stylesheet ekr_test?>
 <leo_file>
 <leo_header file_format="2" tnodes="0" max_tnode_index="0" clone_windows="0"/>
-<globals body_outline_ratio="0.5">
-	<global_window_position top="22" left="710" height="783" width="729"/>
+<globals body_outline_ratio="0.344827586207">
+	<global_window_position top="73" left="43" height="783" width="1219"/>
 	<global_log_window_position top="0" left="0" height="0" width="0"/>
 </globals>
 <preferences/>
 <find_panel_settings/>
 <vnodes>
-<v t="gcross.20090807144330.1670" str_leo_pos="5,0,0"><vh>@chapters</vh></v>
+<v t="gcross.20090807144330.1670" str_leo_pos="5,0"><vh>@chapters</vh></v>
 <v t="gcross.20090624144408.1779"><vh>Potentials</vh>
 <v t="gcross.20090624094338.1366"><vh>@path src/potentials/single_particle</vh>
 <v t="gcross.20090624144408.1411"><vh>@thin sp_null_potential.f90</vh></v>
@@ -93,6 +93,7 @@
 <v t="gcross.20090624144408.1462"><vh>@thin constants.f90</vh></v>
 <v t="gcross.20090807144330.2245"><vh>@thin angular_momentum.f95</vh></v>
 <v t="gcross.20090623152316.73"><vh>@thin sample.f90</vh></v>
+<v t="gcross.20090812093015.1722"><vh>@thin gfn.f95</vh></v>
 <v t="gcross.20090805153643.1852"><vh>@thin rand_utils.f90</vh></v>
 <v t="gcross.20090805093617.1832"><vh>@thin xij.f95</vh></v>
 <v t="gcross.20090805153643.1843"><vh>@thin thermalize.f90</vh></v>
@@ -103,11 +104,17 @@
 <v t="gcross.20090807144330.1674"><vh>@thin __init__.py</vh></v>
 <v t="gcross.20090807144330.2253"><vh>@thin angular_momentum.py</vh></v>
 <v t="gcross.20090806151612.1843"><vh>@thin xij.py</vh></v>
+<v t="gcross.20090812093015.1742"><vh>@thin gfn.py</vh></v>
 <v t="gcross.20090807144330.2151"><vh>@thin thermalize.py</vh></v>
 </v>
 <v t="gcross.20090809223137.1725" a="E"><vh>Pythonize Project</vh>
 <v t="gcross.20090809223137.1726" a="E"><vh>@path src</vh>
 <v t="gcross.20090805153643.1843"></v>
+</v>
+<v t="gcross.20090721121051.1746"><vh>compute_log_acceptance_weight</vh>
+<v t="gcross.20090626112946.1696"><vh>&lt;&lt; Compute contribution from potentials &gt;&gt;</vh></v>
+<v t="gcross.20090721121051.1752"><vh>&lt;&lt; Compute contribution from propagators &gt;&gt;</vh></v>
+<v t="gcross.20090721121051.1754"><vh>&lt;&lt; Compute contribution from trial functions &gt;&gt;</vh></v>
 </v>
 <v t="gcross.20090626112946.1694"><vh>thermalize_path</vh>
 <v t="gcross.20090805153643.1848"><vh>&lt;&lt; Initialize trial functions &gt;&gt;</vh></v>
@@ -125,11 +132,6 @@
 </v>
 </v>
 <v t="gcross.20090805093617.1835"><vh>subroutine revert_move</vh></v>
-</v>
-<v t="gcross.20090721121051.1746"><vh>compute_log_acceptance_weight</vh>
-<v t="gcross.20090626112946.1696"><vh>&lt;&lt; Compute contribution from potentials &gt;&gt;</vh></v>
-<v t="gcross.20090721121051.1752"><vh>&lt;&lt; Compute contribution from propagators &gt;&gt;</vh></v>
-<v t="gcross.20090721121051.1754"><vh>&lt;&lt; Compute contribution from trial functions &gt;&gt;</vh></v>
 </v>
 </v>
 </vnodes>
@@ -430,7 +432,9 @@ U_trial = U
 gradU2_trial = gradU2</t>
 <t tx="gcross.20090807144330.1670"></t>
 <t tx="gcross.20090807144330.1673"></t>
-<t tx="gcross.20090809223137.1725"></t>
+<t tx="gcross.20090809223137.1725">@language fortran90
+@tabwidth -2
+</t>
 <t tx="gcross.20090809223137.1726"></t>
 </tnodes>
 </leo_file>

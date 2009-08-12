@@ -41,9 +41,10 @@ if __name__ == "__main__":
     run_tests()
 #@-node:gcross.20090807144330.2156:runner
 #@+node:gcross.20090807144330.2154:tests
-from tests import xij, thermalize, angular_momentum
+from tests import xij, thermalize, angular_momentum, gfn
 
 modules = [
+    gfn,
     thermalize,
     xij,
     angular_momentum,

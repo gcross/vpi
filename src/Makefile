@@ -15,6 +15,7 @@ SOURCES = \
   angular_momentum.f95 \
 	timers.f90 \
 	rand_utils.f90 \
+  gfn.f95 \
 	sample.f90 \
 	xij.f95 \
   thermalize.f90
@@ -24,6 +25,7 @@ OBJS = \
   angular_momentum.o \
 	timers.o \
 	rand_utils.o \
+  gfn.o \
 	sample.o \
 	xij.o \
   thermalize.o \
@@ -42,6 +44,6 @@ vpimodule.c vpi-f2pywrappers2.f90: ${SOURCES} Makefile
 	${FC} ${FLAGS} ${FFLAGS} -c $< -o $@
 
 vpi.so: ${OBJS}
-	gfortran ${PYTHONLINK} -shared -o vpi.so -lgfortran ${OBJS}
+	gfortran ${PYTHONLINK} -shared -o vpi.so -lgfortran -lblas ${OBJS}
 #@-node:gcross.20090806151612.1842:@thin Makefile
 #@-leo
