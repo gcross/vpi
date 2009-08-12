@@ -26,38 +26,33 @@ end function accept_path
 !@-node:gcross.20090623152316.32:accept_path
 !@+node:gcross.20090721121051.1764:compute_physical_potential
 subroutine compute_physical_potential (&
-    x, xij2, x_rot, &
+    x, xij2, &
     Usp_func, gUsp_func, &
     Uij_func, gUij_func, &
     move_start, move_end, &
-    n_slices, n_particles, n_dimensions, n_dimensions_rotation, &
+    n_slices, n_particles, n_dimensions, &
     U, gradU2, &
-    reject_flag, &
-    Uij_rot_func &
+    reject_flag &
     )
-  implicit none
 !@+at
 ! Array dimensions / slicing
 !@-at
 !@@c
-  integer, intent(in) :: move_start, move_end, n_slices, n_particles, n_dimensions, n_dimensions_rotation
+  integer, intent(in) :: move_start, move_end, n_slices, n_particles, n_dimensions
 !@+at
 ! Function input
 !@-at
 !@@c
   double precision, dimension ( n_slices, n_particles, n_dimensions ), intent(in) :: x
   double precision, dimension ( n_slices, n_particles, n_particles ), intent(in) :: xij2
-  double precision, dimension ( n_slices, n_particles, n_dimensions_rotation ), intent(in), optional :: x_rot
 !@+at
 ! Potential functions
 !@-at
 !@@c
 !f2py external, intent(callback) :: Usp_func, gUsp_func, Uij_func, gUij_func
-!f2py external, intent(callback), optional :: Uij_rot_func
-  optional :: Uij_rot_func
 interface
-  !@  << Callback interface >>
-  !@+node:gcross.20090809223137.1724:<< Callback interface >>
+  !@  << Potential callback interface >>
+  !@+node:gcross.20090809223137.1724:<< Potential callback interface >>
   function Usp_func( x, slice, ip, nslice, np, ndim ) result ( Usp )
     integer, intent(in) :: nslice, np, ndim
     integer, intent(in) :: slice, ip
@@ -85,15 +80,7 @@ interface
     integer, intent(in) :: slice, nslice, np, ndim
     double precision, dimension ( np , ndim ), intent(out) :: gUij
   end subroutine gUij_func
-
-  function Uij_rot_func( x, x_rot, xij2, slice, ip, nslice, np, ndim, ndim_rot ) result ( Uij_rot )
-    double precision, dimension ( nslice, np , ndim ), intent(in) :: x
-    double precision, dimension ( nslice, np , ndim_rot ), intent(in) :: x_rot
-    double precision, dimension ( nslice, np , np ), intent(in) :: xij2
-    integer, intent(in) :: slice, ip, nslice, np, ndim, ndim_rot
-    double precision :: Uij_rot
-  end function Uij_rot_func
-  !@-node:gcross.20090809223137.1724:<< Callback interface >>
+  !@-node:gcross.20090809223137.1724:<< Potential callback interface >>
   !@nl
 end interface
 !@+at
@@ -108,7 +95,7 @@ end interface
 !@-at
 !@@c
   double precision, dimension( n_particles, n_dimensions ) :: grad_Usp, grad_Uij, grad_Uij_rot, grad_U
-  double precision :: U_sp, U_ij, U_ij_rot
+  double precision :: U_sp, U_ij
   integer :: ii, jj
 !@+at
 ! Code begins:
@@ -125,11 +112,7 @@ end interface
       if(reject_flag) then
           return
       end if
-      U_ij_rot=0
-      if( PRESENT(Uij_rot_func) ) then
-        U_ij_rot = Uij_rot_func( x, x_rot, xij2, ii, jj, n_slices, n_particles, n_dimensions, n_dimensions_rotation )
-      end if
-      U(ii,jj) = U(ii,jj) + ( U_sp + U_ij + U_ij_rot )
+      U(ii,jj) = U(ii,jj) + U_sp + U_ij
     end do
 
     call gUsp_func( x, ii, n_slices, n_particles, n_dimensions, grad_Usp )

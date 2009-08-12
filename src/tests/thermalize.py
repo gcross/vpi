@@ -30,18 +30,15 @@ class compute_physical_potential(unittest.TestCase):
             irange(1,5),
             irange(1,5),
             irange(1,5),
-            irange(1,5),
         number_of_calls=10
     )
     def test_null_case(self,
             n_slices,
             n_particles,
             n_dimensions,
-            n_dimensions_rotation
         ):
         x = array(rand(n_slices,n_particles,n_dimensions),order='Fortran')
         xij2 = array(rand(n_slices,n_particles,n_particles),order='Fortran')
-        x_rot = array(zeros((n_slices,n_particles,n_dimensions_rotation)),order='Fortran')
         def null_func(*args):
             return double(0.0)
         def Uij_func(*args):
@@ -56,8 +53,6 @@ class compute_physical_potential(unittest.TestCase):
             Uij_func,
             null_grad_func,
             1,n_slices,
-            x_rot=x_rot,
-            Uij_rot_func=null_func
             )
         self.failIf(reject_flag)
         self.assert_((U==0).all())
@@ -69,18 +64,15 @@ class compute_physical_potential(unittest.TestCase):
             irange(1,5),
             irange(1,5),
             irange(1,5),
-            irange(1,5),
         number_of_calls=10
     )
     def test_constant_case(self,
             n_slices,
             n_particles,
             n_dimensions,
-            n_dimensions_rotation
         ):
         x = array(rand(n_slices,n_particles,n_dimensions),order='Fortran')
         xij2 = array(rand(n_slices,n_particles,n_particles),order='Fortran')
-        x_rot = array(zeros((n_slices,n_particles,n_dimensions_rotation)),order='Fortran')
         def null_func(*args):
             return double(0.0)
         def constant_func(*args):
@@ -97,8 +89,6 @@ class compute_physical_potential(unittest.TestCase):
             Uij_func,
             null_grad_func,
             1,n_slices,
-            x_rot=x_rot,
-            Uij_rot_func=null_func
             )
         self.failIf(reject_flag)
         self.assert_((U==2).all())
