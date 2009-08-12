@@ -15,3 +15,4 @@ vpi-f2pywrappers2.f90
 vpimodule.c
 .scons*
 *.pyc
+paths.mk
