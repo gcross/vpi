@@ -5,10 +5,11 @@
 
 import unittest
 from paycheck import with_checker
-from paycheck.generator import positive_float, non_negative_float, irange
+from paycheck.generator import positive_float, non_negative_float, irange, frange
 from numpy import array, zeros, double, float64
 from numpy.linalg import norm
 from numpy.random import rand
+from random import randint
 from tests import particle_paths_type
 import vpi
 
@@ -96,11 +97,71 @@ class compute_physical_potential(unittest.TestCase):
     #@-node:gcross.20090812093015.1721:test_constant_case
     #@-others
 #@-node:gcross.20090812093015.1718:compute_potential
+#@+node:gcross.20090813093326.1730:compute_log_acceptance_weight
+class compute_log_acceptance_weight(unittest.TestCase):
+    #@    @+others
+    #@+node:gcross.20090813095726.1739:test_null_case
+    @with_checker(
+            irange(1,11,2),
+            irange(1,5),
+            irange(1,5),
+            irange(1,3),
+            frange(0,1),
+            frange(0,1),
+            bool,
+        )
+    def test_null_case(self,
+            c_slice,
+            n_particles,
+            n_dimensions,
+            fixed_rotation_axis,
+            lam,
+            dtau,
+            use_4th_order_green_function,
+        ):
+        n_slices = c_slice * 2
+        x = array(rand(n_slices,n_particles,n_dimensions),order='Fortran')
+        xij2 = array(rand(n_slices,n_particles,n_particles),order='Fortran')
+        move_start = randint(1,n_slices)
+        move_end = randint(move_start,n_slices)
+        particle_number = randint(1,n_particles)
+        def null_func(*args):
+            return double(0.0)
+        def Uij_func(*args):
+            return 0.0, False
+        gnull = array(zeros((n_particles,n_dimensions)),dtype=double,order='Fortran')
+        def null_grad_func(*args):
+            return gnull
+        U_weights, gU2_weights = vpi.gfn.initialize_4th_order_weights(n_slices)
+        U, gradU2, reject_flag, weight = vpi.thermalize.compute_log_acceptance_weight(
+            x,xij2,
+            move_start,move_end,
+            particle_number,
+            null_func,
+            null_grad_func,
+            Uij_func,
+            null_grad_func,
+            U_weights,gU2_weights,
+            fixed_rotation_axis,
+            0,0,
+            lam, dtau,
+            use_4th_order_green_function,
+            null_func,
+            null_func,
+        )
+        self.failIf(reject_flag)
+        self.assert_((U==0).all())
+        self.assert_((gradU2==0).all())
+        self.assertEqual(0,weight)
+    #@-node:gcross.20090813095726.1739:test_null_case
+    #@-others
+#@-node:gcross.20090813093326.1730:compute_log_acceptance_weight
 #@-others
 
 tests = [
     accept_path,
     compute_physical_potential,
+    compute_log_acceptance_weight
     ]
 
 if __name__ == "__main__":
