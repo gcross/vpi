@@ -25,13 +25,6 @@ module sample
  !@-node:gcross.20090623152316.75:<< Move type constants >>
  !@nl
 
- !@ << Other constants >>
- !@+node:gcross.20090805153643.2472:<< Other constants >>
- double precision, parameter :: drot = 2.0d-2
- !@nonl
- !@-node:gcross.20090805153643.2472:<< Other constants >>
- !@nl
-
  contains
 
 !@+others
@@ -40,26 +33,30 @@ module sample
 subroutine sample_scheme1( &
     q0, q1, &
     move_start, move_end, &
-    PROB_BBRIDGE_MOVE, PROB_RIGID_MOVE, PROB_SWAP_MOVE, PROB_OD_PNUM, &
-    dtau, dswap, dnu, dM, lambda, &
+    move_type_probabilities, move_type_differentials, &
+    dM, lambda, &
     low_swap_dim, high_swap_dim, &
     part_num, mtype, &
-    N_SLICE, CSLICE, N_PARTICLE, N_DIM, &
-    od_pnum, n_od_particle, &
+    N_SLICE, N_PARTICLE, N_DIM, &
+    od_pnum, PROB_OD_PNUM, &
+    n_od_particle, &
     od_dim_low, od_dim_high &
   )
-  integer, intent(in) :: N_SLICE, CSLICE, N_PARTICLE, N_DIM
+  integer, intent(in) :: N_SLICE, N_PARTICLE, N_DIM
+  integer, parameter :: N_MOVE_TYPES = 3
+  double precision, dimension ( N_MOVE_TYPES ), intent(in) :: move_type_probabilities, move_type_differentials
   double precision, dimension ( N_SLICE , N_PARTICLE, N_DIM ), intent(in) :: q0
   double precision, dimension ( N_SLICE , N_PARTICLE, N_DIM ), intent(inout) :: q1
   integer, intent(in) :: low_swap_dim, high_swap_dim
   integer, intent(out) :: move_start,move_end,part_num,mtype
+  double precision, intent(in), optional :: PROB_OD_PNUM
   integer, intent(in), optional :: od_pnum, n_od_particle, od_dim_low, od_dim_high
-  double precision, intent(in) :: PROB_BBRIDGE_MOVE, PROB_RIGID_MOVE, PROB_SWAP_MOVE, PROB_OD_PNUM
-  double precision, intent(in) :: dtau, dswap, dnu, dM, lambda
+  double precision, intent(in) :: dM, lambda
 
   double precision :: rnd
-  integer :: i0,i1
+  integer :: i0,i1,cslice
   integer :: swap_dim
+  cslice = n_slice/2
 
   call random_number( rnd )
   if (present(od_pnum) .and. ( rnd .lt. PROB_od_pnum ) ) then
@@ -69,27 +66,29 @@ subroutine sample_scheme1( &
   end if
 
   call random_number( rnd )
-  if (rnd < PROB_BBRIDGE_MOVE) then
+  if (rnd < move_type_probabilities(MT_BBRIDGE)) then
     mtype = MT_BBRIDGE
     call random_number( rnd )
     i0 = floor(rnd*((N_SLICE-1)-(2-dM))) - dM + 2
     i1 = i0 + dM
 ! print *, "i0, i1 ",i0,i1
     if( ((i0 .ge. 1) .and. (i1 .le. N_SLICE)) ) then
-      call bbridge(q0, q1, part_num, 1, N_DIM, S_BRIDGE, i0, i1, lambda, dtau, N_SLICE, N_PARTICLE, N_DIM)
+      call bbridge(q0, q1, part_num, 1, N_DIM, S_BRIDGE, i0, i1, lambda, &
+            move_type_differentials(MT_BBRIDGE), N_SLICE, N_PARTICLE, N_DIM)
       move_start = i0+1
       move_end = i1-1
     else
       if(i0 .lt. 1) then
         i0 = 1
-        call bbridge(q0, q1, part_num, 1, N_DIM, LEFT_BRIDGE, i0, i1, lambda, dtau, N_SLICE, N_PARTICLE, N_DIM)
+        call bbridge(q0, q1, part_num, 1, N_DIM, LEFT_BRIDGE, i0, i1, lambda, &
+            move_type_differentials(MT_BBRIDGE), N_SLICE, N_PARTICLE, N_DIM)
         move_start = 1
         move_end = i1-1
       else
         if(i1 .gt. N_SLICE) then
           i1 = N_SLICE
-          call bbridge(q0, q1, part_num, 1, N_DIM, RIGHT_BRIDGE, i0, i1, lambda, dtau, &
-            N_SLICE, N_PARTICLE, N_DIM, &
+          call bbridge(q0, q1, part_num, 1, N_DIM, RIGHT_BRIDGE, i0, i1, lambda, &
+            move_type_differentials(MT_BBRIDGE), N_SLICE, N_PARTICLE, N_DIM, &
             od_pnum, n_od_particle, &
             od_dim_low, od_dim_high &
             )
@@ -100,27 +99,32 @@ subroutine sample_scheme1( &
     end if
   else 
 ! move all time steps of a single particle at once
-    if (rnd < PROB_BBRIDGE_MOVE + PROB_RIGID_MOVE) then
+    if (rnd < move_type_probabilities(MT_BBRIDGE) + move_type_probabilities(MT_RIGID)) then
       mtype = MT_RIGID
-      call rigid_move(q0, q1, part_num, 1, N_DIM, 1, N_SLICE, dnu, N_SLICE, N_PARTICLE, N_DIM)
+      call rigid_move(q0, q1, part_num, 1, N_DIM, 1, N_SLICE, &
+              move_type_differentials(MT_RIGID), N_SLICE, N_PARTICLE, N_DIM)
       if( (present(od_pnum) .and. (part_num .eq. od_pnum)) .or. (present(n_od_particle) .and. (part_num .le. N_OD_PARTICLE)) ) then
-        call rigid_move(q0, q1, part_num, OD_DIM_LOW, OD_DIM_HIGH, 1, CSLICE, dnu, N_SLICE, N_PARTICLE, N_DIM)
-        call rigid_move(q0, q1, part_num, OD_DIM_LOW, OD_DIM_HIGH, CSLICE+1, N_SLICE, dnu, N_SLICE, N_PARTICLE, N_DIM)
+        call rigid_move(q0, q1, part_num, OD_DIM_LOW, OD_DIM_HIGH, 1, CSLICE, &
+                move_type_differentials(MT_RIGID), N_SLICE, N_PARTICLE, N_DIM)
+        call rigid_move(q0, q1, part_num, OD_DIM_LOW, OD_DIM_HIGH, CSLICE+1, N_SLICE, &
+                move_type_differentials(MT_RIGID), N_SLICE, N_PARTICLE, N_DIM)
       end if
       move_start = 1
       move_end = N_SLICE
     else 
 ! attempt a rotation around a symmetry axis.  right now only does moves like q1 = -q0
-      if (rnd < PROB_BBRIDGE_MOVE + PROB_RIGID_MOVE + PROB_SWAP_MOVE) then
+    if (rnd < move_type_probabilities(MT_BBRIDGE) + move_type_probabilities(MT_RIGID) + move_type_probabilities(MT_SWAP) ) then
         mtype = MT_SWAP
         call random_number( rnd )
         swap_dim = int(floor( rnd * (high_swap_dim-low_swap_dim+1) ))+low_swap_dim
         if( (present(od_pnum) .and. (part_num == OD_PNUM)) .or. (present(N_OD_PARTICLE) .and. (part_num <= N_OD_PARTICLE)) ) then
           call random_number( rnd )
           if(rnd .ge. 0.5) then
-            call swap_move(q0, q1, part_num, swap_dim, swap_dim, 1, CSLICE, dswap, N_SLICE, N_PARTICLE, N_DIM)
+            call swap_move(q0, q1, part_num, swap_dim, swap_dim, 1, CSLICE, &
+                    move_type_differentials(MT_SWAP), N_SLICE, N_PARTICLE, N_DIM)
           else
-            call swap_move(q0, q1, part_num, swap_dim, swap_dim, CSLICE+1, N_SLICE, dswap, N_SLICE, N_PARTICLE, N_DIM)
+            call swap_move(q0, q1, part_num, swap_dim, swap_dim, CSLICE+1, N_SLICE, &
+                    move_type_differentials(MT_SWAP), N_SLICE, N_PARTICLE, N_DIM)
           end if
         else
           call cascading_swap_move(q0, q1, part_num, swap_dim, N_SLICE, N_PARTICLE, N_DIM)
@@ -134,62 +138,6 @@ subroutine sample_scheme1( &
 !  print *, "move_start, move_end ",move_start, move_end,part_num
 end subroutine sample_scheme1
 !@-node:gcross.20090623152316.77:scheme 1
-!@+node:gcross.20090623152316.78:rotation
-subroutine sample_rotation(q_rot0, q_rot1, move_start, move_end, part_num, &
-    N_SLICE, CSLICE, N_PARTICLE, N_DIM_ROT, &
-    od_pnum &
-  )
-  integer, intent(in) :: CSLICE, N_SLICE, N_PARTICLE, N_DIM_ROT
-  double precision, dimension ( N_SLICE , N_PARTICLE, N_DIM_ROT ), intent(in) :: q_rot0
-  double precision, dimension ( N_SLICE , N_PARTICLE, N_DIM_ROT ), intent(inout) :: q_rot1
-  integer, intent(in) :: move_start,move_end,part_num
-  integer, intent(in), optional :: od_pnum
-
-  double precision, dimension(N_DIM_ROT) :: n_vect
-  double precision :: nu
-  double precision :: ctheta,phi,stheta,sint0,cost0,sinp0,cosp0
-  double precision, dimension(3) :: e1
-  double precision, dimension(3,3) :: Ryz,Ry,Rz
-
-  integer :: i
-
-  do i=move_start,move_end
-    cost0=q_rot0(i,part_num,3)
-    if(abs(1d0-abs(cost0))<1d-10) then
-      sint0=0d0; sinp0=0d0; cosp0=1d0
-    else
-      sint0=sqrt(abs(1d0-cost0**2))
-      sinp0=q_rot0(i,part_num,2)/sint0
-      cosp0=q_rot0(i,part_num,1)/sint0
-    endif
-    Rz=reshape( (/ cosp0,sinp0,0.0D0 , -sinp0,cosp0,0.0D0 , 0.0D0,0.0D0,1.0D0/), (/3,3/) )
-    Ry=reshape( (/ cost0,0.0D0,-sint0, 0.0D0,1.0D0,0.0D0 , sint0,0.0D0,cost0/) , (/3,3/) )
-!    Ryz = matmul(Ry,Rz)
-    Ryz = matmul(Rz,Ry)
-e1=matmul(q_rot0(i,part_num,:),Ryz)
-if( abs(e1(1))>1d-6 .or. abs(e1(2))>1d-6 .or. abs(1d0-e1(3))>1d-6 )then
-write(*,*)'sample_rotation()::ERROR ',e1
-stop
-endif
-    call random_number( nu )
-    ctheta = 1.0D0-nu*drot
-    stheta = sqrt(abs(1d0-ctheta**2))
-    call random_number( nu )
-    phi = M_2PI*nu 
-    e1(1) = cos(phi)*stheta
-    e1(2) = sin(phi)*stheta
-    e1(3) = ctheta
-!    q_rot1(i,part_num,:) = matmul(e1,Ryz)
-    q_rot1(i,part_num,:) = matmul(Ryz,e1)
-  end do
-
-  if ( (.not. present(od_pnum)) .or. (part_num /= od_pnum ) ) then
-    q_rot1(CSLICE+1,part_num,:) = q_rot1(CSLICE,part_num,:)
-  end if
-
-end subroutine sample_rotation!}}}
-!@nonl
-!@-node:gcross.20090623152316.78:rotation
 !@-node:gcross.20090623152316.76:Sampling subroutines
 !@+node:gcross.20090623152316.84:Utility subroutines
 !@+node:gcross.20090623152316.85:ipush / ipop
