@@ -19,8 +19,8 @@ class sample_scheme1(unittest.TestCase):
     #@    @+others
     #@+node:gcross.20090813095726.2345:test_move_type_within_bound
     @with_checker(
-            float,float,float,
-            float,float,float,
+            non_negative_float,non_negative_float,non_negative_float,
+            positive_float,positive_float,positive_float,
             irange(2,5),irange(2,5),irange(2,5),
             float,
         )
@@ -44,7 +44,7 @@ class sample_scheme1(unittest.TestCase):
     #@+node:gcross.20090813095726.2347:test_move_type_fits_distribution
     @with_checker(
             irange(1,3),
-            float,float,float,
+            positive_float,positive_float,positive_float,
             irange(2,5),irange(2,5),irange(2,5),
             float,
         )
