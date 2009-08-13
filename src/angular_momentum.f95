@@ -69,6 +69,11 @@ pure subroutine compute_angular_derivatives(&
   double complex :: amplitude
   integer :: i
 
+  if(N_particles == 1) then
+    derivatives(1) = 1
+    return
+  end if
+
   call get_rotation_plane_axes(fixed_rotation_axis,plane_axis_1,plane_axis_2)
   x_slice_1 => x(:,plane_axis_1)
   x_slice_2 => x(:,plane_axis_2)

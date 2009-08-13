@@ -6,7 +6,7 @@
 import unittest
 from paycheck import with_checker
 from paycheck.generator import positive_float, non_negative_float, irange, frange
-from numpy import array, zeros, double, float64
+from numpy import array, zeros, double, float64, isfinite
 from numpy.linalg import norm
 from numpy.random import rand
 from random import randint
@@ -154,6 +154,61 @@ class compute_log_acceptance_weight(unittest.TestCase):
         self.assert_((gradU2==0).all())
         self.assertEqual(0,weight)
     #@-node:gcross.20090813095726.1739:test_null_case
+    #@+node:gcross.20090813095726.1741:test_that_angular_momentum_lowers_weight
+    @with_checker(
+            irange(3,11,2),
+            irange(1,10),
+            irange(1,3),
+            frange(0,1),
+            frange(0,1),
+            bool,
+        )
+    def test_that_angular_momentum_lowers_weight(self,
+            c_slice,
+            n_particles,
+            fixed_rotation_axis,
+            lam,
+            dtau,
+            use_4th_order_green_function,
+        ):
+        fixed_angular_momentum = randint(1,n_particles)
+        n_slices = c_slice * 2
+        n_dimensions = 3
+        x = array(rand(n_slices,n_particles,n_dimensions),order='Fortran')
+        xij2 = array(rand(n_slices,n_particles,n_particles),order='Fortran')
+        move_start = randint(1,n_slices)
+        move_end = randint(move_start,n_slices)
+        particle_number = randint(1,n_particles)
+        def null_func(*args):
+            return double(0.0)
+        def Uij_func(*args):
+            return 0.0, False
+        gnull = array(zeros((n_particles,n_dimensions)),dtype=double,order='Fortran')
+        def null_grad_func(*args):
+            return gnull
+        U_weights, gU2_weights = vpi.gfn.initialize_4th_order_weights(n_slices)
+        U, gradU2, reject_flag, weight = vpi.thermalize.compute_log_acceptance_weight(
+            x,xij2,
+            move_start,move_end,
+            particle_number,
+            null_func,
+            null_grad_func,
+            Uij_func,
+            null_grad_func,
+            U_weights,gU2_weights,
+            fixed_rotation_axis,0,fixed_angular_momentum,
+            lam, dtau,
+            use_4th_order_green_function,
+            null_func,
+            null_func,
+        )
+        self.failIf(reject_flag)
+        U = U[move_start-1:move_end,particle_number-1]
+        self.assert_(isfinite(U).all())
+        self.assert_((U>0).all())
+        self.assert_(isfinite(weight))
+        self.assert_(weight<0)
+    #@-node:gcross.20090813095726.1741:test_that_angular_momentum_lowers_weight
     #@-others
 #@-node:gcross.20090813093326.1730:compute_log_acceptance_weight
 #@-others
