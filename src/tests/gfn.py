@@ -13,6 +13,28 @@ from tests import particle_paths_type
 import vpi
 
 #@+others
+#@+node:gcross.20090812093015.1749:initialize_weights
+def initialize_weights(n_slices):
+    assert (n_slices%2==0)
+    c_slice = n_slices/2
+    assert (c_slice%2==1)
+    U_weight = zeros((n_slices+2))
+    gU2_weight = zeros((n_slices+2))
+    for k in xrange(1,c_slice+1):
+        U_weight[k] = (k+1)%2+1
+        gU2_weight[k] = (k+1)%2
+    for k in xrange(c_slice+2,n_slices+1):
+        U_weight[k] = k%2+1
+        gU2_weight[k] = k%2
+    U_weight[1] = 0.5
+    U_weight[n_slices] = 0.5
+    U_weight[c_slice] = 0.5
+    U_weight[c_slice+1] = 0.5
+    U_weight = U_weight[1:n_slices+1]
+    gU2_weight = gU2_weight[1:n_slices+1]
+
+    return (U_weight, gU2_weight)
+#@-node:gcross.20090812093015.1749:initialize_weights
 #@+node:gcross.20090812093015.1743:gfn2_sp
 class gfn2_sp(unittest.TestCase):
 
@@ -28,37 +50,12 @@ class gfn2_sp(unittest.TestCase):
 #@+node:gcross.20090812093015.1747:gfn4_sp
 class gfn4_sp(unittest.TestCase):
 
-    #@    @+others
-    #@+node:gcross.20090812093015.1749:initialize_weights
-    @staticmethod
-    def initialize_weights(n_slices):
-        assert (n_slices%2==0)
-        c_slice = n_slices/2
-        assert (c_slice%2==1)
-        U_weight = zeros((n_slices+2))
-        gU2_weight = zeros((n_slices+2))
-        for k in xrange(1,c_slice+1):
-            U_weight[k] = (k+1)%2+1
-            gU2_weight[k] = (k+1)%2
-        for k in xrange(c_slice+2,n_slices+1):
-            U_weight[k] = k%2+1
-            gU2_weight[k] = k%2
-        U_weight[1] = 0.5
-        U_weight[n_slices] = 0.5
-        U_weight[c_slice] = 0.5
-        U_weight[c_slice+1] = 0.5
-        U_weight = U_weight[1:n_slices+1]
-        gU2_weight = gU2_weight[1:n_slices+1]
-
-        return (U_weight, gU2_weight)
-    #@-node:gcross.20090812093015.1749:initialize_weights
-    #@+node:gcross.20090812093015.1752:test_correctness
     @with_checker(irange(1,15,2),irange(1,5),frange(0,1),frange(0,1))
     def test_correctness(self,c_slice,n_particles,lam,dt):
         n_slices = c_slice*2
         self.assertEqual(1,c_slice%2)
 
-        (U_weight, gU2_weight) = self.initialize_weights(n_slices)
+        (U_weight, gU2_weight) = initialize_weights(n_slices)
 
         sl_start = randint(1,n_slices)
         sl_end = randint(sl_start,n_slices)
@@ -77,8 +74,6 @@ class gfn4_sp(unittest.TestCase):
                 gU2_weight[sl_start-1:sl_end]
             )/9.0
         )
-    #@-node:gcross.20090812093015.1752:test_correctness
-    #@-others
 #@-node:gcross.20090812093015.1747:gfn4_sp
 #@-others
 
