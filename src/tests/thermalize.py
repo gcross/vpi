@@ -6,10 +6,10 @@
 import unittest
 from paycheck import with_checker
 from paycheck.generator import positive_float, non_negative_float, irange, frange
-from numpy import array, zeros, double, float64, isfinite
+from numpy import array, zeros, double, float64, isfinite, int32
 from numpy.linalg import norm
 from numpy.random import rand
-from random import randint
+from random import randint, random
 from tests import particle_paths_type
 import vpi
 
@@ -211,12 +211,83 @@ class compute_log_acceptance_weight(unittest.TestCase):
     #@-node:gcross.20090813095726.1741:test_that_angular_momentum_lowers_weight
     #@-others
 #@-node:gcross.20090813093326.1730:compute_log_acceptance_weight
+#@+node:gcross.20090813095726.2348:thermalize_path
+class thermalize_path(unittest.TestCase):
+    #@    @+others
+    #@+node:gcross.20090813095726.2349:test_rejection_case
+    @with_checker(
+            non_negative_float,non_negative_float,non_negative_float,
+            float,float,float,
+            irange(1,10),
+            irange(3,11,2),
+            irange(1,10),
+            irange(1,3),
+            float,
+            frange(0,1),
+            bool,
+            num_calls=10,
+        )
+    def test_that_angular_momentum_lowers_weight(self,
+            p1, p2, p3,
+            d1, d2, d3,
+            n_trials,
+            c_slice,
+            n_particles,
+            fixed_rotation_axis,
+            frame_angular_velocity,
+            lam,
+            use_4th_order_green_function,
+        ):
+        fixed_angular_momentum = randint(1,n_particles)
+        n_slices = c_slice * 2
+        n_dimensions = 3
+        x = zeros((n_slices,n_particles,n_dimensions),dtype=double,order='Fortran')
+        xij2 = zeros((n_slices,n_particles,n_particles),dtype=double,order='Fortran')
+        U = zeros((n_slices,n_particles),dtype=double,order='Fortran')
+        gradU2 = zeros((n_slices,),dtype=double,order='Fortran')
+        particle_number = randint(1,n_particles)
+        move_type_probabilities = array([p1,p2,p3])/(p1+p2+p3)
+        move_type_differentials = array([d1,d2,d3])
+        dM = randint(1,n_slices)
+        low_swap_dim = randint(1,n_dimensions)
+        high_swap_dim = randint(low_swap_dim,n_dimensions)
+        def null_func(*args):
+            return double(0.0)
+        def Uij_func(x,_,*args):
+            return double(0.0),(x!=0.0).any()
+        gnull = array(zeros((n_particles,n_dimensions)),dtype=double,order='Fortran')
+        def null_grad_func(*args):
+            return gnull
+        slice_move_attempted_counts, slice_move_accepted_counts = [zeros((n_slices,),dtype='i',order='Fortran') for dummy in xrange(2)]
+        move_type_attempted_counts, move_type_accepted_counts = [zeros((3,),dtype='i',order='Fortran') for dummy in xrange(2)]
+        U_weights, gU2_weights = vpi.gfn.initialize_4th_order_weights(n_slices)
+        vpi.thermalize.thermalize_path(
+            x,xij2,
+            U,gradU2,
+            n_trials,
+            move_type_probabilities,move_type_differentials,
+            dM,lam,low_swap_dim,high_swap_dim,
+            slice_move_attempted_counts,move_type_attempted_counts,slice_move_accepted_counts,move_type_accepted_counts,
+            null_func,null_grad_func,
+            Uij_func,null_grad_func,
+            U_weights,gU2_weights,
+            fixed_rotation_axis,frame_angular_velocity,fixed_angular_momentum,
+            use_4th_order_green_function,
+            null_func,
+            null_func,
+        )
+        self.assert_((x==0.0).all())
+        self.assert_((xij2==0.0).all())
+    #@-node:gcross.20090813095726.2349:test_rejection_case
+    #@-others
+#@-node:gcross.20090813095726.2348:thermalize_path
 #@-others
 
 tests = [
     accept_path,
     compute_physical_potential,
-    compute_log_acceptance_weight
+    compute_log_acceptance_weight,
+    thermalize_path
     ]
 
 if __name__ == "__main__":
