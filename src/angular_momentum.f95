@@ -55,7 +55,7 @@ pure subroutine compute_angular_derivatives(&
 
   ! Input variables
   integer, intent(in) :: N_particles, N_dimensions
-  double precision, dimension(N_particles,N_dimensions), target, intent(in) :: x
+  double precision, dimension(N_particles,N_dimensions), intent(in) :: x
   double precision, intent(in) :: frame_angular_velocity
   integer, intent(in) :: fixed_rotation_axis, fixed_angular_momentum
 
@@ -64,7 +64,6 @@ pure subroutine compute_angular_derivatives(&
 
   ! Local variables
   integer :: plane_axis_1, plane_axis_2
-  double precision, dimension(:), pointer :: x_slice_1, x_slice_2
   double complex, dimension(N_particles) :: amplitudes, partial_sums
   double complex :: amplitude
   integer :: i
@@ -75,11 +74,9 @@ pure subroutine compute_angular_derivatives(&
   end if
 
   call get_rotation_plane_axes(fixed_rotation_axis,plane_axis_1,plane_axis_2)
-  x_slice_1 => x(:,plane_axis_1)
-  x_slice_2 => x(:,plane_axis_2)
 
   amplitudes(:) = &
-    (x_slice_1(:)*(1.0d0,0) + x_slice_2(:)*(0,1.0d0))/sqrt(x_slice_1(:)**2 + x_slice_2(:)**2)
+    (x(:,plane_axis_1)*(1.0d0,0) + x(:,plane_axis_2)*(0,1.0d0))/sqrt(x(:,plane_axis_1)**2 + x(:,plane_axis_2)**2)
 
 !@+at
 ! To get the partial sums, i.e. the the sums which are required to have a 
