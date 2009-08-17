@@ -131,6 +131,45 @@ class compute_effective_rotational_potential(unittest.TestCase):
             potentials.append((angular_width,sum(U_rot)))
         self.assert_(potentials[1] >= potentials[0])
     #@-node:gcross.20090817102318.1726:test_clumping
+    #@+node:gcross.20090817102318.1751:test_angular_momentum_raises_potential
+    @with_checker
+    def test_angular_momentum_raises_potential(self,
+            n_slices = irange(1,5),
+            n_particles = irange(1,10),
+            fixed_rotation_axis = irange(1,3),
+        ):
+        x = rand(n_slices,n_particles,3)
+        move_start = randint(1,n_slices)
+        move_end = randint(move_start,n_slices)
+        potentials = []
+        for fixed_angular_momentum in [0,randint(1,n_particles)]:
+            U_rot = zeros((n_slices,n_particles),dtype=double,order='Fortran')
+            vpi.angular_momentum.compute_effective_rotational_potential(x,fixed_rotation_axis,0,fixed_angular_momentum,move_start,move_end,U_rot)
+            potentials.append(sum(U_rot))
+        self.assert_(potentials[0] < potentials[1])
+    #@-node:gcross.20090817102318.1751:test_angular_momentum_raises_potential
+    #@+node:gcross.20090817102318.1753:test_angular_momentum_cancels_frame_rotation
+    @with_checker
+    def test_angular_momentum_cancels_frame_rotation(self,
+            n_slices = irange(1,5),
+            n_particles = irange(1,10),
+            fixed_rotation_axis = irange(1,3),
+            frame_angular_velocity=unit_interval_float,
+        ):
+        x = rand(n_slices,n_particles,3)
+        move_start = randint(1,n_slices)
+        move_end = randint(move_start,n_slices)
+        potentials = []
+        preferred_momentum = round(frame_angular_velocity*n_particles)
+        chosen_momentum = preferred_momentum
+        while(chosen_momentum == preferred_momentum):
+            chosen_momentum = randint(0,n_particles)
+        for fixed_angular_momentum in [preferred_momentum,chosen_momentum]:
+            U_rot = zeros((n_slices,n_particles),dtype=double,order='Fortran')
+            vpi.angular_momentum.compute_effective_rotational_potential(x,fixed_rotation_axis,frame_angular_velocity,fixed_angular_momentum,move_start,move_end,U_rot)
+            potentials.append(sum(U_rot))
+        self.assert_(potentials[0] < potentials[1])
+    #@-node:gcross.20090817102318.1753:test_angular_momentum_cancels_frame_rotation
     #@-others
 #@-node:gcross.20090813184545.1726:compute_effective_rotational_potential
 #@-others
