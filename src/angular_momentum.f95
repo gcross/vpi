@@ -152,7 +152,7 @@ pure subroutine compute_effective_rotational_potential (&
   integer :: i
 
   forall (i = move_start:move_end) &
-    U_rot(i,:) = U_rot(i,:) + compute_for_slice(i)  
+    U_rot(i,:) = U_rot(i,:) + compute_for_slice(i)
 
   contains
 
