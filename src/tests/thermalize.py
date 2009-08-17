@@ -146,7 +146,7 @@ class compute_log_acceptance_weight(unittest.TestCase):
             dtau = positive_float,
             use_4th_order_green_function = bool,
         ):
-        fixed_angular_momentum = randint(1,n_particles)
+        N_rotating_particles = randint(1,n_particles)
         n_slices = c_slice * 2
         n_dimensions = 3
         x = array(rand(n_slices,n_particles,n_dimensions),order='Fortran')
@@ -171,7 +171,7 @@ class compute_log_acceptance_weight(unittest.TestCase):
             Uij_func,
             null_grad_func,
             U_weights,gU2_weights,
-            fixed_rotation_axis,0,fixed_angular_momentum,
+            fixed_rotation_axis,0,N_rotating_particles,
             lam, dtau,
             use_4th_order_green_function,
             null_func,
@@ -183,6 +183,7 @@ class compute_log_acceptance_weight(unittest.TestCase):
         self.assert_((U>0).all())
         self.assert_(isfinite(weight))
         self.assert_(weight<1e-300)
+    #@nonl
     #@-node:gcross.20090813095726.1741:test_that_angular_momentum_lowers_weight
     #@-others
 #@-node:gcross.20090813093326.1730:compute_log_acceptance_weight
@@ -202,7 +203,7 @@ class thermalize_path(unittest.TestCase):
             lam = positive_float,
             use_4th_order_green_function = bool,
         ):
-        fixed_angular_momentum = randint(1,n_particles)
+        N_rotating_particles = randint(1,n_particles)
         n_slices = c_slice * 2
         n_dimensions = 3
         x = zeros((n_slices,n_particles,n_dimensions),dtype=double,order='Fortran')
@@ -235,13 +236,14 @@ class thermalize_path(unittest.TestCase):
             null_func,null_grad_func,
             Uij_func,null_grad_func,
             U_weights,gU2_weights,
-            fixed_rotation_axis,frame_angular_velocity,fixed_angular_momentum,
+            fixed_rotation_axis,frame_angular_velocity,N_rotating_particles,
             use_4th_order_green_function,
             null_func,
             null_func,
         )
         self.assert_((x==0.0).all())
         self.assert_((xij2==0.0).all())
+    #@nonl
     #@-node:gcross.20090813095726.2349:test_rejection_case
     #@-others
 #@-node:gcross.20090813095726.2348:thermalize_path

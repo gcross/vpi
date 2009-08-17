@@ -46,22 +46,22 @@ pure subroutine perform_special_matmul(vector,amplitudes,size)
 end subroutine perform_special_matmul
 !@-node:gcross.20090803153449.1835:perform_special_matmul
 !@+node:gcross.20090803153449.1836:sum_over_symmetrizations
-pure function sum_over_symmetrizations(amplitudes,N_particles,N_excited)
+pure function sum_over_symmetrizations(amplitudes,N_particles,N_rotating_particles)
   ! Input variables
-  integer, intent(in) :: N_particles, N_excited
+  integer, intent(in) :: N_particles, N_rotating_particles
   double complex, dimension(N_particles), intent(in) :: amplitudes
 
   ! Function Result
   double complex :: sum_over_symmetrizations
 
   ! Local variables
-  double complex, dimension(N_particles-N_excited+1) :: vector
+  double complex, dimension(N_particles-N_rotating_particles+1) :: vector
   integer :: i
 
 
-  vector = amplitudes(1:N_particles-N_excited+1)
-  do i = 2, N_excited
-    call perform_special_matmul(vector,amplitudes(i:i+N_particles-N_excited),N_particles-N_excited+1)
+  vector = amplitudes(1:N_particles-N_rotating_particles+1)
+  do i = 2, N_rotating_particles
+    call perform_special_matmul(vector,amplitudes(i:i+N_particles-N_rotating_particles),N_particles-N_rotating_particles+1)
   end do
   sum_over_symmetrizations = sum(vector)
 
@@ -70,7 +70,7 @@ end function sum_over_symmetrizations
 !@+node:gcross.20090803153449.1837:compute_angular_derivatives
 pure subroutine compute_angular_derivatives(&
     x, &
-    fixed_rotation_axis, fixed_angular_momentum, &
+    fixed_rotation_axis, N_rotating_particles, &
     N_particles,N_dimensions, &
     derivatives &
   )
@@ -78,7 +78,7 @@ pure subroutine compute_angular_derivatives(&
   ! Input variables
   integer, intent(in) :: N_particles, N_dimensions
   double precision, dimension(N_particles,N_dimensions), intent(in) :: x
-  integer, intent(in) :: fixed_rotation_axis, fixed_angular_momentum
+  integer, intent(in) :: fixed_rotation_axis, N_rotating_particles
 
   ! Output variables
   double precision, dimension(N_particles), intent(out) :: derivatives
@@ -89,12 +89,12 @@ pure subroutine compute_angular_derivatives(&
   double complex :: amplitude
   integer :: i
 
-  if(fixed_angular_momentum == 0) then
+  if(N_rotating_particles == 0) then
     derivatives(:) = 0
     return
   end if
 
-  if(N_particles == fixed_angular_momentum) then
+  if(N_particles == N_rotating_particles) then
     derivatives(:) = 1
     return
   end if
@@ -115,7 +115,7 @@ pure subroutine compute_angular_derivatives(&
   do i = 1, N_particles
     amplitude = amplitudes(i)
     amplitudes(i) = (0d0,0d0)
-    partial_sums(i) = sum_over_symmetrizations(amplitudes,N_particles,fixed_angular_momentum)*amplitude
+    partial_sums(i) = sum_over_symmetrizations(amplitudes,N_particles,N_rotating_particles)*amplitude
     amplitudes(i) = amplitude
   end do
 !@+at
@@ -125,7 +125,7 @@ pure subroutine compute_angular_derivatives(&
 ! of the partial sums (one for each coordinate).
 !@-at
 !@@c
-  amplitude = sum(partial_sums)/fixed_angular_momentum
+  amplitude = sum(partial_sums)/N_rotating_particles
   derivatives(:) = real(amplitude*conjg(partial_sums(:)))/(abs(amplitude)**2)
 
 end subroutine compute_angular_derivatives
@@ -133,7 +133,7 @@ end subroutine compute_angular_derivatives
 !@+node:gcross.20090721121051.1756:compute_effective_rotational_potential
 pure subroutine compute_effective_rotational_potential (&
     x, &
-    fixed_rotation_axis, frame_angular_velocity, fixed_angular_momentum, &
+    fixed_rotation_axis, frame_angular_velocity, N_rotating_particles, &
     move_start, move_end, &
     n_slices, n_particles, n_dimensions, &
     U_rot &
@@ -143,7 +143,7 @@ pure subroutine compute_effective_rotational_potential (&
   integer, intent(in) :: move_start, move_end, n_slices, n_particles, n_dimensions
   double precision, dimension ( n_slices, n_particles , n_dimensions ), intent(in) :: x
   double precision, intent(in) :: frame_angular_velocity
-  integer, intent(in) :: fixed_rotation_axis, fixed_angular_momentum
+  integer, intent(in) :: fixed_rotation_axis, N_rotating_particles
 
   ! Output variables
   double precision, dimension( n_slices, n_particles ), intent(inout) :: U_rot
@@ -161,7 +161,7 @@ pure subroutine compute_effective_rotational_potential (&
       double precision, dimension( n_particles ) :: derivatives, potential
       call compute_angular_derivatives( &
               x(i,:,:), &
-              fixed_rotation_axis, fixed_angular_momentum, &
+              fixed_rotation_axis, N_rotating_particles, &
               n_particles, n_dimensions, &
               derivatives &
             )

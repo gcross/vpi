@@ -73,9 +73,10 @@ class compute_angular_derivatives(unittest.TestCase):
             fixed_rotation_axis = irange(1,3),
         ):
         x = rand(n_particles,3)
-        fixed_angular_momentum = randint(0,n_particles)
-        derivatives = vpi.angular_momentum.compute_angular_derivatives(x,fixed_rotation_axis,fixed_angular_momentum)
+        N_rotating_particles = randint(0,n_particles)
+        derivatives = vpi.angular_momentum.compute_angular_derivatives(x,fixed_rotation_axis,N_rotating_particles)
         self.assert_(isfinite(derivatives).all())
+    #@nonl
     #@-node:gcross.20090817102318.1731:test_finite
     #@-others
 #@-node:gcross.20090817102318.1730:compute_angular_derivatives
@@ -91,12 +92,13 @@ class compute_effective_rotational_potential(unittest.TestCase):
             frame_angular_velocity=unit_interval_float,
         ):
         x = rand(n_slices,n_particles,3)
-        fixed_angular_momentum = randint(0,n_particles)
+        N_rotating_particles = randint(0,n_particles)
         U_rot = zeros((n_slices,n_particles),dtype=double,order='Fortran')
         move_start = randint(1,n_slices)
         move_end = randint(move_start,n_slices)
-        vpi.angular_momentum. compute_effective_rotational_potential(x,fixed_rotation_axis,frame_angular_velocity,fixed_angular_momentum,move_start,move_end,U_rot)
+        vpi.angular_momentum. compute_effective_rotational_potential(x,fixed_rotation_axis,frame_angular_velocity,N_rotating_particles,move_start,move_end,U_rot)
         self.assert_(isfinite(U_rot).all())
+    #@nonl
     #@-node:gcross.20090817102318.1733:test_finite
     #@+node:gcross.20090817102318.1726:test_clumping
     @with_checker
@@ -109,7 +111,7 @@ class compute_effective_rotational_potential(unittest.TestCase):
         n_dimensions = 3
         x = zeros((n_slices,n_particles,n_dimensions),dtype=double,order='Fortran')
         U_rot = zeros((n_slices,n_particles),dtype=double,order='Fortran')
-        fixed_angular_momentum = randint(1,n_particles)
+        N_rotating_particles = randint(1,n_particles)
         frame_angular_velocity = 0.0
         fixed_rotation_axis = 3
         potentials = []
@@ -124,12 +126,13 @@ class compute_effective_rotational_potential(unittest.TestCase):
             U_rot[...] = 0
             vpi.angular_momentum.compute_effective_rotational_potential(
                 x,
-                fixed_rotation_axis,frame_angular_velocity,fixed_angular_momentum,
+                fixed_rotation_axis,frame_angular_velocity,N_rotating_particles,
                 move_start,move_end,
                 U_rot
             )
             potentials.append((angular_width,sum(U_rot)))
         self.assert_(potentials[1] >= potentials[0])
+    #@nonl
     #@-node:gcross.20090817102318.1726:test_clumping
     #@+node:gcross.20090817102318.1751:test_angular_momentum_raises_potential
     @with_checker
@@ -142,11 +145,12 @@ class compute_effective_rotational_potential(unittest.TestCase):
         move_start = randint(1,n_slices)
         move_end = randint(move_start,n_slices)
         potentials = []
-        for fixed_angular_momentum in [0,randint(1,n_particles)]:
+        for N_rotating_particles in [0,randint(1,n_particles)]:
             U_rot = zeros((n_slices,n_particles),dtype=double,order='Fortran')
-            vpi.angular_momentum.compute_effective_rotational_potential(x,fixed_rotation_axis,0,fixed_angular_momentum,move_start,move_end,U_rot)
+            vpi.angular_momentum.compute_effective_rotational_potential(x,fixed_rotation_axis,0,N_rotating_particles,move_start,move_end,U_rot)
             potentials.append(sum(U_rot))
         self.assert_(potentials[0] < potentials[1])
+    #@nonl
     #@-node:gcross.20090817102318.1751:test_angular_momentum_raises_potential
     #@+node:gcross.20090817102318.1753:test_angular_momentum_cancels_frame_rotation
     @with_checker
@@ -164,11 +168,12 @@ class compute_effective_rotational_potential(unittest.TestCase):
         chosen_momentum = preferred_momentum
         while(chosen_momentum == preferred_momentum):
             chosen_momentum = randint(0,n_particles)
-        for fixed_angular_momentum in [preferred_momentum,chosen_momentum]:
+        for N_rotating_particles in [preferred_momentum,chosen_momentum]:
             U_rot = zeros((n_slices,n_particles),dtype=double,order='Fortran')
-            vpi.angular_momentum.compute_effective_rotational_potential(x,fixed_rotation_axis,frame_angular_velocity,fixed_angular_momentum,move_start,move_end,U_rot)
+            vpi.angular_momentum.compute_effective_rotational_potential(x,fixed_rotation_axis,frame_angular_velocity,N_rotating_particles,move_start,move_end,U_rot)
             potentials.append(sum(U_rot))
         self.assert_(potentials[0] < potentials[1])
+    #@nonl
     #@-node:gcross.20090817102318.1753:test_angular_momentum_cancels_frame_rotation
     #@-others
 #@-node:gcross.20090813184545.1726:compute_effective_rotational_potential

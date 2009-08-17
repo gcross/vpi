@@ -135,7 +135,7 @@ subroutine compute_log_acceptance_weight (&
     Uij_func, gUij_func, &
     U, gradU2, &
     U_weights, gU2_weights, &
-    fixed_rotation_axis, frame_angular_velocity, fixed_angular_momentum, &
+    fixed_rotation_axis, frame_angular_velocity, N_rotating_particles, &
     lambda, dtau, &
     use_4th_order_green_function, &
     sp_trial_function, jastrow_trial_function, &
@@ -158,7 +158,7 @@ subroutine compute_log_acceptance_weight (&
   double precision, dimension ( n_slices, n_particles , n_particles ), intent(in) :: xij2
   logical, intent(in) :: use_4th_order_green_function
   double precision, dimension ( n_slices ), intent(in) :: U_weights, gU2_weights
-  integer, intent(in) :: fixed_rotation_axis, fixed_angular_momentum
+  integer, intent(in) :: fixed_rotation_axis, N_rotating_particles
   double precision, intent(in) :: frame_angular_velocity
   integer, intent(in) :: particle_number
   double precision, intent(in) :: lambda, dtau
@@ -254,16 +254,15 @@ end interface
     return
   endif
 
-  if (fixed_angular_momentum > 0) then
+  if (N_rotating_particles > 0) then
     call compute_effective_rotational_potential (&
       x, &
-      fixed_rotation_axis, frame_angular_velocity, fixed_angular_momentum, &
+      fixed_rotation_axis, frame_angular_velocity, N_rotating_particles, &
       move_start, move_end, &
       n_slices, n_particles, n_dimensions, &
       U &
       )
   end if
-
   !@-node:gcross.20090626112946.1696:<< Compute contribution from potentials >>
   !@nl
 
@@ -304,7 +303,6 @@ end interface
   weight = lngfn + lntfn
 
 end subroutine
-
 !@-node:gcross.20090721121051.1746:compute_log_acceptance_weight
 !@+node:gcross.20090626112946.1694:thermalize_path
 subroutine thermalize_path( &
@@ -319,7 +317,7 @@ subroutine thermalize_path( &
   Usp_func, gUsp_func, &
   Uij_func, gUij_func, &
   U_weights, gU2_weights, &
-  fixed_rotation_axis, frame_angular_velocity, fixed_angular_momentum, &
+  fixed_rotation_axis, frame_angular_velocity, N_rotating_particles, &
   use_4th_order_green_function, &
   sp_trial_function, jastrow_trial_function, &
   pbc_period_length, &
@@ -339,7 +337,7 @@ subroutine thermalize_path( &
   double precision, intent(in), optional :: pbc_period_length
   logical, intent(in) :: use_4th_order_green_function
   double precision, dimension ( n_slices ), intent(in) :: U_weights, gU2_weights
-  integer, intent(in) :: fixed_rotation_axis, fixed_angular_momentum
+  integer, intent(in) :: fixed_rotation_axis, N_rotating_particles
   double precision, intent(in) :: frame_angular_velocity
   double precision, intent(in), optional :: PROB_OD_PNUM
   integer, intent(in), optional :: od_pnum, n_od_particle, od_dim_low, od_dim_high
@@ -496,7 +494,7 @@ end interface
         Uij_func, gUij_func, &
         U, gradU2, &
         U_weights, gU2_weights, &
-        fixed_rotation_axis, frame_angular_velocity, fixed_angular_momentum, &
+        fixed_rotation_axis, frame_angular_velocity, N_rotating_particles, &
         lambda, move_type_differentials(MT_BBRIDGE), &
         use_4th_order_green_function, &
         sp_trial_function, jastrow_trial_function, &
@@ -517,7 +515,7 @@ end interface
         Uij_func, gUij_func, &
         U_trial, gradU2_trial, &
         U_weights, gU2_weights, &
-        fixed_rotation_axis, frame_angular_velocity, fixed_angular_momentum, &
+        fixed_rotation_axis, frame_angular_velocity, N_rotating_particles, &
         lambda, move_type_differentials(MT_BBRIDGE), &
         use_4th_order_green_function, &
         sp_trial_function, jastrow_trial_function, &
@@ -529,6 +527,7 @@ end interface
       call revert_move
       cycle
     end if
+    !@nonl
     !@-node:gcross.20090721121051.1755:<< Compute logarithmic probability of acceptance >>
     !@nl
 
@@ -577,6 +576,7 @@ end interface
   !@-others
 
 end subroutine thermalize_path
+!@nonl
 !@-node:gcross.20090626112946.1694:thermalize_path
 !@-others
 
