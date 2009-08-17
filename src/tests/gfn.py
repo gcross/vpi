@@ -4,20 +4,19 @@
 #@@tabwidth -4
 
 import unittest
-from paycheck import with_checker, irange, frange
+from paycheck import *
 from numpy import zeros, double, dot
 from numpy.linalg import norm
 from numpy.random import rand
 from random import randint
-from tests import particle_paths_type
 import vpi
 
 #@+others
 #@+node:gcross.20090812093015.1743:gfn2_sp
 class gfn2_sp(unittest.TestCase):
 
-    @with_checker(irange(1,10),irange(1,5),float)
-    def test_correctness(self,n_slices,n_particles,dt):
+    @with_checker
+    def test_correctness(self, n_slices = irange(1,10), n_particles = irange(1,5), dt = float):
         sl_start = randint(1,n_slices)
         sl_end = randint(sl_start,n_slices)
         ip = randint(1,n_particles)
@@ -53,8 +52,8 @@ class gfn4_sp(unittest.TestCase):
         return (U_weight, gU2_weight)
     #@-node:gcross.20090812093015.1749:initialize_weights
     #@+node:gcross.20090812093015.1752:test_correctness
-    @with_checker(irange(1,15,2),irange(1,5),frange(0,1),frange(0,1))
-    def test_correctness(self,c_slice,n_particles,lam,dt):
+    @with_checker
+    def test_correctness(self,c_slice = irange(1,15,2),n_particles = irange(1,5),lam = positive_float(1e-5,100),dt = positive_float(1e-5,100)):
         n_slices = c_slice*2
         self.assertEqual(1,c_slice%2)
 

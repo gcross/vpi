@@ -10,33 +10,27 @@ from numpy import array, zeros, double, float64, isfinite, int32
 from numpy.linalg import norm
 from numpy.random import rand
 from random import randint, random
-from tests import particle_paths_type
 import vpi
 
 #@+others
 #@+node:gcross.20090807144330.2152:accept_path
 class accept_path(unittest.TestCase):
-    @with_checker(float,float)
-    def test_always_accepts_minimizing_move(self,p1,p2):
+    @with_checker
+    def test_always_accepts_minimizing_move(self, p1 = positive_float, p2 = positive_float):
         self.assert_(
-            (vpi.thermalize.accept_path(p1,p2) == 0) or
-            (p1 < p2)
+            (vpi.thermalize.accept_path(p1,p2) == 1) or
+            (p1 > p2)
         )
 #@-node:gcross.20090807144330.2152:accept_path
 #@+node:gcross.20090812093015.1718:compute_potential
 class compute_physical_potential(unittest.TestCase):
     #@    @+others
     #@+node:gcross.20090812093015.1719:test_null_case
-    @with_checker(
-            irange(1,5),
-            irange(1,5),
-            irange(1,5),
-        number_of_calls=10
-    )
+    @with_checker(number_of_calls=10)
     def test_null_case(self,
-            n_slices,
-            n_particles,
-            n_dimensions,
+            n_slices = irange(1,5),
+            n_particles = irange(1,5),
+            n_dimensions = irange(1,5),
         ):
         x = array(rand(n_slices,n_particles,n_dimensions),order='Fortran')
         xij2 = array(rand(n_slices,n_particles,n_particles),order='Fortran')
@@ -61,16 +55,11 @@ class compute_physical_potential(unittest.TestCase):
     #@nonl
     #@-node:gcross.20090812093015.1719:test_null_case
     #@+node:gcross.20090812093015.1721:test_constant_case
-    @with_checker(
-            irange(1,5),
-            irange(1,5),
-            irange(1,5),
-        number_of_calls=10
-    )
+    @with_checker(number_of_calls=10)
     def test_constant_case(self,
-            n_slices,
-            n_particles,
-            n_dimensions,
+            n_slices = irange(1,5),
+            n_particles = irange(1,5),
+            n_dimensions = irange(1,5),
         ):
         x = array(rand(n_slices,n_particles,n_dimensions),order='Fortran')
         xij2 = array(rand(n_slices,n_particles,n_particles),order='Fortran')
@@ -101,23 +90,15 @@ class compute_physical_potential(unittest.TestCase):
 class compute_log_acceptance_weight(unittest.TestCase):
     #@    @+others
     #@+node:gcross.20090813095726.1739:test_null_case
-    @with_checker(
-            irange(1,11,2),
-            irange(1,5),
-            irange(1,5),
-            irange(1,3),
-            frange(0,1),
-            frange(0,1),
-            bool,
-        )
+    @with_checker
     def test_null_case(self,
-            c_slice,
-            n_particles,
-            n_dimensions,
-            fixed_rotation_axis,
-            lam,
-            dtau,
-            use_4th_order_green_function,
+            c_slice = irange(1,11,2),
+            n_particles = irange(1,5),
+            n_dimensions = irange(1,5),
+            fixed_rotation_axis = irange(1,3),
+            lam = positive_float,
+            dtau = positive_float,
+            use_4th_order_green_function = bool,
         ):
         n_slices = c_slice * 2
         x = array(rand(n_slices,n_particles,n_dimensions),order='Fortran')
@@ -152,24 +133,18 @@ class compute_log_acceptance_weight(unittest.TestCase):
         self.failIf(reject_flag)
         self.assert_((U==0).all())
         self.assert_((gradU2==0).all())
-        self.assertEqual(0,weight)
+        self.assertAlmostEqual(0,weight,14)
     #@-node:gcross.20090813095726.1739:test_null_case
     #@+node:gcross.20090813095726.1741:test_that_angular_momentum_lowers_weight
-    @with_checker(
-            irange(3,11,2),
-            irange(1,10),
-            irange(1,3),
-            frange(0,1),
-            frange(0,1),
-            bool,
-        )
+    @with_checker
     def test_that_angular_momentum_lowers_weight(self,
-            c_slice,
-            n_particles,
-            fixed_rotation_axis,
-            lam,
-            dtau,
-            use_4th_order_green_function,
+            c_slice = irange(1,11,2),
+            n_particles = irange(1,5),
+            n_dimensions = irange(1,5),
+            fixed_rotation_axis = irange(1,3),
+            lam = positive_float,
+            dtau = positive_float,
+            use_4th_order_green_function = bool,
         ):
         fixed_angular_momentum = randint(1,n_particles)
         n_slices = c_slice * 2
@@ -215,28 +190,17 @@ class compute_log_acceptance_weight(unittest.TestCase):
 class thermalize_path(unittest.TestCase):
     #@    @+others
     #@+node:gcross.20090813095726.2349:test_rejection_case
-    @with_checker(
-            non_negative_float,non_negative_float,non_negative_float,
-            float,float,float,
-            irange(1,10),
-            irange(3,11,2),
-            irange(1,10),
-            irange(1,3),
-            float,
-            frange(0,1),
-            bool,
-            num_calls=10,
-        )
+    @with_checker(number_of_calls=10)
     def test_that_angular_momentum_lowers_weight(self,
-            p1, p2, p3,
-            d1, d2, d3,
-            n_trials,
-            c_slice,
-            n_particles,
-            fixed_rotation_axis,
-            frame_angular_velocity,
-            lam,
-            use_4th_order_green_function,
+            p1 = non_negative_float, p2 = non_negative_float, p3 = non_negative_float,
+            d1 = float, d2 = float, d3 = float,
+            n_trials = irange(1,10),
+            c_slice = irange(3,11,2),
+            n_particles = irange(1,10),
+            fixed_rotation_axis = irange(1,3),
+            frame_angular_velocity = float,
+            lam = positive_float,
+            use_4th_order_green_function = bool,
         ):
         fixed_angular_momentum = randint(1,n_particles)
         n_slices = c_slice * 2
@@ -287,7 +251,7 @@ tests = [
     accept_path,
     compute_physical_potential,
     compute_log_acceptance_weight,
-    thermalize_path
+    #thermalize_path
     ]
 
 if __name__ == "__main__":

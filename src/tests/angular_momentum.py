@@ -10,7 +10,6 @@ from numpy import zeros, array, complex128, exp, prod
 from numpy.random import rand
 from numpy.linalg import norm
 from itertools import imap, combinations
-from tests import particle_paths_type
 import vpi
 
 #@+others
@@ -31,8 +30,8 @@ class perform_special_matmul(unittest.TestCase):
         vpi.angular_momentum.perform_special_matmul(vector,amplitudes)
         self.assertEqual(vector,array([2+2j],dtype=complex128))
 
-    @with_checker([(complex,complex)])
-    def test_random_cases(self,values):
+    @with_checker
+    def test_random_cases(self,values=[(complex,complex)]):
         if(len(values) == 0): return
         vector, amplitudes = (array(values_,dtype=complex128) for values_ in zip(*values))
         original_vector = vector.copy()
@@ -44,8 +43,8 @@ class perform_special_matmul(unittest.TestCase):
 #@-node:gcross.20090807144330.2254:perform_special_matmul
 #@+node:gcross.20090807171924.1722:sum_over_symmetrizations
 class sum_over_symmetrizations(unittest.TestCase):
-    @with_checker(irange(1,6),irange(1,8))
-    def test_length(self,n1,n2):
+    @with_checker
+    def test_length(self, n1 = irange(1,6), n2 = irange(1,8)):
         number_of_particles = max(n1,n2)
         number_excited = min(n1,n2)
         amplitudes = exp(rand(number_of_particles)+1j*rand(number_of_particles))
@@ -53,6 +52,17 @@ class sum_over_symmetrizations(unittest.TestCase):
         correct = sum(imap(prod,combinations(amplitudes,number_excited)))
         self.assertAlmostEqual(result,correct)
 #@-node:gcross.20090807171924.1722:sum_over_symmetrizations
+#@+node:gcross.20090813184545.1726:compute_angular_derivatives
+class compute_angular_derivatives(unittest.TestCase):
+    @with_checker
+    def test_length(self,n1,n2):
+        number_of_particles = max(n1,n2)
+        number_excited = min(n1,n2)
+        amplitudes = exp(rand(number_of_particles)+1j*rand(number_of_particles))
+        result = vpi.angular_momentum.sum_over_symmetrizations(amplitudes,number_excited)
+        correct = sum(imap(prod,combinations(amplitudes,number_excited)))
+        self.assertAlmostEqual(result,correct)
+#@-node:gcross.20090813184545.1726:compute_angular_derivatives
 #@-others
 
 tests = [

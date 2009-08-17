@@ -4,19 +4,18 @@
 #@@tabwidth -4
 
 import unittest
-from paycheck import with_checker
-from paycheck.generator import positive_float, non_negative_float
-from numpy import zeros, double
+from paycheck import with_checker, positive_float, non_negative_float, irange
+from numpy import zeros, double, array
+from numpy.random import rand
 from numpy.linalg import norm
-from tests import particle_paths_type
 import vpi
 
 #@+others
 #@+node:gcross.20090807144330.1678:wrap_around
 class wrap_around(unittest.TestCase):
 
-    @with_checker(float,positive_float)
-    def test_values_within_correct_range(self,x,period_length):
+    @with_checker
+    def test_values_within_correct_range(self,x = positive_float,period_length = positive_float(minimum_magnitude=1)):
         period_length = abs(period_length)
         result = vpi.xij.wrap_around(x,period_length)
         self.assert_(result <= period_length/2)
@@ -25,16 +24,16 @@ class wrap_around(unittest.TestCase):
 #@+node:gcross.20090807144330.1672:update_xij
 class update_xij(unittest.TestCase):
 
-    @with_checker(particle_paths_type)
-    def test_values_are_nonnegative(self,x):
-        n_slices, n_particles = x.shape
+    @with_checker
+    def test_values_are_nonnegative(self,n_slices = irange(1,5), n_particles = irange(2,5)):
+        x = array(rand(n_slices,n_particles),dtype=double,order='Fortran')
         xij2 = zeros((n_slices,n_particles,n_particles),dtype=double,order='Fortran')
         vpi.xij.update_xij(xij2,x,1,n_slices)
         self.assert_((xij2>=0).all())
 
-    @with_checker(particle_paths_type,int,int,int)
-    def test_values_are_correct(self,x,s,i,j):
-        n_slices, n_particles = x.shape
+    @with_checker
+    def test_values_are_correct(self,n_slices = irange(1,5), n_particles = irange(2,5), s = int, i = int, j = int):
+        x = array(rand(n_slices,n_particles),dtype=double,order='Fortran')
         xij2 = zeros((n_slices,n_particles,n_particles),dtype=double,order='Fortran')
         vpi.xij.update_xij(xij2,x,1,n_slices)
         s = s % n_slices
@@ -45,23 +44,23 @@ class update_xij(unittest.TestCase):
 #@+node:gcross.20090807144330.1680:update_xij_pbc
 class update_xij_pbc(unittest.TestCase):
 
-    @with_checker(particle_paths_type,positive_float)
-    def test_values_are_nonnegative(self,x,period_length):
-        n_slices, n_particles = x.shape
+    @with_checker
+    def test_values_are_nonnegative(self, n_slices = irange(1,5), n_particles = irange(1,2), period_length = positive_float(1)):
+        x = array(rand(n_slices,n_particles) % (period_length/2),dtype=double,order='Fortran')
         xij2 = zeros((n_slices,n_particles,n_particles),dtype=double,order='Fortran')
         vpi.xij.update_xij_pbc(xij2,x,period_length,1,n_slices)
         self.assert_((xij2>=0).all())
 
-    @with_checker(particle_paths_type,positive_float)
-    def test_values_are_within_range(self,x,period_length):
-        n_slices, n_particles = x.shape
+    @with_checker
+    def test_values_are_within_range(self, n_slices = irange(1,5), n_particles = irange(1,2), period_length = positive_float(1)):
+        x = array(rand(n_slices,n_particles) % (period_length/2),dtype=double,order='Fortran')
         xij2 = zeros((n_slices,n_particles,n_particles),dtype=double,order='Fortran')
         vpi.xij.update_xij_pbc(xij2,x,period_length,1,n_slices)
         self.assert_((xij2<=period_length/2).all())
 
-    @with_checker(particle_paths_type,int,int,int,positive_float)
-    def test_values_are_correct(self,x,s,i,j,period_length):
-        n_slices, n_particles = x.shape
+    @with_checker
+    def test_values_are_correct(self, n_slices = irange(1,5), n_particles = irange(1,2), s = int, i = int, j = int, period_length = positive_float(1)):
+        x = array(rand(n_slices,n_particles) % (period_length/2),dtype=double,order='Fortran')
         xij2 = zeros((n_slices,n_particles,n_particles),dtype=double,order='Fortran')
         vpi.xij.update_xij_pbc(xij2,x,period_length,1,n_slices)
         s = s % n_slices
