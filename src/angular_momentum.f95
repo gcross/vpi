@@ -70,7 +70,7 @@ end function sum_over_symmetrizations
 !@+node:gcross.20090803153449.1837:compute_angular_derivatives
 pure subroutine compute_angular_derivatives(&
     x, &
-    fixed_rotation_axis, N_rotating_particles, &
+    rotation_plane_axis_1, rotation_plane_axis_2, N_rotating_particles, &
     N_particles,N_dimensions, &
     derivatives &
   )
@@ -78,13 +78,12 @@ pure subroutine compute_angular_derivatives(&
   ! Input variables
   integer, intent(in) :: N_particles, N_dimensions
   double precision, dimension(N_particles,N_dimensions), intent(in) :: x
-  integer, intent(in) :: fixed_rotation_axis, N_rotating_particles
+  integer, intent(in) :: rotation_plane_axis_1, rotation_plane_axis_2, N_rotating_particles
 
   ! Output variables
   double precision, dimension(N_particles), intent(out) :: derivatives
 
   ! Local variables
-  integer :: plane_axis_1, plane_axis_2
   double complex, dimension(N_particles) :: amplitudes, partial_sums
   double complex :: amplitude
   integer :: i
@@ -99,10 +98,9 @@ pure subroutine compute_angular_derivatives(&
     return
   end if
 
-  call get_rotation_plane_axes(fixed_rotation_axis,plane_axis_1,plane_axis_2)
-
   amplitudes(:) = &
-    (x(:,plane_axis_1)*(1.0d0,0) + x(:,plane_axis_2)*(0,1.0d0))/sqrt(x(:,plane_axis_1)**2 + x(:,plane_axis_2)**2)
+    (x(:,rotation_plane_axis_1)*(1.0d0,0) + x(:,rotation_plane_axis_2)*(0,1.0d0)) &
+  / sqrt(x(:,rotation_plane_axis_1)**2 + x(:,rotation_plane_axis_2)**2)
 
 !@+at
 ! To get the partial sums, i.e. the the sums which are required to have a 
@@ -133,7 +131,7 @@ end subroutine compute_angular_derivatives
 !@+node:gcross.20090721121051.1756:compute_effective_rotational_potential
 pure subroutine compute_effective_rotational_potential (&
     x, &
-    fixed_rotation_axis, frame_angular_velocity, N_rotating_particles, &
+    rotation_plane_axis_1, rotation_plane_axis_2, frame_angular_velocity, N_rotating_particles, &
     move_start, move_end, &
     n_slices, n_particles, n_dimensions, &
     U_rot &
@@ -143,7 +141,7 @@ pure subroutine compute_effective_rotational_potential (&
   integer, intent(in) :: move_start, move_end, n_slices, n_particles, n_dimensions
   double precision, dimension ( n_slices, n_particles , n_dimensions ), intent(in) :: x
   double precision, intent(in) :: frame_angular_velocity
-  integer, intent(in) :: fixed_rotation_axis, N_rotating_particles
+  integer, intent(in) :: rotation_plane_axis_1, rotation_plane_axis_2, N_rotating_particles
 
   ! Output variables
   double precision, dimension( n_slices, n_particles ), intent(inout) :: U_rot
@@ -161,7 +159,7 @@ pure subroutine compute_effective_rotational_potential (&
       double precision, dimension( n_particles ) :: derivatives, potential
       call compute_angular_derivatives( &
               x(i,:,:), &
-              fixed_rotation_axis, N_rotating_particles, &
+              rotation_plane_axis_1, rotation_plane_axis_2, N_rotating_particles, &
               n_particles, n_dimensions, &
               derivatives &
             )
