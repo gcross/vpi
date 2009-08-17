@@ -27,7 +27,7 @@ class thermalize_path(unittest.TestCase):
     #@    @+others
     #@+node:gcross.20090813095726.2349:test_rejection_case
     @with_checker(number_of_calls=10)
-    def test_that_angular_momentum_lowers_weight(self,
+    def test_rejection_case(self,
             p1 = non_negative_float, p2 = non_negative_float, p3 = non_negative_float,
             d1 = float, d2 = float, d3 = float,
             n_trials = irange(1,10),
@@ -52,10 +52,10 @@ class thermalize_path(unittest.TestCase):
         def null_func(*args):
             return double(0.0)
         def compute_potential(x,xij2,n_slices,n_particles,n_dimensions):
-            if(not (x==0).all()):
-                return zeros((n_slices,n_particles)), zeros((n_slices,)), True
-            else:
+            if((abs(x)==0).all()):
                 return zeros((n_slices,n_particles)), zeros((n_slices,)), False
+            else:
+                return zeros((n_slices,n_particles)), zeros((n_slices,)), True
         slice_move_attempted_counts, slice_move_accepted_counts = [zeros((n_slices,),dtype='i',order='Fortran') for dummy in xrange(2)]
         move_type_attempted_counts, move_type_accepted_counts = [zeros((3,),dtype='i',order='Fortran') for dummy in xrange(2)]
         U_weights, gU2_weights = vpi.gfn.initialize_4th_order_weights(n_slices)
@@ -74,7 +74,6 @@ class thermalize_path(unittest.TestCase):
         )
         self.assert_((x==0.0).all())
         self.assert_((xij2==0.0).all())
-    #@nonl
     #@-node:gcross.20090813095726.2349:test_rejection_case
     #@-others
 #@-node:gcross.20090813095726.2348:thermalize_path

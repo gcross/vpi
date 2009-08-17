@@ -160,6 +160,12 @@ end interface
           n_slices, n_particles, n_dimensions &
         )
     end if
+
+    if( move_start < 1 .or. move_start > move_end .or. move_end > n_slices ) then
+      call revert_move
+      cycle
+    end if
+
     !@<< Impose periodic boundary conditions >>
     !@+node:gcross.20090626112946.1691:<< Impose periodic boundary conditions >>
     if( present(pbc_period_length) ) then
@@ -191,6 +197,8 @@ end interface
     !@+node:gcross.20090626112946.1693:<< Determine whether the move should be accepted >>
     !@<< Compute logarithmic probability of acceptance >>
     !@+node:gcross.20090721121051.1755:<< Compute logarithmic probability of acceptance >>
+    reject_flag = .false.
+
     old_weight = compute_log_acceptance_weight (&
         q, xij2, &
         move_start, move_end, &
@@ -201,6 +209,8 @@ end interface
     if(reject_flag) then
       stop "Error:  A path that had been okay before is somehow invalid now."
     end if
+
+    reject_flag = .false.
 
     new_weight = compute_log_acceptance_weight (&
         q_trial, xij2_trial, &
@@ -213,7 +223,6 @@ end interface
       call revert_move
       cycle
     end if
-    !@nonl
     !@-node:gcross.20090721121051.1755:<< Compute logarithmic probability of acceptance >>
     !@nl
 
@@ -304,6 +313,7 @@ end interface
   ! Code begins:
   !@-at
   !@@c
+
     !@  << Compute contribution from potentials >>
     !@+node:gcross.20090817102318.2266:<< Compute contribution from potentials >>
     call compute_potential (&
