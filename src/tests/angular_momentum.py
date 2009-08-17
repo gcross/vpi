@@ -4,12 +4,13 @@
 #@@tabwidth -4
 
 import unittest
-from paycheck import with_checker
-from paycheck.generator import irange
-from numpy import zeros, array, complex128, exp, prod
+from paycheck import *
+from numpy import *
 from numpy.random import rand
 from numpy.linalg import norm
+from random import randint
 from itertools import imap, combinations
+import __builtin__
 import vpi
 
 #@+others
@@ -49,26 +50,54 @@ class sum_over_symmetrizations(unittest.TestCase):
         number_excited = min(n1,n2)
         amplitudes = exp(rand(number_of_particles)+1j*rand(number_of_particles))
         result = vpi.angular_momentum.sum_over_symmetrizations(amplitudes,number_excited)
-        correct = sum(imap(prod,combinations(amplitudes,number_excited)))
+        correct = __builtin__.sum(imap(prod,combinations(amplitudes,number_excited)))
         self.assertAlmostEqual(result,correct)
 #@-node:gcross.20090807171924.1722:sum_over_symmetrizations
-#@+node:gcross.20090813184545.1726:compute_angular_derivatives
-class compute_angular_derivatives(unittest.TestCase):
+#@+node:gcross.20090813184545.1726:compute_effective_rotational_potential
+class compute_effective_rotational_potential(unittest.TestCase):
+    #@    @+others
+    #@+node:gcross.20090817102318.1726:test_clumping
     @with_checker
-    def test_length(self,n1,n2):
-        number_of_particles = max(n1,n2)
-        number_excited = min(n1,n2)
-        amplitudes = exp(rand(number_of_particles)+1j*rand(number_of_particles))
-        result = vpi.angular_momentum.sum_over_symmetrizations(amplitudes,number_excited)
-        correct = sum(imap(prod,combinations(amplitudes,number_excited)))
-        self.assertAlmostEqual(result,correct)
-#@-node:gcross.20090813184545.1726:compute_angular_derivatives
+    def test_clumping(self,
+            n_slices=irange(1,4),
+            n_particles=irange(2,10),
+            angular_width_1=frange(0,0.6),
+            angular_width_2=frange(0,0.6),
+        ):
+        n_dimensions = 3
+        x = zeros((n_slices,n_particles,n_dimensions),dtype=double,order='Fortran')
+        U_rot = zeros((n_slices,n_particles),dtype=double,order='Fortran')
+        fixed_angular_momentum = randint(1,n_particles)
+        frame_angular_velocity = 0.0
+        fixed_rotation_axis = 3
+        potentials = []
+        move_start = 1
+        move_end = n_slices
+        for angular_width in sorted([angular_width_1,angular_width_2]):
+            angles = (array(range(n_particles))*angular_width).reshape(1,n_particles)
+            radii = rand(n_slices,n_particles)
+            x[:,:,0] = radii*cos(angles)
+            x[:,:,1] = radii*sin(angles)
+            x[:,:,2] = rand(n_slices,n_particles)
+            U_rot[...] = 0
+            vpi.angular_momentum.compute_effective_rotational_potential(
+                x,
+                fixed_rotation_axis,frame_angular_velocity,fixed_angular_momentum,
+                move_start,move_end,
+                U_rot
+            )
+            potentials.append((angular_width,sum(U_rot)))
+        self.assert_(potentials[1] >= potentials[0])
+    #@-node:gcross.20090817102318.1726:test_clumping
+    #@-others
+#@-node:gcross.20090813184545.1726:compute_effective_rotational_potential
 #@-others
 
 tests = [
     get_rotation_plane_axes,
     perform_special_matmul,
-    sum_over_symmetrizations
+    sum_over_symmetrizations,
+    compute_effective_rotational_potential
     ]
 
 if __name__ == "__main__":
