@@ -73,6 +73,11 @@ pure subroutine compute_angular_derivatives(&
     return
   end if
 
+  if(N_particles == fixed_angular_momentum) then
+    derivatives(1) = 1
+    return
+  end if
+
   call get_rotation_plane_axes(fixed_rotation_axis,plane_axis_1,plane_axis_2)
 
   amplitudes(:) = &
