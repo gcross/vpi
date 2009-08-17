@@ -48,7 +48,7 @@ end subroutine perform_special_matmul
 !@+node:gcross.20090803153449.1837:compute_angular_derivatives
 pure subroutine compute_angular_derivatives(&
     x, &
-    fixed_rotation_axis, frame_angular_velocity, fixed_angular_momentum, &
+    fixed_rotation_axis, fixed_angular_momentum, &
     N_particles,N_dimensions, &
     derivatives &
   )
@@ -56,7 +56,6 @@ pure subroutine compute_angular_derivatives(&
   ! Input variables
   integer, intent(in) :: N_particles, N_dimensions
   double precision, dimension(N_particles,N_dimensions), intent(in) :: x
-  double precision, intent(in) :: frame_angular_velocity
   integer, intent(in) :: fixed_rotation_axis, fixed_angular_momentum
 
   ! Output variables
@@ -140,7 +139,7 @@ pure subroutine compute_effective_rotational_potential (&
       double precision, dimension( n_particles ) :: derivatives, potential
       call compute_angular_derivatives( &
               x(i,:,:), &
-              fixed_rotation_axis, frame_angular_velocity, fixed_angular_momentum, &
+              fixed_rotation_axis, fixed_angular_momentum, &
               n_particles, n_dimensions, &
               derivatives &
             )
