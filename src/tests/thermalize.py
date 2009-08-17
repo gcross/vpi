@@ -182,7 +182,7 @@ class compute_log_acceptance_weight(unittest.TestCase):
         self.assert_(isfinite(U).all())
         self.assert_((U>0).all())
         self.assert_(isfinite(weight))
-        self.assert_(weight<0)
+        self.assert_(weight<1e-300)
     #@-node:gcross.20090813095726.1741:test_that_angular_momentum_lowers_weight
     #@-others
 #@-node:gcross.20090813093326.1730:compute_log_acceptance_weight
