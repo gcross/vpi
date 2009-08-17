@@ -22,171 +22,6 @@ class accept_path(unittest.TestCase):
             (p1 > p2)
         )
 #@-node:gcross.20090807144330.2152:accept_path
-#@+node:gcross.20090812093015.1718:compute_potential
-class compute_physical_potential(unittest.TestCase):
-    #@    @+others
-    #@+node:gcross.20090812093015.1719:test_null_case
-    @with_checker(number_of_calls=10)
-    def test_null_case(self,
-            n_slices = irange(1,5),
-            n_particles = irange(1,5),
-            n_dimensions = irange(1,5),
-        ):
-        x = array(rand(n_slices,n_particles,n_dimensions),order='Fortran')
-        xij2 = array(rand(n_slices,n_particles,n_particles),order='Fortran')
-        def null_func(*args):
-            return double(0.0)
-        def Uij_func(*args):
-            return 0.0, False
-        gnull = array(zeros((n_particles,n_dimensions)),dtype=double,order='Fortran')
-        def null_grad_func(*args):
-            return gnull
-        U,gradU2,reject_flag = vpi.thermalize.compute_physical_potential(
-            x,xij2,
-            null_func,
-            null_grad_func,
-            Uij_func,
-            null_grad_func,
-            1,n_slices,
-            )
-        self.failIf(reject_flag)
-        self.assert_((U==0).all())
-        self.assert_((gradU2==0).all())
-    #@nonl
-    #@-node:gcross.20090812093015.1719:test_null_case
-    #@+node:gcross.20090812093015.1721:test_constant_case
-    @with_checker(number_of_calls=10)
-    def test_constant_case(self,
-            n_slices = irange(1,5),
-            n_particles = irange(1,5),
-            n_dimensions = irange(1,5),
-        ):
-        x = array(rand(n_slices,n_particles,n_dimensions),order='Fortran')
-        xij2 = array(rand(n_slices,n_particles,n_particles),order='Fortran')
-        def null_func(*args):
-            return double(0.0)
-        def constant_func(*args):
-            return double(1.0)
-        def Uij_func(*args):
-            return double(1.0), False
-        gnull = array(zeros((n_particles,n_dimensions)),dtype=double,order='Fortran')
-        def null_grad_func(*args):
-            return gnull
-        U,gradU2,reject_flag = vpi.thermalize.compute_physical_potential(
-            x,xij2,
-            constant_func,
-            null_grad_func,
-            Uij_func,
-            null_grad_func,
-            1,n_slices,
-            )
-        self.failIf(reject_flag)
-        self.assert_((U==2).all())
-        self.assert_((gradU2==0).all())
-    #@-node:gcross.20090812093015.1721:test_constant_case
-    #@-others
-#@-node:gcross.20090812093015.1718:compute_potential
-#@+node:gcross.20090813093326.1730:compute_log_acceptance_weight
-class compute_log_acceptance_weight(unittest.TestCase):
-    #@    @+others
-    #@+node:gcross.20090813095726.1739:test_null_case
-    @with_checker
-    def test_null_case(self,
-            c_slice = irange(1,11,2),
-            n_particles = irange(1,5),
-            n_dimensions = irange(1,5),
-            fixed_rotation_axis = irange(1,3),
-            lam = positive_float,
-            dtau = positive_float,
-            use_4th_order_green_function = bool,
-        ):
-        n_slices = c_slice * 2
-        x = array(rand(n_slices,n_particles,n_dimensions),order='Fortran')
-        xij2 = array(rand(n_slices,n_particles,n_particles),order='Fortran')
-        move_start = randint(1,n_slices)
-        move_end = randint(move_start,n_slices)
-        particle_number = randint(1,n_particles)
-        def null_func(*args):
-            return double(0.0)
-        def Uij_func(*args):
-            return 0.0, False
-        gnull = array(zeros((n_particles,n_dimensions)),dtype=double,order='Fortran')
-        def null_grad_func(*args):
-            return gnull
-        U_weights, gU2_weights = vpi.gfn.initialize_4th_order_weights(n_slices)
-        U, gradU2, reject_flag, weight = vpi.thermalize.compute_log_acceptance_weight(
-            x,xij2,
-            move_start,move_end,
-            particle_number,
-            null_func,
-            null_grad_func,
-            Uij_func,
-            null_grad_func,
-            U_weights,gU2_weights,
-            fixed_rotation_axis,
-            0,0,
-            lam, dtau,
-            use_4th_order_green_function,
-            null_func,
-            null_func,
-        )
-        self.failIf(reject_flag)
-        self.assert_((U==0).all())
-        self.assert_((gradU2==0).all())
-        self.assertAlmostEqual(0,weight,14)
-    #@-node:gcross.20090813095726.1739:test_null_case
-    #@+node:gcross.20090813095726.1741:test_that_angular_momentum_lowers_weight
-    @with_checker
-    def test_that_angular_momentum_lowers_weight(self,
-            c_slice = irange(1,11,2),
-            n_particles = irange(1,5),
-            n_dimensions = irange(1,5),
-            fixed_rotation_axis = irange(1,3),
-            lam = positive_float,
-            dtau = positive_float,
-            use_4th_order_green_function = bool,
-        ):
-        N_rotating_particles = randint(1,n_particles)
-        n_slices = c_slice * 2
-        n_dimensions = 3
-        x = array(rand(n_slices,n_particles,n_dimensions),order='Fortran')
-        xij2 = array(rand(n_slices,n_particles,n_particles),order='Fortran')
-        move_start = randint(1,n_slices)
-        move_end = randint(move_start,n_slices)
-        particle_number = randint(1,n_particles)
-        def null_func(*args):
-            return double(0.0)
-        def Uij_func(*args):
-            return 0.0, False
-        gnull = array(zeros((n_particles,n_dimensions)),dtype=double,order='Fortran')
-        def null_grad_func(*args):
-            return gnull
-        U_weights, gU2_weights = vpi.gfn.initialize_4th_order_weights(n_slices)
-        U, gradU2, reject_flag, weight = vpi.thermalize.compute_log_acceptance_weight(
-            x,xij2,
-            move_start,move_end,
-            particle_number,
-            null_func,
-            null_grad_func,
-            Uij_func,
-            null_grad_func,
-            U_weights,gU2_weights,
-            fixed_rotation_axis,0,N_rotating_particles,
-            lam, dtau,
-            use_4th_order_green_function,
-            null_func,
-            null_func,
-        )
-        self.failIf(reject_flag)
-        U = U[move_start-1:move_end,particle_number-1]
-        self.assert_(isfinite(U).all())
-        self.assert_((U>0).all())
-        self.assert_(isfinite(weight))
-        self.assert_(weight<1e-300)
-    #@nonl
-    #@-node:gcross.20090813095726.1741:test_that_angular_momentum_lowers_weight
-    #@-others
-#@-node:gcross.20090813093326.1730:compute_log_acceptance_weight
 #@+node:gcross.20090813095726.2348:thermalize_path
 class thermalize_path(unittest.TestCase):
     #@    @+others
@@ -198,8 +33,6 @@ class thermalize_path(unittest.TestCase):
             n_trials = irange(1,10),
             c_slice = irange(3,11,2),
             n_particles = irange(1,10),
-            fixed_rotation_axis = irange(1,3),
-            frame_angular_velocity = float,
             lam = positive_float,
             use_4th_order_green_function = bool,
         ):
@@ -218,11 +51,11 @@ class thermalize_path(unittest.TestCase):
         high_swap_dim = randint(low_swap_dim,n_dimensions)
         def null_func(*args):
             return double(0.0)
-        def Uij_func(x,_,*args):
-            return double(0.0),(x!=0.0).any()
-        gnull = array(zeros((n_particles,n_dimensions)),dtype=double,order='Fortran')
-        def null_grad_func(*args):
-            return gnull
+        def compute_potential(x,xij2,n_slices,n_particles,n_dimensions):
+            if(not (x==0).all()):
+                return zeros((n_slices,n_particles)), zeros((n_slices,)), True
+            else:
+                return zeros((n_slices,n_particles)), zeros((n_slices,)), False
         slice_move_attempted_counts, slice_move_accepted_counts = [zeros((n_slices,),dtype='i',order='Fortran') for dummy in xrange(2)]
         move_type_attempted_counts, move_type_accepted_counts = [zeros((3,),dtype='i',order='Fortran') for dummy in xrange(2)]
         U_weights, gU2_weights = vpi.gfn.initialize_4th_order_weights(n_slices)
@@ -233,10 +66,8 @@ class thermalize_path(unittest.TestCase):
             move_type_probabilities,move_type_differentials,
             dM,lam,low_swap_dim,high_swap_dim,
             slice_move_attempted_counts,move_type_attempted_counts,slice_move_accepted_counts,move_type_accepted_counts,
-            null_func,null_grad_func,
-            Uij_func,null_grad_func,
+            compute_potential,
             U_weights,gU2_weights,
-            fixed_rotation_axis,frame_angular_velocity,N_rotating_particles,
             use_4th_order_green_function,
             null_func,
             null_func,
@@ -251,9 +82,7 @@ class thermalize_path(unittest.TestCase):
 
 tests = [
     accept_path,
-    compute_physical_potential,
-    compute_log_acceptance_weight,
-    #thermalize_path
+    thermalize_path
     ]
 
 if __name__ == "__main__":
