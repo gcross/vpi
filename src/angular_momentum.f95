@@ -45,6 +45,28 @@ pure subroutine perform_special_matmul(vector,amplitudes,size)
 
 end subroutine perform_special_matmul
 !@-node:gcross.20090803153449.1835:perform_special_matmul
+!@+node:gcross.20090803153449.1836:sum_over_symmetrizations
+pure function sum_over_symmetrizations(amplitudes,N_particles,N_excited)
+  ! Input variables
+  integer, intent(in) :: N_particles, N_excited
+  double complex, dimension(N_particles), intent(in) :: amplitudes
+
+  ! Function Result
+  double complex :: sum_over_symmetrizations
+
+  ! Local variables
+  double complex, dimension(N_particles-N_excited+1) :: vector
+  integer :: i
+
+
+  vector = amplitudes(1:N_particles-N_excited+1)
+  do i = 2, N_excited
+    call perform_special_matmul(vector,amplitudes(i:i+N_particles-N_excited),N_particles-N_excited+1)
+  end do
+  sum_over_symmetrizations = sum(vector)
+
+end function sum_over_symmetrizations
+!@-node:gcross.20090803153449.1836:sum_over_symmetrizations
 !@+node:gcross.20090803153449.1837:compute_angular_derivatives
 pure subroutine compute_angular_derivatives(&
     x, &
@@ -67,13 +89,13 @@ pure subroutine compute_angular_derivatives(&
   double complex :: amplitude
   integer :: i
 
-  if(N_particles == 1) then
-    derivatives(1) = 1
+  if(fixed_angular_momentum == 0) then
+    derivatives(:) = 0
     return
   end if
 
   if(N_particles == fixed_angular_momentum) then
-    derivatives(1) = 1
+    derivatives(:) = 1
     return
   end if
 
@@ -92,8 +114,8 @@ pure subroutine compute_angular_derivatives(&
 !@@c
   do i = 1, N_particles
     amplitude = amplitudes(i)
-    amplitudes(i) = 0
-    partial_sums(i) = sum_over_symmetrizations(amplitudes,N_particles,fixed_angular_momentum-1)*amplitude
+    amplitudes(i) = (0d0,0d0)
+    partial_sums(i) = sum_over_symmetrizations(amplitudes,N_particles,fixed_angular_momentum)*amplitude
     amplitudes(i) = amplitude
   end do
 !@+at
@@ -148,28 +170,6 @@ pure subroutine compute_effective_rotational_potential (&
 
 end subroutine compute_effective_rotational_potential
 !@-node:gcross.20090721121051.1756:compute_effective_rotational_potential
-!@+node:gcross.20090803153449.1836:sum_over_symmetrizations
-pure function sum_over_symmetrizations(amplitudes,N_particles,N_excited)
-  ! Input variables
-  integer, intent(in) :: N_particles, N_excited
-  double complex, dimension(N_particles), intent(in) :: amplitudes
-
-  ! Function Result
-  double complex :: sum_over_symmetrizations
-
-  ! Local variables
-  double complex, dimension(N_particles-N_excited+1) :: vector
-  integer :: i
-
-
-  vector = amplitudes(1:N_particles-N_excited+1)
-  do i = 2, N_excited
-    call perform_special_matmul(vector,amplitudes(i:i+N_particles-N_excited),N_particles-N_excited+1)
-  end do
-  sum_over_symmetrizations = sum(vector)
-
-end function sum_over_symmetrizations
-!@-node:gcross.20090803153449.1836:sum_over_symmetrizations
 !@-others
 
 end module angular_momentum
