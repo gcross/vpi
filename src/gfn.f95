@@ -71,7 +71,7 @@ pure function gfn2_sp( sl_start, sl_end, ip, U, nslice, np, dt ) result ( ln_gfn
 end function gfn2_sp
 !@-node:gcross.20090624144408.1799:2nd order
 !@+node:gcross.20090812093015.1845:4th order
-function gfn4_sp( sl_start, sl_end, ip, U, gradU2, U_weight, gU2_weight, nslice, np, lambda, dt ) result ( ln_gfn )
+pure function gfn4_sp( sl_start, sl_end, ip, U, gradU2, U_weight, gU2_weight, nslice, np, lambda, dt ) result ( ln_gfn )
   double precision, dimension( nslice, np ), intent(in) :: U
   double precision, dimension( nslice ), intent(in) :: gradU2
   double precision, dimension( nslice ), intent(in) :: U_weight
@@ -82,7 +82,15 @@ function gfn4_sp( sl_start, sl_end, ip, U, gradU2, U_weight, gU2_weight, nslice,
   double precision :: ln_gfn
 
   integer :: slice_length
-  double precision, external :: ddot
+
+  interface
+    pure function ddot(n,x,incx,y,incy)
+      integer, intent(in) :: n, incx, incy
+      double precision, intent(in), dimension(n*incx) :: x
+      double precision, intent(in), dimension(n*incy) :: y
+      double precision :: ddot
+    end function ddot
+  end interface
 
   slice_length = sl_end-sl_start+1
 
