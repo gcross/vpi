@@ -38,7 +38,7 @@ if __name__ == "__main__":
     run_tests()
 #@-node:gcross.20090807144330.2156:runner
 #@+node:gcross.20090807144330.2154:tests
-from tests import xij, thermalize, angular_momentum, gfn, sample
+from tests import xij, thermalize, angular_momentum, gfn, sample, observables
 
 modules = [
     gfn,
@@ -46,6 +46,7 @@ modules = [
     xij,
     angular_momentum,
     sample,
+    observables,
     ]
 #@nonl
 #@-node:gcross.20090807144330.2154:tests

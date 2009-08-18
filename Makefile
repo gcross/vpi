@@ -19,6 +19,7 @@ SOURCES = \
   src/gfn.f95 \
 	src/sample.f90 \
 	src/xij.f95 \
+	src/observables.f95 \
   src/thermalize.f90
 
 OBJS = \
@@ -29,6 +30,7 @@ OBJS = \
   obj/gfn.o \
   obj/sample.o \
   obj/xij.o \
+	obj/observables.o \
   obj/thermalize.o \
   obj/vpimodule.o \
   obj/vpi-f2pywrappers2.o \
