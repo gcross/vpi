@@ -9,7 +9,7 @@ CC = gcc
 FC = gfortran
 FLAGS = -fPIC
 CFLAGS = -I ${NUMPYDIR}/include -I ${PYTHONINCDIR} 
-FFLAGS = -cpp
+FFLAGS = -cpp -fbounds-check
 
 SOURCES = \
   angular_momentum.f95 \
