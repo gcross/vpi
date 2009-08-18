@@ -79,6 +79,20 @@ class compute_angular_derivatives(unittest.TestCase):
         self.assert_(isfinite(first_derivatives).all())
         self.assert_(isfinite(second_derivatives).all())
     #@-node:gcross.20090817102318.1731:test_finite
+    #@+node:gcross.20090818081913.1338:test_2nd_derivatives_symmetric
+    @with_checker
+    def test_2nd_derivatives_symmetric(self,
+            n_particles = irange(1,10),
+            fixed_rotation_axis = irange(1,3),
+        ):
+        x = rand(n_particles,3)
+        N_rotating_particles = randint(0,n_particles)
+        rotation_plane_axis_1, rotation_plane_axis_2 = vpi.angular_momentum.get_rotation_plane_axes(fixed_rotation_axis)
+        first_derivatives, second_derivatives = vpi.angular_momentum.compute_angular_derivatives(x,rotation_plane_axis_1,rotation_plane_axis_2,N_rotating_particles)
+        for i in xrange(n_particles):
+            for j in xrange(n_particles):
+                self.assertAlmostEqual(second_derivatives[i,j],second_derivatives[j,i])
+    #@-node:gcross.20090818081913.1338:test_2nd_derivatives_symmetric
     #@-others
 #@-node:gcross.20090817102318.1730:compute_angular_derivatives
 #@+node:gcross.20090813184545.1726:compute_effective_rotational_potential
