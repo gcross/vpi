@@ -112,9 +112,7 @@ class compute_effective_rotational_potential(unittest.TestCase):
         N_rotating_particles = randint(0,n_particles)
         U = zeros((n_slices,n_particles),dtype=double,order='Fortran')
         gradU = zeros((n_slices,n_particles,n_dimensions),dtype=double,order='Fortran')
-        move_start = randint(1,n_slices)
-        move_end = randint(move_start,n_slices)
-        vpi.angular_momentum. compute_effective_rotational_potential(x,rotation_plane_axis_1,rotation_plane_axis_2,frame_angular_velocity,N_rotating_particles,move_start,move_end,U,gradU)
+        vpi.angular_momentum. compute_effective_rotational_potential(x,rotation_plane_axis_1,rotation_plane_axis_2,frame_angular_velocity,N_rotating_particles,U,gradU)
         self.assert_(isfinite(U).all())
     #@nonl
     #@-node:gcross.20090817102318.1733:test_finite
@@ -135,8 +133,6 @@ class compute_effective_rotational_potential(unittest.TestCase):
         fixed_rotation_axis = 3
         rotation_plane_axis_1, rotation_plane_axis_2 = vpi.angular_momentum.get_rotation_plane_axes(fixed_rotation_axis)
         potentials = []
-        move_start = 1
-        move_end = n_slices
         for angular_width in sorted([angular_width_1,angular_width_2]):
             angles = (array(range(n_particles))*angular_width).reshape(1,n_particles)
             radii = rand(n_slices,n_particles)
@@ -148,7 +144,6 @@ class compute_effective_rotational_potential(unittest.TestCase):
             vpi.angular_momentum.compute_effective_rotational_potential(
                 x,
                 rotation_plane_axis_1,rotation_plane_axis_2,frame_angular_velocity,N_rotating_particles,
-                move_start,move_end,
                 U,gradU
             )
             potentials.append((angular_width,sum(U)))
@@ -165,13 +160,11 @@ class compute_effective_rotational_potential(unittest.TestCase):
         n_dimensions = 3
         rotation_plane_axis_1, rotation_plane_axis_2 = vpi.angular_momentum.get_rotation_plane_axes(fixed_rotation_axis)
         x = rand(n_slices,n_particles,n_dimensions)
-        move_start = randint(1,n_slices)
-        move_end = randint(move_start,n_slices)
         potentials = []
         for N_rotating_particles in [0,randint(1,n_particles)]:
             U = zeros((n_slices,n_particles),dtype=double,order='Fortran')
             gradU = zeros((n_slices,n_particles,n_dimensions),dtype=double,order='Fortran')
-            vpi.angular_momentum.compute_effective_rotational_potential(x,rotation_plane_axis_1,rotation_plane_axis_2,0,N_rotating_particles,move_start,move_end,U,gradU)
+            vpi.angular_momentum.compute_effective_rotational_potential(x,rotation_plane_axis_1,rotation_plane_axis_2,0,N_rotating_particles,U,gradU)
             potentials.append(sum(U))
         self.assert_(potentials[0] < potentials[1])
     #@nonl
@@ -191,8 +184,6 @@ class compute_effective_rotational_potential(unittest.TestCase):
             for j in xrange(n_particles):
                 x[i,j,fixed_rotation_axis-1] = 0
                 x[i,j] /= norm(x[i,j])
-        move_start = randint(1,n_slices)
-        move_end = randint(move_start,n_slices)
         potentials = []
         preferred_momentum = round(frame_angular_velocity*n_particles)
         chosen_momentum = preferred_momentum
@@ -201,7 +192,7 @@ class compute_effective_rotational_potential(unittest.TestCase):
         for N_rotating_particles in [preferred_momentum,chosen_momentum]:
             U = zeros((n_slices,n_particles),dtype=double,order='Fortran')
             gradU = zeros((n_slices,n_particles,n_dimensions),dtype=double,order='Fortran')
-            vpi.angular_momentum.compute_effective_rotational_potential(x,rotation_plane_axis_1,rotation_plane_axis_2,frame_angular_velocity,N_rotating_particles,move_start,move_end,U,gradU)
+            vpi.angular_momentum.compute_effective_rotational_potential(x,rotation_plane_axis_1,rotation_plane_axis_2,frame_angular_velocity,N_rotating_particles,U,gradU)
             potentials.append(sum(U))
         self.assert_(potentials[0] < potentials[1])
     #@nonl

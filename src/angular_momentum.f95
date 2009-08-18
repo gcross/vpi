@@ -183,13 +183,12 @@ end subroutine compute_angular_derivatives
 subroutine compute_effective_rotational_potential (&
     x, &
     rotation_plane_axis_1, rotation_plane_axis_2, frame_angular_velocity, N_rotating_particles, &
-    move_start, move_end, &
     n_slices, n_particles, n_dimensions, &
     U, gradU &
   )
 
   ! Input variables
-  integer, intent(in) :: move_start, move_end, n_slices, n_particles, n_dimensions
+  integer, intent(in) :: n_slices, n_particles, n_dimensions
   double precision, dimension ( n_slices, n_particles, n_dimensions ), intent(in) :: x
   double precision, intent(in) :: frame_angular_velocity
   integer, intent(in) :: rotation_plane_axis_1, rotation_plane_axis_2, N_rotating_particles
@@ -204,7 +203,7 @@ subroutine compute_effective_rotational_potential (&
   integer :: slice, i, j
   double precision :: rho, rho_squared, rho_cubed, C, S, P, Q
 
-  do slice = move_start, move_end
+  do slice = 1, n_slices
     call compute_angular_derivatives( &
             x(slice,:,:), &
             rotation_plane_axis_1, rotation_plane_axis_2, N_rotating_particles, &
