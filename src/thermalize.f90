@@ -36,10 +36,9 @@ subroutine thermalize_path( &
   low_swap_dim, high_swap_dim, &
   slice_move_attempted_counts, move_type_attempted_counts, &
   slice_move_accepted_counts, move_type_accepted_counts, &
-  compute_potential, &
+  compute_potential, trial_function, &
   U_weights, gU2_weights, &
   use_4th_order_green_function, &
-  trial_function, &
   pbc_period_length, &
   od_pnum, PROB_OD_PNUM, &
   n_od_particle, &

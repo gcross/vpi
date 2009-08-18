@@ -66,10 +66,9 @@ class thermalize_path(unittest.TestCase):
             move_type_probabilities,move_type_differentials,
             dM,lam,low_swap_dim,high_swap_dim,
             slice_move_attempted_counts,move_type_attempted_counts,slice_move_accepted_counts,move_type_accepted_counts,
-            compute_potential,
+            compute_potential, null_func,
             U_weights,gU2_weights,
             use_4th_order_green_function,
-            null_func,
         )
         self.assert_((x==0.0).all())
         self.assert_((xij2==0.0).all())
