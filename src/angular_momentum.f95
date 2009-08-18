@@ -181,7 +181,7 @@ end subroutine compute_angular_derivatives
 !@-node:gcross.20090803153449.1837:compute_angular_derivatives
 !@+node:gcross.20090721121051.1756:compute_effective_rotational_potential
 subroutine compute_effective_rotational_potential (&
-    x, &
+    x, lambda, &
     rotation_plane_axis_1, rotation_plane_axis_2, frame_angular_velocity, N_rotating_particles, &
     n_slices, n_particles, n_dimensions, &
     U, gradU &
@@ -190,7 +190,7 @@ subroutine compute_effective_rotational_potential (&
   ! Input variables
   integer, intent(in) :: n_slices, n_particles, n_dimensions
   double precision, dimension ( n_slices, n_particles, n_dimensions ), intent(in) :: x
-  double precision, intent(in) :: frame_angular_velocity
+  double precision, intent(in) :: frame_angular_velocity, lambda
   integer, intent(in) :: rotation_plane_axis_1, rotation_plane_axis_2, N_rotating_particles
 
   ! Output variables
@@ -212,18 +212,18 @@ subroutine compute_effective_rotational_potential (&
           )
     do j = 1, n_particles
       rho_squared = x(slice,j,rotation_plane_axis_1)**2 + x(slice,j,rotation_plane_axis_2)**2
-      U(slice,j) = U(slice,j) + first_derivatives(j)*(first_derivatives(j)/(2.0d0*rho_squared) - frame_angular_velocity)
+      U(slice,j) = U(slice,j) + first_derivatives(j)*(first_derivatives(j)*lambda/rho_squared - frame_angular_velocity)
       rho = sqrt(rho_squared)
       rho_cubed = rho*rho_squared
       do i = 1, n_particles
         C = x(slice,i,rotation_plane_axis_1)/rho
         S = x(slice,i,rotation_plane_axis_2)/rho
-        P = first_derivatives(i)
+        P = first_derivatives(i)*2d0*lambda/rho_cubed
         Q = second_derivatives(i,j)
         gradU(slice,j,rotation_plane_axis_1) = &
-          gradU(slice,j,rotation_plane_axis_1) + ( S*P+C*Q)*P/rho_cubed
+          gradU(slice,j,rotation_plane_axis_1) + ( S*P+C*Q)*P
         gradU(slice,j,rotation_plane_axis_2) = &
-          gradU(slice,j,rotation_plane_axis_2) + (-C*P+S*Q)*P/rho_cubed
+          gradU(slice,j,rotation_plane_axis_2) + (-C*P+S*Q)*P
       end do
     end do
   end do

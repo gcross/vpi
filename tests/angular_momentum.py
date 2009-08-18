@@ -112,7 +112,12 @@ class compute_effective_rotational_potential(unittest.TestCase):
         N_rotating_particles = randint(0,n_particles)
         U = zeros((n_slices,n_particles),dtype=double,order='Fortran')
         gradU = zeros((n_slices,n_particles,n_dimensions),dtype=double,order='Fortran')
-        vpi.angular_momentum. compute_effective_rotational_potential(x,rotation_plane_axis_1,rotation_plane_axis_2,frame_angular_velocity,N_rotating_particles,U,gradU)
+        vpi.angular_momentum. compute_effective_rotational_potential(
+            x,0.5,
+            rotation_plane_axis_1,rotation_plane_axis_2,
+            frame_angular_velocity,N_rotating_particles,
+            U,gradU
+        )
         self.assert_(isfinite(U).all())
     #@nonl
     #@-node:gcross.20090817102318.1733:test_finite
@@ -142,7 +147,7 @@ class compute_effective_rotational_potential(unittest.TestCase):
             U[...] = 0
             gradU[...] = 0
             vpi.angular_momentum.compute_effective_rotational_potential(
-                x,
+                x,0.5,
                 rotation_plane_axis_1,rotation_plane_axis_2,frame_angular_velocity,N_rotating_particles,
                 U,gradU
             )
@@ -164,7 +169,12 @@ class compute_effective_rotational_potential(unittest.TestCase):
         for N_rotating_particles in [0,randint(1,n_particles)]:
             U = zeros((n_slices,n_particles),dtype=double,order='Fortran')
             gradU = zeros((n_slices,n_particles,n_dimensions),dtype=double,order='Fortran')
-            vpi.angular_momentum.compute_effective_rotational_potential(x,rotation_plane_axis_1,rotation_plane_axis_2,0,N_rotating_particles,U,gradU)
+            vpi.angular_momentum.compute_effective_rotational_potential(
+                x,0.5,
+                rotation_plane_axis_1,rotation_plane_axis_2,
+                0,N_rotating_particles,
+                U,gradU
+            )
             potentials.append(sum(U))
         self.assert_(potentials[0] < potentials[1])
     #@nonl
@@ -192,7 +202,12 @@ class compute_effective_rotational_potential(unittest.TestCase):
         for N_rotating_particles in [preferred_momentum,chosen_momentum]:
             U = zeros((n_slices,n_particles),dtype=double,order='Fortran')
             gradU = zeros((n_slices,n_particles,n_dimensions),dtype=double,order='Fortran')
-            vpi.angular_momentum.compute_effective_rotational_potential(x,rotation_plane_axis_1,rotation_plane_axis_2,frame_angular_velocity,N_rotating_particles,U,gradU)
+            vpi.angular_momentum.compute_effective_rotational_potential(
+                x,0.5,
+                rotation_plane_axis_1,rotation_plane_axis_2,
+                frame_angular_velocity,N_rotating_particles,
+                U,gradU
+            )
             potentials.append(sum(U))
         self.assert_(potentials[0] < potentials[1])
     #@nonl
