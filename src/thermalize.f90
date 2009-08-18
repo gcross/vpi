@@ -39,7 +39,7 @@ subroutine thermalize_path( &
   compute_potential, &
   U_weights, gU2_weights, &
   use_4th_order_green_function, &
-  sp_trial_function, jastrow_trial_function, &
+  trial_function, &
   pbc_period_length, &
   od_pnum, PROB_OD_PNUM, &
   n_od_particle, &
@@ -64,8 +64,7 @@ subroutine thermalize_path( &
 ! Potential and trial functions
 !@-at
 !@@c
-!f2py external, intent(callback) :: compute_potential
-!f2py external, intent(callback) :: sp_trial_function, jastrow_trial_function
+!f2py external, intent(callback) :: compute_potential, trial_function
 interface
   !@  << Potential callback interface >>
   !@+middle:gcross.20090817102318.2271:Interface
@@ -84,18 +83,12 @@ interface
   !@  << Trial callback interface >>
   !@+middle:gcross.20090817102318.2271:Interface
   !@+node:gcross.20090812093015.1848:<< Trial callback interface >>
-  function sp_trial_function( x, n_particles, n_dimensions ) result ( log_probability )
-    integer, intent(in) :: n_particles, n_dimensions
-    double precision, dimension( n_particles , n_dimensions ), intent(in) :: x
-    double precision :: log_probability
-  end function sp_trial_function
-
-  function jastrow_trial_function( x, xij2, n_particles, n_dimensions ) result ( log_probability )
+  function trial_function( x, xij2, n_particles, n_dimensions ) result ( log_probability )
     integer :: n_particles, n_dimensions
     double precision, dimension( n_particles, n_dimensions ), intent(in) :: x
     double precision, dimension( n_particles, n_particles ), intent(in) :: xij2
     double precision  :: log_probability
-  end function jastrow_trial_function
+  end function trial_function
   !@-node:gcross.20090812093015.1848:<< Trial callback interface >>
   !@-middle:gcross.20090817102318.2271:Interface
   !@nl
@@ -351,10 +344,8 @@ end interface
 
     !@  << Compute contribution from trial functions >>
     !@+node:gcross.20090817102318.2270:<< Compute contribution from trial functions >>
-    lntfn = sp_trial_function(x(1,:,:), n_particles, n_dimensions) + &
-            sp_trial_function(x(n_slices,:,:), n_particles, n_dimensions) + &
-            jastrow_trial_function(x(1,:,:), xij2(1,:,:), n_particles, n_dimensions) + &
-            jastrow_trial_function(x(n_slices,:,:), xij2(n_slices,:,:), n_particles, n_dimensions)
+    lntfn = trial_function(x(1,:,:), xij2(1,:,:), n_particles, n_dimensions) + &
+            trial_function(x(n_slices,:,:), xij2(n_slices,:,:), n_particles, n_dimensions)
     !@-node:gcross.20090817102318.2270:<< Compute contribution from trial functions >>
     !@nl
 

@@ -70,7 +70,6 @@ class thermalize_path(unittest.TestCase):
             U_weights,gU2_weights,
             use_4th_order_green_function,
             null_func,
-            null_func,
         )
         self.assert_((x==0.0).all())
         self.assert_((xij2==0.0).all())
