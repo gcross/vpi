@@ -163,7 +163,11 @@ pure subroutine compute_effective_rotational_potential (&
               n_particles, n_dimensions, &
               derivatives &
             )
-      potential = derivatives(:)*(derivatives(:)/2.0d0-frame_angular_velocity)
+      potential = &
+          derivatives(:)*( &
+             derivatives(:)/2.0d0/(x(i,:,rotation_plane_axis_1)**2 + x(i,:,rotation_plane_axis_2)**2) &
+            -frame_angular_velocity &
+          )
     end function compute_for_slice
 
 end subroutine compute_effective_rotational_potential

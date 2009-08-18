@@ -166,6 +166,10 @@ class compute_effective_rotational_potential(unittest.TestCase):
         ):
         rotation_plane_axis_1, rotation_plane_axis_2 = vpi.angular_momentum.get_rotation_plane_axes(fixed_rotation_axis)
         x = rand(n_slices,n_particles,3)
+        for i in xrange(n_slices):
+            for j in xrange(n_particles):
+                x[i,j,fixed_rotation_axis-1] = 0
+                x[i,j] /= norm(x[i,j])
         move_start = randint(1,n_slices)
         move_end = randint(move_start,n_slices)
         potentials = []
