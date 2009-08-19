@@ -15,12 +15,14 @@ FFLAGS = -cpp -fbounds-check -M src
 SOURCES = \
   src/angular_momentum.f95 \
 	src/timers.f90 \
-	src/rand_utils.f90 \
+	src/rand_utils.f95 \
   src/gfn.f95 \
 	src/sample.f90 \
 	src/xij.f95 \
 	src/observables.f95 \
-  src/thermalize.f90
+  src/thermalize.f90 \
+  src/histograms.f95 \
+	src/lattice.f90
 
 OBJS = \
   obj/constants.o \
@@ -32,6 +34,8 @@ OBJS = \
   obj/xij.o \
 	obj/observables.o \
   obj/thermalize.o \
+  obj/histograms.o \
+	obj/lattice.o \
   obj/vpimodule.o \
   obj/vpi-f2pywrappers2.o \
   obj/fortranobject.o

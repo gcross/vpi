@@ -350,7 +350,7 @@ end interface
     !@-node:gcross.20090817102318.2270:<< Compute contribution from trial functions >>
     !@nl
 
-    weight = lngfn + lntfn
+    weight = lntfn + lngfn
 
   end function compute_log_acceptance_weight
   !@-node:gcross.20090817102318.2264:subroutine compute_log_acceptance_weight

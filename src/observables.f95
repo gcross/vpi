@@ -3,6 +3,8 @@
 !@@language fortran90
 module observables
 
+implicit none
+
 contains
 
 !@+others
