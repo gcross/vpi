@@ -201,7 +201,7 @@ subroutine compute_effective_rotational_potential (&
 
   ! Local variables
   integer :: slice, i, j
-  double precision :: rho, rho_squared, rho_cubed, C, S, P, Q
+  double precision :: rho_i_squared, rho_j, rho_j_squared, C, S, F
 
   do slice = 1, n_slices
     call compute_angular_derivatives( &
@@ -211,20 +211,28 @@ subroutine compute_effective_rotational_potential (&
             first_derivatives, second_derivatives &
           )
     do j = 1, n_particles
-      rho_squared = x(slice,j,rotation_plane_axis_1)**2 + x(slice,j,rotation_plane_axis_2)**2
-      U(slice,j) = U(slice,j) + first_derivatives(j)*(first_derivatives(j)*lambda/rho_squared - frame_angular_velocity)
-      rho = sqrt(rho_squared)
-      rho_cubed = rho*rho_squared
+      rho_j_squared = x(slice,j,rotation_plane_axis_1)**2 + x(slice,j,rotation_plane_axis_2)**2
+      U(slice,j) = U(slice,j) + first_derivatives(j)*(first_derivatives(j)*lambda/rho_j_squared - frame_angular_velocity)
+      rho_j = sqrt(rho_j_squared)
+      C = x(slice,j,rotation_plane_axis_1)/rho_j
+      S = x(slice,j,rotation_plane_axis_2)/rho_j
       do i = 1, n_particles
-        C = x(slice,i,rotation_plane_axis_1)/rho
-        S = x(slice,i,rotation_plane_axis_2)/rho
-        P = first_derivatives(i)*2d0*lambda/rho_cubed
-        Q = second_derivatives(i,j)
+        rho_i_squared = x(slice,i,rotation_plane_axis_1)**2 + x(slice,i,rotation_plane_axis_2)**2
+        F = second_derivatives(i,j) * &
+          ( &
+            first_derivatives(i) * 2d0*lambda/(rho_j*rho_i_squared) &
+          - frame_angular_velocity / rho_j &
+          )
         gradU(slice,j,rotation_plane_axis_1) = &
-          gradU(slice,j,rotation_plane_axis_1) + ( S*P+C*Q)*P
+          gradU(slice,j,rotation_plane_axis_1) - S*F
         gradU(slice,j,rotation_plane_axis_2) = &
-          gradU(slice,j,rotation_plane_axis_2) + (-C*P+S*Q)*P
+          gradU(slice,j,rotation_plane_axis_2) + C*F
       end do
+      F = first_derivatives(j)**2 * 2d0*lambda/(rho_j*rho_j_squared)
+      gradU(slice,j,rotation_plane_axis_1) = &
+        gradU(slice,j,rotation_plane_axis_1) - C*F
+      gradU(slice,j,rotation_plane_axis_2) = &
+        gradU(slice,j,rotation_plane_axis_2) - S*F
     end do
   end do
 

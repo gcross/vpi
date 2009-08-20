@@ -8,8 +8,12 @@ from paycheck import *
 from numpy import *
 from numpy.random import rand
 from numpy.linalg import norm
+from scipy.misc import derivative
 from random import randint
+import itertools
 from itertools import imap, combinations
+from functools import partial
+from math import atan
 import __builtin__
 import vpi
 
@@ -93,6 +97,56 @@ class compute_angular_derivatives(unittest.TestCase):
             for j in xrange(n_particles):
                 self.assertAlmostEqual(second_derivatives[i,j],second_derivatives[j,i])
     #@-node:gcross.20090818081913.1338:test_2nd_derivatives_symmetric
+    #@+node:gcross.20090819152718.1587:test_correct_1st_derivatives
+    @with_checker(number_of_calls=10)
+    def test_correct_1st_derivatives(self,
+            N_particles  = irange(1,5),
+            N_dimensions = irange(2,5),
+        ):
+        N_rotating_particles = randint(1,N_particles)
+        x = rand(N_particles,N_dimensions)
+        rotation_plane_axis_1 = randint(1,N_dimensions-1)
+        rotation_plane_axis_2 = randint(rotation_plane_axis_1+1,N_dimensions)
+        angles = arctan2(
+            x[:,rotation_plane_axis_2-1],
+            x[:,rotation_plane_axis_1-1]
+        )
+        first_derivatives, _ = vpi.angular_momentum.compute_angular_derivatives(
+            x,
+            rotation_plane_axis_1,rotation_plane_axis_2,
+            N_rotating_particles
+        )
+        for i in xrange(len(angles)):
+            numerical_derivative = derivative(
+                self.make_phase1(N_rotating_particles,angles,i),
+                angles[i],
+                dx=1e-6,
+                n=1,
+                order=13
+            )
+            self.assertAlmostEqual(
+                numerical_derivative,
+                first_derivatives[i]
+            )
+    #@-node:gcross.20090819152718.1587:test_correct_1st_derivatives
+    #@+node:gcross.20090819152718.1588:phase
+    @staticmethod
+    def phase(N_rotating_particles, angles):
+        C = 0
+        S = 0
+        for a in combinations(angles,N_rotating_particles):
+            C += cos(sum(a))
+            S += sin(sum(a))
+        return atan(S/C)
+    #@-node:gcross.20090819152718.1588:phase
+    #@+node:gcross.20090819152718.1589:make_phase1
+    def make_phase1(self,N_rotating_particles,angles,index):
+        angles = angles.copy()
+        def phase1(angle):
+            angles[index] = angle
+            return self.phase(N_rotating_particles,angles)
+        return phase1
+    #@-node:gcross.20090819152718.1589:make_phase1
     #@-others
 #@-node:gcross.20090817102318.1730:compute_angular_derivatives
 #@+node:gcross.20090813184545.1726:compute_effective_rotational_potential
@@ -212,6 +266,60 @@ class compute_effective_rotational_potential(unittest.TestCase):
         self.assert_(potentials[0] < potentials[1])
     #@nonl
     #@-node:gcross.20090817102318.1753:test_angular_momentum_cancels_frame_rotation
+    #@+node:gcross.20090820145058.1400:test_gradient_numerically
+    @with_checker
+    def test_gradient_numerically(self,
+            N_slices = irange(1,5),
+            N_particles = irange(1,10),
+            N_dimensions = irange(2,4),
+            frame_angular_velocity=unit_interval_float,
+            lambda_ = unit_interval_float,
+        ):
+        #@    @+others
+        #@+node:gcross.20090820145058.1402:compute_Ueff
+        def compute_Ueff(x):
+            U = zeros(x.shape[:2],dtype=double,order='Fortran')
+            gradU = zeros(x.shape,dtype=double,order='Fortran')
+            vpi.angular_momentum.compute_effective_rotational_potential(
+                x, lambda_,
+                1, 2, frame_angular_velocity, N_rotating_particles,
+                U, gradU
+            )
+            return sum(U)
+        #@-node:gcross.20090820145058.1402:compute_Ueff
+        #@+node:gcross.20090820145058.1403:compute_gradUeff
+        def compute_gradUeff(x):
+            U = zeros(x.shape[:2],dtype=double,order='Fortran')
+            gradU = zeros(x.shape,dtype=double,order='Fortran')
+            vpi.angular_momentum.compute_effective_rotational_potential(
+                x, lambda_,
+                1, 2, frame_angular_velocity, N_rotating_particles,
+                U, gradU
+            )
+            return gradU
+        #@-node:gcross.20090820145058.1403:compute_gradUeff
+        #@+node:gcross.20090820145058.1404:make_U
+        def make_U(x,slice_,particle,coordinate):
+            x = x.copy()
+            def U(v):
+                x[slice_,particle,coordinate] = v
+                return compute_Ueff(x)
+            return U
+        #@-node:gcross.20090820145058.1404:make_U
+        #@-others
+        N_rotating_particles = randint(1,N_particles)
+        x = rand(N_slices,N_particles,N_dimensions)*10-5
+        rotation_plane_axis_1 = randint(1,N_dimensions-1)
+        rotation_plane_axis_2 = randint(rotation_plane_axis_1+1,N_dimensions)
+        analytic_derivatives = compute_gradUeff(x)
+        for (i,j,k) in itertools.product(*imap(xrange,x.shape)):
+            numerical_derivative = derivative(make_U(x,i,j,k),x[i,j,k],dx=1e-6,n=1,order=13)
+            try:
+                self.assertAlmostEqual(numerical_derivative,analytic_derivatives[i,j,k])
+            except:
+                print "Nrot=",N_rotating_particles
+                raise
+    #@-node:gcross.20090820145058.1400:test_gradient_numerically
     #@-others
 #@-node:gcross.20090813184545.1726:compute_effective_rotational_potential
 #@-others
