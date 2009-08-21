@@ -92,7 +92,7 @@ subroutine compute_angular_derivatives(&
   double complex, dimension(N_particles) :: amplitudes, one_index_restricted_sums
   double complex, dimension(N_particles,N_particles) :: two_index_restricted_sums
   double complex :: full_sum, full_sum_conj, ai, aj
-  double precision :: full_sum_amplitude_squared
+  double precision :: full_sum_amplitude_squared, full_sum_amplitude_4th
   integer :: i, j
 
   if(N_rotating_particles == 0) then
@@ -115,19 +115,20 @@ subroutine compute_angular_derivatives(&
     full_sum = sum(amplitudes)
     full_sum_conj = conjg(full_sum)
     full_sum_amplitude_squared = real(full_sum*conjg(full_sum))
+    full_sum_amplitude_4th = full_sum_amplitude_squared**2
     first_derivatives(:) = real(amplitudes(:)*full_sum_conj)/full_sum_amplitude_squared
     do i = 1, n_particles
-      do j = 1, n_particles
-        if(i /= j) then
+      do j = i+1, n_particles
           second_derivatives(i,j) = &
-                imag(amplitudes(i)*conjg(amplitudes(j)))/full_sum_amplitude_squared &
-            + 2*real(amplitudes(i)*full_sum)*imag(amplitudes(j)*full_sum)/full_sum_amplitude_squared**2
-        else
-          second_derivatives(i,j) = &
-                imag(amplitudes(i)*full_sum)/full_sum_amplitude_squared &
-            + 2*real(amplitudes(i)*full_sum)*imag(amplitudes(j)*full_sum)/full_sum_amplitude_squared**2
-        end if
+            +   imag(amplitudes(i)*conjg(amplitudes(j)))/full_sum_amplitude_squared &
+            + 2*real(amplitudes(i)*full_sum_conj)*imag(amplitudes(j)*full_sum_conj)/full_sum_amplitude_4th
+          second_derivatives(j,i) = second_derivatives(i,j)
       end do
+    end do
+    do i = 1, n_particles 
+        second_derivatives(i,i) = &
+          -   imag(amplitudes(i)*full_sum_conj)/full_sum_amplitude_squared &
+          + 2*real(amplitudes(i)*full_sum_conj)*imag(amplitudes(i)*full_sum_conj)/full_sum_amplitude_4th
     end do
     return
   end if

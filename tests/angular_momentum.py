@@ -129,6 +129,44 @@ class compute_angular_derivatives(unittest.TestCase):
                 first_derivatives[i]
             )
     #@-node:gcross.20090819152718.1587:test_correct_1st_derivatives
+    #@+node:gcross.20090821144437.1412:test_correct_2nd_derivatives
+    @with_checker(number_of_calls=10)
+    def test_correct_2nd_derivatives(self,
+            N_particles  = irange(1,5),
+            N_dimensions = irange(2,5),
+        ):
+        N_rotating_particles = randint(1,N_particles)
+        x = rand(N_particles,N_dimensions)
+        rotation_plane_axis_1 = randint(1,N_dimensions-1)
+        rotation_plane_axis_2 = randint(rotation_plane_axis_1+1,N_dimensions)
+        angles = arctan2(
+            x[:,rotation_plane_axis_2-1],
+            x[:,rotation_plane_axis_1-1]
+        )
+        _, second_derivatives = vpi.angular_momentum.compute_angular_derivatives(
+            x,
+            rotation_plane_axis_1,rotation_plane_axis_2,
+            N_rotating_particles
+        )
+        for i in xrange(len(angles)):
+            numerical_derivative = derivative(
+                self.make_phase1(N_rotating_particles,angles,i),
+                angles[i],
+                dx=1e-6,
+                n=2,
+                order=13
+            )
+            try:
+                self.assertAlmostEqual(
+                    numerical_derivative,
+                    second_derivatives[i,i],
+                    2
+                )
+            except:
+                print "N_rot=",N_rotating_particles
+                raise
+
+    #@-node:gcross.20090821144437.1412:test_correct_2nd_derivatives
     #@+node:gcross.20090819152718.1588:phase
     @staticmethod
     def phase(N_rotating_particles, angles):
@@ -267,7 +305,7 @@ class compute_effective_rotational_potential(unittest.TestCase):
     #@nonl
     #@-node:gcross.20090817102318.1753:test_angular_momentum_cancels_frame_rotation
     #@+node:gcross.20090820145058.1400:test_gradient_numerically
-    @with_checker
+    @with_checker(number_of_calls=10)
     def test_gradient_numerically(self,
             N_slices = irange(1,5),
             N_particles = irange(1,10),
@@ -315,7 +353,7 @@ class compute_effective_rotational_potential(unittest.TestCase):
         for (i,j,k) in itertools.product(*imap(xrange,x.shape)):
             numerical_derivative = derivative(make_U(x,i,j,k),x[i,j,k],dx=1e-6,n=1,order=13)
             try:
-                self.assertAlmostEqual(numerical_derivative,analytic_derivatives[i,j,k])
+                self.assertAlmostEqual(numerical_derivative,analytic_derivatives[i,j,k],5)
             except:
                 print "Nrot=",N_rotating_particles
                 raise
