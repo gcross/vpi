@@ -165,8 +165,40 @@ class compute_angular_derivatives(unittest.TestCase):
             except:
                 print "N_rot=",N_rotating_particles
                 raise
-
     #@-node:gcross.20090821144437.1412:test_correct_2nd_derivatives
+    #@+node:gcross.20090824103348.1566:test_correct_2nd_partial_derivatives
+    @with_checker(number_of_calls=5)
+    def test_correct_2nd_partial_derivatives(self,
+            N_particles  = irange(1,5),
+            N_dimensions = irange(2,5),
+        ):
+        N_rotating_particles = randint(1,N_particles)
+        x = rand(N_particles,N_dimensions)
+        rotation_plane_axis_1 = randint(1,N_dimensions-1)
+        rotation_plane_axis_2 = randint(rotation_plane_axis_1+1,N_dimensions)
+        angles = arctan2(
+            x[:,rotation_plane_axis_2-1],
+            x[:,rotation_plane_axis_1-1]
+        )
+        _, second_derivatives = vpi.angular_momentum.compute_angular_derivatives(
+            x,
+            rotation_plane_axis_1,rotation_plane_axis_2,
+            N_rotating_particles
+        )
+        for i in xrange(len(angles)):
+            for j in xrange(len(angles)):
+                numerical_derivative = self.phase_d2(N_rotating_particles,angles,i,j)
+                try:
+                    self.assertAlmostEqual(
+                        numerical_derivative,
+                        second_derivatives[i,j],
+                        0
+                    )
+                except:
+                    print "N_rot=",N_rotating_particles
+                    raise
+
+    #@-node:gcross.20090824103348.1566:test_correct_2nd_partial_derivatives
     #@+node:gcross.20090819152718.1588:phase
     @staticmethod
     def phase(N_rotating_particles, angles):
@@ -175,7 +207,13 @@ class compute_angular_derivatives(unittest.TestCase):
         for a in combinations(angles,N_rotating_particles):
             C += cos(sum(a))
             S += sin(sum(a))
-        return atan(S/C)
+        try:
+            return atan(S/C)
+        except ZeroDivisionError:
+            if S > 0:
+                return pi
+            else:
+                return -pi
     #@-node:gcross.20090819152718.1588:phase
     #@+node:gcross.20090819152718.1589:make_phase1
     def make_phase1(self,N_rotating_particles,angles,index):
@@ -185,6 +223,23 @@ class compute_angular_derivatives(unittest.TestCase):
             return self.phase(N_rotating_particles,angles)
         return phase1
     #@-node:gcross.20090819152718.1589:make_phase1
+    #@+node:gcross.20090824103348.1562:make_phase2
+    def make_phase2(self,N_rotating_particles,angles,index1,index2):
+        angles = angles.copy()
+        def phase2(angle1,angle2):
+            angles[index1] = angle1
+            angles[index2] = angle2
+            return self.phase(N_rotating_particles,angles)
+        return phase2
+    #@-node:gcross.20090824103348.1562:make_phase2
+    #@+node:gcross.20090824103348.1564:phase_d2
+    def phase_d2(self,N_rotating_particles,angles,index1,index2):
+        phase2 = self.make_phase2(2,angles,index1,index2)
+        def diff_phase(angle1):
+            phase1 = partial(phase2,angle1)
+            return derivative(phase1,angles[index2],dx=1e-6,n=1,order=13)
+        return derivative(diff_phase,angles[index1],dx=1e-6,n=1,order=13)
+    #@-node:gcross.20090824103348.1564:phase_d2
     #@-others
 #@-node:gcross.20090817102318.1730:compute_angular_derivatives
 #@+node:gcross.20090813184545.1726:compute_effective_rotational_potential
