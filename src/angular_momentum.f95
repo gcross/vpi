@@ -114,7 +114,7 @@ subroutine compute_angular_derivatives(&
   if(N_rotating_particles == 1) then
     full_sum = sum(amplitudes)
     full_sum_conj = conjg(full_sum)
-    full_sum_amplitude_squared = real(full_sum*conjg(full_sum))
+    full_sum_amplitude_squared = real(full_sum*full_sum_conj)
     full_sum_amplitude_4th = full_sum_amplitude_squared**2
     first_derivatives(:) = real(amplitudes(:)*full_sum_conj)/full_sum_amplitude_squared
     do i = 1, n_particles
