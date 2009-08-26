@@ -101,6 +101,12 @@ subroutine compute_angular_derivatives(&
     return
   end if
 
+  if(N_particles == N_rotating_particles / 2) then
+    first_derivatives = 0.5
+    second_derivatives = 0
+    return
+  end if
+
   if(N_particles == N_rotating_particles) then
     first_derivatives = 1
     second_derivatives = 0
