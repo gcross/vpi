@@ -59,15 +59,76 @@ pure subroutine accumulate_radial_densities(x,maximum_radius,n_particles,n_dimen
   integer, dimension(n_bins), intent(inout) :: histogram
 
   integer :: i
-  double precision :: radius, dndx
+  double precision :: dndx
 
   dndx = n_bins/maximum_radius
   do i = 1, n_particles
     call place_in_bin(sqrt(sum(x(i,:)**2)),0d0,dndx,n_bins,histogram)
   end do
 
-end subroutine accumulate_radial_densities
+end subroutine
 !@-node:gcross.20090819083142.1370:accumulate_radial_densities
+!@+node:gcross.20090825141639.1523:accumulate_recip_r_sq_densities
+pure subroutine accumulate_recip_r_sq_densities(x,maximum_value,n_particles,n_dimensions,n_bins,histogram)
+  double precision, dimension(n_particles,n_dimensions), intent(in) :: x
+  double precision, intent(in) :: maximum_value
+  integer, intent(in) :: n_particles, n_dimensions, n_bins
+  integer, dimension(n_bins), intent(inout) :: histogram
+
+  integer :: i
+  double precision :: dndx
+
+  dndx = n_bins/maximum_value
+  do i = 1, n_particles
+    call place_in_bin(1.0/sum(x(i,:)**2),0d0,dndx,n_bins,histogram)
+  end do
+
+end subroutine
+!@-node:gcross.20090825141639.1523:accumulate_recip_r_sq_densities
+!@+node:gcross.20090825141639.1525:accumulate_plane_radial_densities
+pure subroutine accumulate_plane_radial_densities( &
+    x,maximum_radius, &
+    plane_axis_1,plane_axis_2, &
+    n_particles,n_dimensions,n_bins, &
+    histogram &
+    )
+  double precision, dimension(n_particles,n_dimensions), intent(in) :: x
+  double precision, intent(in) :: maximum_radius
+  integer, intent(in) :: plane_axis_1, plane_axis_2, n_particles, n_dimensions, n_bins
+  integer, dimension(n_bins), intent(inout) :: histogram
+
+  integer :: i
+  double precision :: dndx
+
+  dndx = n_bins/maximum_radius
+  do i = 1, n_particles
+    call place_in_bin(sqrt(x(i,plane_axis_1)**2+x(i,plane_axis_2)**2),0d0,dndx,n_bins,histogram)
+  end do
+
+end subroutine
+!@-node:gcross.20090825141639.1525:accumulate_plane_radial_densities
+!@+node:gcross.20090825141639.1527:accumulate_recip_plane_r_sq_densities
+pure subroutine accumulate_recip_plane_r_sq_densities( &
+    x,maximum_value, &
+    plane_axis_1,plane_axis_2, &
+    n_particles,n_dimensions,n_bins, &
+    histogram &
+    )
+  double precision, dimension(n_particles,n_dimensions), intent(in) :: x
+  double precision, intent(in) :: maximum_value
+  integer, intent(in) :: plane_axis_1, plane_axis_2, n_particles, n_dimensions, n_bins
+  integer, dimension(n_bins), intent(inout) :: histogram
+
+  integer :: i
+  double precision :: dndx
+
+  dndx = n_bins/maximum_value
+  do i = 1, n_particles
+    call place_in_bin(1.0/(x(i,plane_axis_1)**2+x(i,plane_axis_2)**2),0d0,dndx,n_bins,histogram)
+  end do
+
+end subroutine
+!@-node:gcross.20090825141639.1527:accumulate_recip_plane_r_sq_densities
 !@-others
 
 end module
