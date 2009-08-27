@@ -241,6 +241,41 @@ pure subroutine accumulate_effective_potential (&
 
 end subroutine
 !@-node:gcross.20090827135657.1431:accumulate_effective_potential
+!@+node:gcross.20090827135657.1433:accumulate_effective_potential2
+pure subroutine accumulate_effective_potential2 (&
+    x, lambda, &
+    rotation_plane_axis_1, rotation_plane_axis_2, &
+    frame_angular_velocity, n_rotating_particles, &
+    n_slices, n_particles, n_dimensions, &
+    U &
+  )
+
+  ! Input variables
+  integer, intent(in) :: n_slices, n_particles, n_dimensions, n_rotating_particles
+  double precision, dimension ( n_slices, n_particles, n_dimensions ), intent(in) :: x
+  double precision, intent(in) :: frame_angular_velocity, lambda
+  integer, intent(in) :: rotation_plane_axis_1, rotation_plane_axis_2
+
+  ! Output variables
+  double precision, dimension( n_slices, n_particles ), intent(inout) :: U
+
+  ! Local variables
+  integer :: i
+  double precision, dimension( n_particles ) :: first_angular_derivatives
+
+  first_angular_derivatives = dble(n_rotating_particles)/dble(n_particles)
+  do i = 1, n_slices
+    call accumulate_rotation_potential ( &
+      x(i,:,:), lambda, &
+      first_angular_derivatives, &
+      rotation_plane_axis_1, rotation_plane_axis_2, frame_angular_velocity, &
+      n_particles, n_dimensions, &
+      U(i,:) &
+    )
+  end do
+
+end subroutine
+!@-node:gcross.20090827135657.1433:accumulate_effective_potential2
 !@-others
 
 end module angular_momentum
