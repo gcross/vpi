@@ -167,8 +167,8 @@ pure function compute_rotation_potential_term (&
 
 end function
 !@-node:gcross.20090827135657.1421:compute_rotation_potential_term
-!@+node:gcross.20090827135657.1424:compute_rotation_potential
-pure subroutine compute_rotation_potential (&
+!@+node:gcross.20090827135657.1424:accumulate_rotation_potential
+pure subroutine accumulate_rotation_potential (&
     x, lambda, &
     first_angular_derivatives, &
     rotation_plane_axis_1, rotation_plane_axis_2, frame_angular_velocity, &
@@ -184,13 +184,14 @@ pure subroutine compute_rotation_potential (&
   integer, intent(in) :: rotation_plane_axis_1, rotation_plane_axis_2
 
   ! Output variables
-  double precision, dimension( n_particles ), intent(out) :: U
+  double precision, dimension( n_particles ), intent(inout) :: U
 
   ! Local variables
   integer :: i
 
   forall (i=1:n_particles) &
-    U(i) = compute_rotation_potential_term (&
+    U(i) = U(i) + &
+           compute_rotation_potential_term (&
               x(i,:), lambda, &
               first_angular_derivatives(i), &
               rotation_plane_axis_1, rotation_plane_axis_2, frame_angular_velocity, &
@@ -198,7 +199,48 @@ pure subroutine compute_rotation_potential (&
             )
 
 end subroutine
-!@-node:gcross.20090827135657.1424:compute_rotation_potential
+!@-node:gcross.20090827135657.1424:accumulate_rotation_potential
+!@+node:gcross.20090827135657.1431:accumulate_effective_potential
+pure subroutine accumulate_effective_potential (&
+    x, lambda, &
+    rotation_plane_axis_1, rotation_plane_axis_2, &
+    n_rotating_particles, frame_angular_velocity, &
+    n_slices, n_particles, n_dimensions, &
+    U &
+  )
+
+  ! Input variables
+  integer, intent(in) :: n_slices, n_particles, n_dimensions, n_rotating_particles
+  double precision, dimension ( n_slices, n_particles, n_dimensions ), intent(in) :: x
+  double precision, intent(in) :: frame_angular_velocity, lambda
+  integer, intent(in) :: rotation_plane_axis_1, rotation_plane_axis_2
+
+  ! Output variables
+  double precision, dimension( n_slices, n_particles ), intent(inout) :: U
+
+  ! Local variables
+  integer :: i
+  double precision, dimension( n_particles ) :: first_angular_derivatives
+
+  do i = 1, n_slices
+    call compute_angular_derivatives( &
+      x(i,:,:), &
+      rotation_plane_axis_1, rotation_plane_axis_2, &
+      n_rotating_particles, &
+      n_particles, n_dimensions, &
+      first_angular_derivatives &
+    )
+    call accumulate_rotation_potential ( &
+      x(i,:,:), lambda, &
+      first_angular_derivatives, &
+      rotation_plane_axis_1, rotation_plane_axis_2, frame_angular_velocity, &
+      n_particles, n_dimensions, &
+      U(i,:) &
+    )
+  end do
+
+end subroutine
+!@-node:gcross.20090827135657.1431:accumulate_effective_potential
 !@-others
 
 end module angular_momentum

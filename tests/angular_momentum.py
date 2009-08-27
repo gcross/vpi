@@ -181,7 +181,7 @@ class compute_angular_derivatives(unittest.TestCase):
     #@-others
 #@-node:gcross.20090817102318.1730:compute_angular_derivatives
 #@+node:gcross.20090813184545.1726:compute_rotational_potential
-class compute_rotational_potential(unittest.TestCase):
+class accumulate_rotation_potential(unittest.TestCase):
     #@    @+others
     #@+node:gcross.20090817102318.1733:test_finite
     @with_checker
@@ -197,11 +197,12 @@ class compute_rotational_potential(unittest.TestCase):
         N_rotating_particles = randint(0,n_particles)
         U = zeros((n_particles,),dtype=double,order='Fortran')
         first_angular_derivatives = rand(n_particles)
-        U = vpi.angular_momentum.compute_rotation_potential(
+        vpi.angular_momentum.accumulate_rotation_potential(
             x,lambda_,
             first_angular_derivatives,
             rotation_plane_axis_1,rotation_plane_axis_2,
             frame_angular_velocity,
+            U
         )
         self.assert_(isfinite(U).all())
     #@-node:gcross.20090817102318.1733:test_finite
@@ -230,11 +231,13 @@ class compute_rotational_potential(unittest.TestCase):
                 x,
                 rotation_plane_axis_1, rotation_plane_axis_2, N_rotating_particles
             )
-            U = vpi.angular_momentum.compute_rotation_potential(
+            U = zeros((n_particles,),dtype=double,order='Fortran')
+            vpi.angular_momentum.accumulate_rotation_potential(
                 x,0.5,
                 first_angular_derivatives,
                 rotation_plane_axis_1,rotation_plane_axis_2,
                 frame_angular_velocity,
+                U
             )
             potentials.append((angular_width,sum(U)))
         self.assert_(potentials[1] >= potentials[0])
@@ -254,11 +257,13 @@ class compute_rotational_potential(unittest.TestCase):
                 x,
                 rotation_plane_axis_1, rotation_plane_axis_2, N_rotating_particles
             )
-            U = vpi.angular_momentum.compute_rotation_potential(
+            U = zeros((n_particles,),dtype=double,order='Fortran')
+            vpi.angular_momentum.accumulate_rotation_potential(
                 x,0.5,
                 first_angular_derivatives,
                 rotation_plane_axis_1,rotation_plane_axis_2,
-                0
+                0,
+                U
             )
             potentials.append(sum(U))
         self.assert_(potentials[0] < potentials[1])
@@ -286,11 +291,13 @@ class compute_rotational_potential(unittest.TestCase):
                 x,
                 rotation_plane_axis_1, rotation_plane_axis_2, N_rotating_particles
             )
-            U = vpi.angular_momentum.compute_rotation_potential(
+            U = zeros((n_particles,),dtype=double,order='Fortran')
+            vpi.angular_momentum.accumulate_rotation_potential(
                 x,0.5,
                 first_angular_derivatives,
                 rotation_plane_axis_1,rotation_plane_axis_2,
-                frame_angular_velocity
+                frame_angular_velocity,
+                U
             )
             potentials.append(sum(U))
         self.assert_(potentials[0] < potentials[1])
@@ -304,7 +311,7 @@ tests = [
     perform_special_matmul,
     sum_over_symmetrizations,
     compute_angular_derivatives,
-    compute_rotational_potential
+    accumulate_rotation_potential
     ]
 
 if __name__ == "__main__":
