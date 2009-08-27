@@ -8,7 +8,7 @@ include paths.mk
 
 CC = gcc
 FC = gfortran
-FLAGS = -fPIC
+FLAGS = -fPIC -O3
 CFLAGS = -I ${NUMPYDIR}/include -I ${PYTHONINCDIR} -I src
 FFLAGS = -cpp -fbounds-check -M src
 
