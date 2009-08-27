@@ -102,6 +102,40 @@ pure function compute_recip_plane_r_sq_average( &
 
 end function
 !@-node:gcross.20090825141639.1535:compute_recip_plane_r_sq_average
+!@+node:gcross.20090826091347.1420:compute_average_angular_separation
+pure function compute_average_angular_separation(angles,n_particles) result (average)
+  integer, intent(in) :: n_particles
+  double precision, dimension(n_particles), intent(in) :: angles
+
+  integer :: i, j
+  double precision :: average
+
+  average = 0
+  do i = 1, n_particles
+    do j = i+1, n_particles
+      average = average + abs(angles(i)-angles(j))
+    end do
+  end do
+  average = average / dble(n_particles * (n_particles-1) / 2)
+
+end function
+!@-node:gcross.20090826091347.1420:compute_average_angular_separation
+!@+node:gcross.20090826091347.1422:compute_avg_neighbor_angular_sep
+pure function compute_avg_neighbor_angular_sep(angles,n_particles) result (average)
+  integer, intent(in) :: n_particles
+  double precision, dimension(n_particles), intent(in) :: angles
+
+  integer :: i
+  double precision :: average
+
+  average = 0
+  do i = 1, n_particles
+    average = average + min(minval(abs(angles(i)-angles(:i-1))),minval(abs(angles(i)-angles(i+1:))))
+  end do
+  average = average / dble(n_particles)
+
+end function
+!@-node:gcross.20090826091347.1422:compute_avg_neighbor_angular_sep
 !@-others
 
 end module
