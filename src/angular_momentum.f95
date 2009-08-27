@@ -204,7 +204,7 @@ end subroutine
 pure subroutine accumulate_effective_potential (&
     x, lambda, &
     rotation_plane_axis_1, rotation_plane_axis_2, &
-    n_rotating_particles, frame_angular_velocity, &
+    frame_angular_velocity, n_rotating_particles, &
     n_slices, n_particles, n_dimensions, &
     U &
   )
