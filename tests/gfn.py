@@ -79,11 +79,82 @@ class gfn4_sp(unittest.TestCase):
     #@-node:gcross.20090812093015.1752:test_correctness
     #@-others
 #@-node:gcross.20090812093015.1747:gfn4_sp
+#@+node:gcross.20090828095451.1459:gfn_hard_wall_contribution
+class gfn_hard_wall_contribution(unittest.TestCase):
+
+    @with_checker
+    def test_finite(self,
+            n_slices = irange(1,10),
+            n_particles = irange(1,5),
+            n_dimensions = irange(1,5),
+            lambda_ = float,
+            dt = float
+        ):
+        q = rand(n_slices,n_particles,n_dimensions)
+        hard_wall_locations = rand(n_dimensions)
+        slice_start = randint(1,n_slices)
+        slice_end = randint(slice_start,n_slices)
+        particle_number = randint(1,n_particles)
+        vpi.gfn.gfn_hard_wall_contribution(
+            q,
+            hard_wall_locations,
+            lambda_, dt,
+            slice_start, slice_end,
+            particle_number
+        )
+#@-node:gcross.20090828095451.1459:gfn_hard_wall_contribution
+#@+node:gcross.20090828095451.1461:gfn_hard_sphere_contribution
+class gfn_hard_sphere_contribution(unittest.TestCase):
+
+    @with_checker
+    def test_finite(self,
+            n_slices = irange(1,10),
+            n_particles = irange(1,5),
+            dt = float,
+            hard_sphere_radius = float,
+        ):
+        xij2 = rand(n_slices,n_particles,n_particles)
+        slice_start = randint(1,n_slices)
+        slice_end = randint(slice_start,n_slices)
+        particle_number = randint(1,n_particles)
+        vpi.gfn.gfn_hard_sphere_contribution(
+            xij2,
+            dt,hard_sphere_radius,
+            slice_start, slice_end,
+            particle_number
+        )
+#@-node:gcross.20090828095451.1461:gfn_hard_sphere_contribution
+#@+node:gcross.20090828095451.1463:gfn_hard_sphere_contribution2
+class gfn_hard_sphere_contribution2(unittest.TestCase):
+
+    @with_checker
+    def test_finite(self,
+            n_slices = irange(1,10),
+            n_particles = irange(1,5),
+            n_dimensions = irange(1,5),
+            lambda_ = float,
+            dt = float,
+            hard_sphere_radius = float,
+        ):
+        q = rand(n_slices,n_particles,n_dimensions)
+        slice_start = randint(1,n_slices)
+        slice_end = randint(slice_start,n_slices)
+        particle_number = randint(1,n_particles)
+        vpi.gfn.gfn_hard_sphere_contribution2(
+            q,
+            lambda_,dt,hard_sphere_radius,
+            slice_start, slice_end,
+            particle_number
+        )
+#@-node:gcross.20090828095451.1463:gfn_hard_sphere_contribution2
 #@-others
 
 tests = [
     gfn2_sp,
     gfn4_sp,
+    gfn_hard_wall_contribution,
+    gfn_hard_sphere_contribution,
+    gfn_hard_sphere_contribution2,
     ]
 
 if __name__ == "__main__":
