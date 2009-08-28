@@ -33,8 +33,7 @@ class thermalize_path(unittest.TestCase):
             n_trials = irange(1,10),
             c_slice = irange(3,11,2),
             n_particles = irange(1,10),
-            lam = positive_float,
-            use_4th_order_green_function = bool,
+            lam = float,
         ):
         N_rotating_particles = randint(1,n_particles)
         n_slices = c_slice * 2
@@ -56,9 +55,10 @@ class thermalize_path(unittest.TestCase):
                 return zeros((n_slices,n_particles)), zeros((n_slices,)), False
             else:
                 return zeros((n_slices,n_particles)), zeros((n_slices,)), True
+        def greens_function(*args):
+            return double(0.0)
         slice_move_attempted_counts, slice_move_accepted_counts = [zeros((n_slices,),dtype='i',order='Fortran') for dummy in xrange(2)]
         move_type_attempted_counts, move_type_accepted_counts = [zeros((3,),dtype='i',order='Fortran') for dummy in xrange(2)]
-        U_weights, gU2_weights = vpi.gfn.initialize_4th_order_weights(n_slices)
         vpi.thermalize.thermalize_path(
             x,xij2,
             U,gradU2,
@@ -66,9 +66,7 @@ class thermalize_path(unittest.TestCase):
             move_type_probabilities,move_type_differentials,
             dM,lam,low_swap_dim,high_swap_dim,
             slice_move_attempted_counts,move_type_attempted_counts,slice_move_accepted_counts,move_type_accepted_counts,
-            compute_potential, null_func,
-            U_weights,gU2_weights,
-            use_4th_order_green_function,
+            compute_potential, null_func,greens_function,
         )
         self.assert_((x==0.0).all())
         self.assert_((xij2==0.0).all())

@@ -36,9 +36,7 @@ subroutine thermalize_path( &
   low_swap_dim, high_swap_dim, &
   slice_move_attempted_counts, move_type_attempted_counts, &
   slice_move_accepted_counts, move_type_accepted_counts, &
-  compute_potential, trial_function, &
-  U_weights, gU2_weights, &
-  use_4th_order_green_function, &
+  compute_potential, trial_function, greens_function, &
   pbc_period_length, &
   od_pnum, PROB_OD_PNUM, &
   n_od_particle, &
@@ -54,8 +52,6 @@ subroutine thermalize_path( &
   double precision, intent(in) :: dM, lambda
   integer, intent(in) :: low_swap_dim, high_swap_dim
   double precision, intent(in), optional :: pbc_period_length
-  logical, intent(in) :: use_4th_order_green_function
-  double precision, dimension ( n_slices ), intent(in) :: U_weights, gU2_weights
   double precision, intent(in), optional :: PROB_OD_PNUM
   integer, intent(in), optional :: od_pnum, n_od_particle, od_dim_low, od_dim_high
 
@@ -63,7 +59,7 @@ subroutine thermalize_path( &
 ! Potential and trial functions
 !@-at
 !@@c
-!f2py external, intent(callback) :: compute_potential, trial_function
+!f2py external, intent(callback) :: compute_potential, trial_function, greens_function
 interface
   !@  << Potential callback interface >>
   !@+middle:gcross.20090817102318.2271:Interface
@@ -83,12 +79,34 @@ interface
   !@+middle:gcross.20090817102318.2271:Interface
   !@+node:gcross.20090812093015.1848:<< Trial callback interface >>
   function trial_function( x, xij2, n_particles, n_dimensions ) result ( log_probability )
-    integer :: n_particles, n_dimensions
+    integer, intent(in) :: n_particles, n_dimensions
     double precision, dimension( n_particles, n_dimensions ), intent(in) :: x
     double precision, dimension( n_particles, n_particles ), intent(in) :: xij2
     double precision  :: log_probability
   end function trial_function
   !@-node:gcross.20090812093015.1848:<< Trial callback interface >>
+  !@-middle:gcross.20090817102318.2271:Interface
+  !@nl
+  !@  << Green's function callback interface >>
+  !@+middle:gcross.20090817102318.2271:Interface
+  !@+node:gcross.20090828095451.1676:<< Green's function callback interface >>
+  function greens_function( &
+      x, xij2, U, gradU2, &
+      lambda, dt, &
+      slice_start, slice_end, &
+      particle_number, &
+      n_slices, n_particles, n_dimensions &
+    ) result ( log_probability )
+    integer, intent(in) :: n_slices, n_particles, n_dimensions
+    double precision, dimension( n_slices, n_particles, n_dimensions ), intent(in) :: x
+    double precision, dimension( n_slices, n_particles, n_particles ), intent(in) :: xij2
+    double precision, dimension( n_slices, n_particles ), intent(in) :: U
+    double precision, dimension( n_slices ), intent(in) :: gradU2
+    double precision, intent(in) :: lambda, dt
+    integer, intent(in) :: slice_start, slice_end, particle_number
+    double precision  :: log_probability
+  end function
+  !@-node:gcross.20090828095451.1676:<< Green's function callback interface >>
   !@-middle:gcross.20090817102318.2271:Interface
   !@nl
 end interface
@@ -301,7 +319,7 @@ end interface
   !@-at
   !@@c
     double precision :: lngfn, lntfn
-    integer :: sl_start, sl_end
+    integer :: slice_start, slice_end
 
   !@+at
   ! Code begins:
@@ -322,23 +340,24 @@ end interface
     endif
 
     if(move_start .le. 1) then
-      sl_start = 1
+      slice_start = 1
     else
-      sl_start = move_start-1
+      slice_start = move_start-1
     end if
     if(move_end .ge. n_slices) then
-      sl_end = n_slices
+      slice_end = n_slices
     else
-      sl_end = move_end+1
+      slice_end = move_end+1
     end if
 
     if( n_slices > 2 ) then
-      if ( use_4th_order_green_function ) then
-        lngfn = gfn4_sp( sl_start, sl_end, particle_number, U, gradU2, U_weights, gU2_weights, &
-                             n_slices, n_particles, lambda, dtau )
-      else
-        lngfn = gfn2_sp( sl_start, sl_end, particle_number, U, n_slices, n_particles, dtau )
-      end if
+      lngfn = greens_function( &
+                x, xij2, U, gradU2, &
+                lambda, dtau, &
+                slice_start, slice_end, &
+                particle_number, &
+                n_slices, n_particles, n_dimensions &
+              )
     end if
     !@-node:gcross.20090817102318.2266:<< Compute contribution from potentials >>
     !@nl
