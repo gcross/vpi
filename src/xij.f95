@@ -42,6 +42,26 @@ pure subroutine update_xij_pbc( xij2, x, period_length, N_SLICES, N_PARTICLES, N
 
 end subroutine update_xij_pbc
 !@-node:gcross.20090805093617.1834:update_xij_pbc
+!@+node:gcross.20090828201103.2127:hard_sphere_violation
+pure function hard_sphere_violation(xij2,hard_sphere_radius_squared,n_slices,n_particles) result (is_violated)
+  integer, intent(in) :: n_slices, n_particles
+  double precision, intent(in) :: hard_sphere_radius_squared
+  double precision, dimension(n_slices,n_particles,n_particles), intent(in) :: xij2
+  logical :: is_violated
+
+  integer :: i, j
+
+  is_violated = .false.
+  do i = 1, n_particles
+    do j = i+1, n_particles
+      if (any(xij2(:,i,j) <= hard_sphere_radius_squared)) then
+        is_violated = .true.
+        return
+      end if
+    end do
+  end do
+end function
+!@-node:gcross.20090828201103.2127:hard_sphere_violation
 !@-others
 
 end module xij

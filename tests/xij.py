@@ -76,12 +76,26 @@ class update_xij_pbc(unittest.TestCase):
     #@-others
 
 #@-node:gcross.20090807144330.1680:update_xij_pbc
+#@+node:gcross.20090828201103.2129:hard_sphere_violation
+class hard_sphere_violation(unittest.TestCase):
+
+    def test_violated(self):
+        xij2 = array([[[0,3],[3,0]],[[0,1],[1,0]]],dtype=double,order='Fortran')
+        hard_sphere_radius_squared = 2
+        self.assert_(vpi.xij.hard_sphere_violation(xij2,hard_sphere_radius_squared))
+
+    def test_not_violated(self):
+        xij2 = array([[[0,3],[3,0]],[[0,2.5],[2.5,0]]],dtype=double,order='Fortran')
+        hard_sphere_radius_squared = 2
+        self.assert_(not vpi.xij.hard_sphere_violation(xij2,hard_sphere_radius_squared))
+#@-node:gcross.20090828201103.2129:hard_sphere_violation
 #@-others
 
 tests = [
     wrap_around,
     update_xij,
     update_xij_pbc,
+    hard_sphere_violation,
     ]
 
 if __name__ == "__main__":
