@@ -136,6 +136,27 @@ pure function compute_avg_neighbor_angular_sep(angles,n_particles) result (avera
 
 end function
 !@-node:gcross.20090826091347.1422:compute_avg_neighbor_angular_sep
+!@+node:gcross.20090830224709.2068:compute_average_particle_separation
+pure function compute_particle_separation_average( &
+  xij2, &
+  n_particles &
+  ) result (separation_average)
+  integer, intent(in) :: n_particles
+  double precision, dimension(n_particles, n_particles), intent(in) :: xij2
+
+  integer :: i, j
+  double precision :: separation_average
+
+  separation_average = 0
+  do i = 1, n_particles
+    do j = i+1, n_particles
+      separation_average = separation_average + sqrt(xij2(j,i))
+    end do
+  end do
+  separation_average = separation_average/(n_particles*(n_particles-1))
+
+end function
+!@-node:gcross.20090830224709.2068:compute_average_particle_separation
 !@-others
 
 end module

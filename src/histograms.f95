@@ -194,6 +194,30 @@ pure subroutine accumulate_recip_plane_r_sq_densities( &
 
 end subroutine
 !@-node:gcross.20090825141639.1527:accumulate_recip_plane_r_sq_densities
+!@+node:gcross.20090830224709.2035:accumulate_particle_separation_densities
+pure subroutine accumulate_particle_separation_densities( &
+    xij2, &
+    maximum_value, &
+    n_particles,n_bins, &
+    histogram &
+    )
+  double precision, dimension(n_particles,n_particles), intent(in) :: xij2
+  double precision, intent(in) :: maximum_value
+  integer, intent(in) :: n_particles, n_bins
+  integer, dimension(n_bins), intent(inout) :: histogram
+
+  integer :: i, j
+  double precision :: dndx
+
+  dndx = n_bins/maximum_value
+  do i = 1, n_particles
+    do j = i+1, n_particles
+      call place_in_bin(sqrt(xij2(j,i)),0d0,dndx,n_bins,histogram)
+    end do
+  end do
+
+end subroutine
+!@-node:gcross.20090830224709.2035:accumulate_particle_separation_densities
 !@-others
 
 end module
