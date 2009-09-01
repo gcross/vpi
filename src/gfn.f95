@@ -253,6 +253,8 @@ pure function gfn_hard_sphere_contribution2( &
     end do
   end do
 
+  ln_gfn = log(hs_gfn)
+
 end function
 !@-node:gcross.20090828095451.1456:strategy 2
 !@-node:gcross.20090828095451.1454:hard sphere
