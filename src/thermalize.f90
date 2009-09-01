@@ -78,10 +78,11 @@ interface
   !@  << Trial callback interface >>
   !@+middle:gcross.20090817102318.2271:Interface
   !@+node:gcross.20090812093015.1848:<< Trial callback interface >>
-  function trial_function( x, xij2, n_particles, n_dimensions ) result ( log_probability )
+  function trial_function( x, xij2, n_particles, n_dimensions, reject_flag ) result ( log_probability )
     integer, intent(in) :: n_particles, n_dimensions
     double precision, dimension( n_particles, n_dimensions ), intent(in) :: x
     double precision, dimension( n_particles, n_particles ), intent(in) :: xij2
+    logical, intent(out) :: reject_flag
     double precision  :: log_probability
   end function trial_function
   !@-node:gcross.20090812093015.1848:<< Trial callback interface >>
@@ -337,7 +338,7 @@ end interface
 
     if (reject_flag) then
       return
-    endif
+    end if
 
     if(move_start .le. 1) then
       slice_start = 1
@@ -364,8 +365,18 @@ end interface
 
     !@  << Compute contribution from trial functions >>
     !@+node:gcross.20090817102318.2270:<< Compute contribution from trial functions >>
-    lntfn = trial_function(x(1,:,:), xij2(1,:,:), n_particles, n_dimensions) + &
-            trial_function(x(n_slices,:,:), xij2(n_slices,:,:), n_particles, n_dimensions)
+    lntfn = 0d0
+
+    lntfn = lntfn + trial_function(x(1,:,:), xij2(1,:,:), n_particles, n_dimensions, reject_flag)
+    if(reject_flag) then
+      return
+    end if
+
+    lntfn = lntfn + trial_function(x(n_slices,:,:), xij2(n_slices,:,:), n_particles, n_dimensions, reject_flag)
+    if(reject_flag) then
+      return
+    end if
+
     !@-node:gcross.20090817102318.2270:<< Compute contribution from trial functions >>
     !@nl
 

@@ -1,7 +1,7 @@
 #@+leo-ver=4-thin
 #@+node:gcross.20090806151612.1842:@thin Makefile
 #@@language Makefile
-#@@tabwidth 2
+#@@tabwidth 4
 all: lib/vpi.so
 
 include paths.mk
@@ -22,7 +22,10 @@ SOURCES = \
   src/observables.f95 \
   src/thermalize.f90 \
   src/histograms.f95 \
-  src/lattice.f90
+  src/lattice.f90 \
+  src/harmonic_oscillator_3d.f95 \
+  src/hard_sphere_interaction.f95 \
+  src/leonard_jones_interaction.f95
 
 OBJS = \
   obj/constants.o \
@@ -36,6 +39,9 @@ OBJS = \
   obj/thermalize.o \
   obj/histograms.o \
   obj/lattice.o \
+  obj/harmonic_oscillator_3d.o \
+  obj/hard_sphere_interaction.o \
+  obj/leonard_jones_interaction.o \
   obj/vpimodule.o \
   obj/vpi-f2pywrappers2.o \
   obj/fortranobject.o
