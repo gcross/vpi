@@ -933,7 +933,7 @@ class HardSphereInteraction(Physics):
   #@+node:gcross.20090902085220.2370:accumulate_potential
   def accumulate_potential(self,x,xij2,U,gradU):
       if vpif.hard_sphere_interaction.has_collision(
-          x, self.hard_sphere_radius_squared
+          xij2, self.hard_sphere_radius_squared
       ): raise MoveRejected
   #@-node:gcross.20090902085220.2370:accumulate_potential
   #@+node:gcross.20090902085220.2371:compute_trial_weight
@@ -954,14 +954,14 @@ class HardSphereInteraction(Physics):
       )
   #@-node:gcross.20090902085220.2372:accumulate_trial_derivatives
   #@+node:gcross.20090902085220.2384:compute_greens_function
-  def compute_greens_function(
+  def compute_greens_function(self,
           x,xij2,
           U,gradU2,
           lam,dt,
           slice_start,slice_end,
           particle_number
       ): return \
-          vpif.gfn.gfn_hard_sphere_contribution(
+          vpif.hard_sphere_interaction.compute_greens_function(
               xij2,dt,
               self.hard_sphere_radius,
               slice_start,slice_end,particle_number
@@ -983,8 +983,7 @@ class SecondOrderGreensFunction(Physics):
           lam,dt,
           slice_start,slice_end,
           particle_number
-      ):  vpi.gfn.gfn2_sp(slice_start,slice_end,particle_number,U,dt)
-          #return -dt*sum( U[slice_start-1:slice_end-1,particle_number-1] )
+      ):  return vpif.gfn.gfn2_sp(slice_start,slice_end,particle_number,U,dt)
   #@-node:gcross.20090902085220.2382:compute_greens_function
   #@-others
 #@-node:gcross.20090902085220.2373:class SecondOrderGreensFunction
