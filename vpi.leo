@@ -24,8 +24,9 @@
 <v t="gcross.20090818081913.1354"><vh>@thin observables.f95</vh></v>
 <v t="gcross.20090819083142.1363"><vh>@thin histograms.f95</vh></v>
 <v t="gcross.20090819093822.1396"><vh>@thin lattice.f90</vh></v>
+<v t="gcross.20090902085220.2158"><vh>@thin vpi.py</vh></v>
 <v t="gcross.20090901084550.2623"><vh>Physics</vh>
-<v t="gcross.20090901084550.2618"><vh>@thin harmonic_oscillator_3d.f95</vh></v>
+<v t="gcross.20090901084550.2618"><vh>@thin harmonic_oscillator.f95</vh></v>
 <v t="gcross.20090901084550.2616"><vh>@thin hard_sphere_interaction.f95</vh></v>
 <v t="gcross.20090901084550.2627"><vh>@thin leonard_jones_interaction.f95</vh></v>
 </v>

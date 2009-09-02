@@ -1,8 +1,8 @@
 !@+leo-ver=4-thin
-!@+node:gcross.20090901084550.2618:@thin harmonic_oscillator_3d.f95
+!@+node:gcross.20090901084550.2618:@thin harmonic_oscillator.f95
 !@@language fortran90
 
-module harmonic_oscillator_3d
+module harmonic_oscillator
   implicit none
 
 contains
@@ -46,7 +46,7 @@ pure subroutine accumulate_trial_derivatives( &
   forall (i=1:n_dimensions) &
     gradient_of_log_trial_fn(:,i) = gradient_of_log_trial_fn(:,i) - harmonic_oscillator_coefficients(i)*x(:,i)
 
-  laplacian_of_log_trial_fn = laplacian_of_log_trial_fn - sum(harmonic_oscillator_coefficients)
+  laplacian_of_log_trial_fn = laplacian_of_log_trial_fn - sum(harmonic_oscillator_coefficients)*n_particles
 end subroutine
 !@-node:gcross.20090901084550.2621:accumulate_trial_derivatives
 !@+node:gcross.20090901084550.2626:accumulate_potential
@@ -71,5 +71,5 @@ end subroutine
 !@-others
 
 end module
-!@-node:gcross.20090901084550.2618:@thin harmonic_oscillator_3d.f95
+!@-node:gcross.20090901084550.2618:@thin harmonic_oscillator.f95
 !@-leo

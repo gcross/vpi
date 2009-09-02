@@ -11,8 +11,8 @@ lib
 fit.log
 .nfs*
 *.so
-vpi-f2pywrappers2.f90
-vpimodule.c
+vpif-f2pywrappers2.f90
+vpifmodule.c
 .scons*
 *.pyc
 paths.mk

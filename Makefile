@@ -23,7 +23,7 @@ SOURCES = \
   src/thermalize.f90 \
   src/histograms.f95 \
   src/lattice.f90 \
-  src/harmonic_oscillator_3d.f95 \
+  src/harmonic_oscillator.f95 \
   src/hard_sphere_interaction.f95 \
   src/leonard_jones_interaction.f95
 
@@ -39,7 +39,7 @@ OBJS = \
   obj/thermalize.o \
   obj/histograms.o \
   obj/lattice.o \
-  obj/harmonic_oscillator_3d.o \
+  obj/harmonic_oscillator.o \
   obj/hard_sphere_interaction.o \
   obj/leonard_jones_interaction.o \
   obj/vpifmodule.o \

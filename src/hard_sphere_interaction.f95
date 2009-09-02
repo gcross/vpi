@@ -82,6 +82,26 @@ pure subroutine accumulate_trial_derivatives( &
   end do
 end subroutine
 !@-node:gcross.20090901084550.2622:accumulate_trial_derivatives
+!@+node:gcross.20090828201103.2127:has_collision
+pure function has_collision(xij2,hard_sphere_radius_squared,n_slices,n_particles)
+  integer, intent(in) :: n_slices, n_particles
+  double precision, intent(in) :: hard_sphere_radius_squared
+  double precision, dimension(n_slices,n_particles,n_particles), intent(in) :: xij2
+  logical :: has_collision
+
+  integer :: i, j
+
+  has_collision = .false.
+  do i = 1, n_particles
+    do j = i+1, n_particles
+      if (any(xij2(:,i,j) <= hard_sphere_radius_squared)) then
+        has_collision = .true.
+        return
+      end if
+    end do
+  end do
+end function
+!@-node:gcross.20090828201103.2127:has_collision
 !@-others
 
 end module
