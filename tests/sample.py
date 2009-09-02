@@ -9,7 +9,7 @@ from numpy import array, zeros, double, float64, isfinite, isfortran
 from numpy.linalg import norm
 from numpy.random import rand
 from random import randint, random
-import vpi
+import vpif
 
 #@+others
 #@+node:gcross.20090813095726.2344:sample_scheme1
@@ -30,9 +30,10 @@ class sample_scheme1(unittest.TestCase):
         dM = randint(1,n_slice)
         low_swap_dim = randint(1,n_dim)
         high_swap_dim = randint(low_swap_dim,n_dim)
-        _,_,_,move_type = vpi.sample.sample_scheme1(q0,q1,move_type_probabilities,move_type_differentials,dM,lam,low_swap_dim,high_swap_dim)
+        _,_,_,move_type = vpif.sample.sample_scheme1(q0,q1,move_type_probabilities,move_type_differentials,dM,lam,low_swap_dim,high_swap_dim)
         self.assert_(move_type >= 1)
         self.assert_(move_type <= 3)
+    #@nonl
     #@-node:gcross.20090813095726.2345:test_move_type_within_bound
     #@+node:gcross.20090813095726.2347:test_move_type_fits_distribution
     @with_checker
@@ -50,8 +51,9 @@ class sample_scheme1(unittest.TestCase):
         dM = randint(1,n_slice)
         low_swap_dim = randint(1,n_dim)
         high_swap_dim = randint(low_swap_dim,n_dim)
-        _,_,_,move_type = vpi.sample.sample_scheme1(q0,q1,move_type_probabilities,move_type_differentials,dM,lam,low_swap_dim,high_swap_dim)
+        _,_,_,move_type = vpif.sample.sample_scheme1(q0,q1,move_type_probabilities,move_type_differentials,dM,lam,low_swap_dim,high_swap_dim)
         self.assert_(move_type == desired_move_type)
+    #@nonl
     #@-node:gcross.20090813095726.2347:test_move_type_fits_distribution
     #@-others
 #@-node:gcross.20090813095726.2344:sample_scheme1
@@ -63,5 +65,6 @@ tests = [
 
 if __name__ == "__main__":
     unittest.main()
+#@nonl
 #@-node:gcross.20090813095726.2343:@thin sample.py
 #@-leo

@@ -9,7 +9,7 @@ from numpy import zeros, double, dot
 from numpy.linalg import norm
 from numpy.random import rand
 from random import randint
-import vpi
+import vpif
 
 #@+others
 #@+node:gcross.20090812093015.1743:gfn2_sp
@@ -21,8 +21,9 @@ class gfn2_sp(unittest.TestCase):
         sl_end = randint(sl_start,n_slices)
         ip = randint(1,n_particles)
         U = rand(n_slices,n_particles)
-        ln_gfn = vpi.gfn.gfn2_sp(sl_start,sl_end,ip,U,dt)
+        ln_gfn = vpif.gfn.gfn2_sp(sl_start,sl_end,ip,U,dt)
         self.assertAlmostEqual(ln_gfn,-dt*sum(U[sl_start-1:sl_end,ip-1]))
+#@nonl
 #@-node:gcross.20090812093015.1743:gfn2_sp
 #@+node:gcross.20090812093015.1747:gfn4_sp
 class gfn4_sp(unittest.TestCase):
@@ -64,7 +65,7 @@ class gfn4_sp(unittest.TestCase):
         ip = randint(1,n_particles)
         U = rand(n_slices,n_particles)
         gradU2 = rand(n_slices)
-        ln_gfn = vpi.gfn.gfn4_sp(sl_start,sl_end,ip,U,gradU2,U_weight,gU2_weight,lam,dt)
+        ln_gfn = vpif.gfn.gfn4_sp(sl_start,sl_end,ip,U,gradU2,U_weight,gU2_weight,lam,dt)
 
         self.assertAlmostEqual(ln_gfn,
             -2.0*dt*dot(
@@ -76,6 +77,7 @@ class gfn4_sp(unittest.TestCase):
                 gU2_weight[sl_start-1:sl_end]
             )/9.0
         )
+    #@nonl
     #@-node:gcross.20090812093015.1752:test_correctness
     #@-others
 #@-node:gcross.20090812093015.1747:gfn4_sp
@@ -95,13 +97,14 @@ class gfn_hard_wall_contribution(unittest.TestCase):
         slice_start = randint(1,n_slices)
         slice_end = randint(slice_start,n_slices)
         particle_number = randint(1,n_particles)
-        vpi.gfn.gfn_hard_wall_contribution(
+        vpif.gfn.gfn_hard_wall_contribution(
             q,
             hard_wall_locations,
             lambda_, dt,
             slice_start, slice_end,
             particle_number
         )
+#@nonl
 #@-node:gcross.20090828095451.1459:gfn_hard_wall_contribution
 #@+node:gcross.20090828095451.1461:gfn_hard_sphere_contribution
 class gfn_hard_sphere_contribution(unittest.TestCase):
@@ -117,12 +120,13 @@ class gfn_hard_sphere_contribution(unittest.TestCase):
         slice_start = randint(1,n_slices)
         slice_end = randint(slice_start,n_slices)
         particle_number = randint(1,n_particles)
-        vpi.gfn.gfn_hard_sphere_contribution(
+        vpif.gfn.gfn_hard_sphere_contribution(
             xij2,
             dt,hard_sphere_radius,
             slice_start, slice_end,
             particle_number
         )
+#@nonl
 #@-node:gcross.20090828095451.1461:gfn_hard_sphere_contribution
 #@+node:gcross.20090828095451.1463:gfn_hard_sphere_contribution2
 class gfn_hard_sphere_contribution2(unittest.TestCase):
@@ -140,12 +144,13 @@ class gfn_hard_sphere_contribution2(unittest.TestCase):
         slice_start = randint(1,n_slices)
         slice_end = randint(slice_start,n_slices)
         particle_number = randint(1,n_particles)
-        vpi.gfn.gfn_hard_sphere_contribution2(
+        vpif.gfn.gfn_hard_sphere_contribution2(
             q,
             lambda_,dt,hard_sphere_radius,
             slice_start, slice_end,
             particle_number
         )
+#@nonl
 #@-node:gcross.20090828095451.1463:gfn_hard_sphere_contribution2
 #@-others
 
@@ -159,5 +164,6 @@ tests = [
 
 if __name__ == "__main__":
     unittest.main()
+#@nonl
 #@-node:gcross.20090812093015.1742:@thin gfn.py
 #@-leo

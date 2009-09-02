@@ -2,7 +2,7 @@
 #@+node:gcross.20090806151612.1842:@thin Makefile
 #@@language Makefile
 #@@tabwidth 4
-all: lib/vpi.so
+all: lib/vpif.so
 
 include paths.mk
 
@@ -42,15 +42,15 @@ OBJS = \
   obj/harmonic_oscillator_3d.o \
   obj/hard_sphere_interaction.o \
   obj/leonard_jones_interaction.o \
-  obj/vpimodule.o \
-  obj/vpi-f2pywrappers2.o \
+  obj/vpifmodule.o \
+  obj/vpif-f2pywrappers2.o \
   obj/fortranobject.o
 
-src/vpimodule.c src/vpi-f2pywrappers2.f90: ${SOURCES} Makefile
-	f2py ${SOURCES} -m vpi
-	mv vpimodule.c vpi-f2pywrappers2.f90 src
+src/vpifmodule.c src/vpif-f2pywrappers2.f90: ${SOURCES} Makefile
+	f2py ${SOURCES} -m vpif
+	mv vpifmodule.c vpif-f2pywrappers2.f90 src
 
-obj/vpimodule.o: src/vpimodule.c
+obj/vpifmodule.o: src/vpifmodule.c
 	${CC} ${FLAGS} ${CFLAGS} -c $< -o $@
 
 obj/%.o: src/%.c Makefile
@@ -60,10 +60,11 @@ obj/%.o: src/%.f95 Makefile
 obj/%.o: src/%.f90 Makefile
 	${FC} ${FLAGS} ${FFLAGS} -c $< -o $@
 
-lib/vpi.so: ${OBJS}
-	gfortran ${PYTHONLINK} -shared -o lib/vpi.so -lgfortran -lblas ${OBJS}
+lib/vpif.so: ${OBJS}
+	gfortran ${PYTHONLINK} -shared -o lib/vpif.so -lgfortran -lblas ${OBJS}
 
 clean:
-	rm -f obj/* lib/* src/*.mod src/vpimodule.c src/vpi-f2pywrappers2.f90
+	rm -f obj/* lib/* src/*.mod src/vpifmodule.c src/vpif-f2pywrappers2.f90
+#@nonl
 #@-node:gcross.20090806151612.1842:@thin Makefile
 #@-leo

@@ -10,7 +10,7 @@ from numpy import array, zeros, double, float64, isfinite, int32
 from numpy.linalg import norm
 from numpy.random import rand
 from random import randint, random
-import vpi
+import vpif
 
 #@+others
 #@+node:gcross.20090807144330.2152:accept_path
@@ -18,9 +18,10 @@ class accept_path(unittest.TestCase):
     @with_checker
     def test_always_accepts_minimizing_move(self, p1 = positive_float, p2 = positive_float):
         self.assert_(
-            (vpi.thermalize.accept_path(p1,p2) == 1) or
+            (vpif.thermalize.accept_path(p1,p2) == 1) or
             (p1 > p2)
         )
+#@nonl
 #@-node:gcross.20090807144330.2152:accept_path
 #@+node:gcross.20090813095726.2348:thermalize_path
 class thermalize_path(unittest.TestCase):
@@ -59,7 +60,7 @@ class thermalize_path(unittest.TestCase):
             return double(0.0)
         slice_move_attempted_counts, slice_move_accepted_counts = [zeros((n_slices,),dtype='i',order='Fortran') for dummy in xrange(2)]
         move_type_attempted_counts, move_type_accepted_counts = [zeros((3,),dtype='i',order='Fortran') for dummy in xrange(2)]
-        vpi.thermalize.thermalize_path(
+        vpif.thermalize.thermalize_path(
             x,xij2,
             U,gradU2,
             n_trials,
@@ -70,6 +71,7 @@ class thermalize_path(unittest.TestCase):
         )
         self.assert_((x==0.0).all())
         self.assert_((xij2==0.0).all())
+    #@nonl
     #@-node:gcross.20090813095726.2349:test_rejection_case
     #@-others
 #@-node:gcross.20090813095726.2348:thermalize_path
@@ -82,5 +84,6 @@ tests = [
 
 if __name__ == "__main__":
     unittest.main()
+#@nonl
 #@-node:gcross.20090807144330.2151:@thin thermalize.py
 #@-leo

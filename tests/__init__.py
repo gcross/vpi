@@ -6,7 +6,7 @@ from numpy import array, zeros, all, double
 from numpy.linalg import norm
 from numpy.random import rand
 import random
-import vpi
+import vpif
 
 #@+others
 #@+node:gcross.20090807144330.2153:ArrayGenerator
@@ -53,5 +53,6 @@ modules = [
 #@nonl
 #@-node:gcross.20090807144330.2154:tests
 #@-others
+#@nonl
 #@-node:gcross.20090807144330.1674:@thin __init__.py
 #@-leo
