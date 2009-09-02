@@ -869,17 +869,16 @@ class HarmonicOscillator(Physics):
   def __init__(self,system):
       Physics.__init__(self,system)
       try:
-          self.harmonic_oscillator_coefficients = system.harmonic_oscillator_coefficients
+          self.potential_coefficients = system.harmonic_oscillator_coefficients
+          self.trial_coefficients = sqrt(system.harmonic_oscillator_coefficients)
       except AttributeError:
               raise ValueError("System needs to define 'harmonic_oscillator_coefficients' to use harmonic oscillator physics!")       
-      self.system.physical_potentials.append(self)
-      self.system.trial_functions.append(self)
   #@-node:gcross.20090902085220.2359:__init__
   #@+node:gcross.20090902085220.2360:accumulate_potential
   def accumulate_potential(self,x,xij2,U,gradU):
       vpif.harmonic_oscillator.accumulate_potential(
           x,
-          self.system.harmonic_oscillator_coefficients,
+          self.potential_coefficients,
           U
       )
   #@-node:gcross.20090902085220.2360:accumulate_potential
@@ -887,7 +886,7 @@ class HarmonicOscillator(Physics):
   def compute_trial_weight(self,x,xij2):
       return vpif.harmonic_oscillator.compute_trial_weight(
           x,
-          self.harmonic_oscillator_coefficients
+          self.trial_coefficients
       )
   #@-node:gcross.20090902085220.2361:compute_trial_weight
   #@+node:gcross.20090902085220.2362:accumulate_trial_derivatives
@@ -896,7 +895,7 @@ class HarmonicOscillator(Physics):
           gradient_of_log_trial_fn,laplacian_of_log_trial_fn
       ):
       vpif.harmonic_oscillator.accumulate_trial_derivatives(
-          x,self.system.harmonic_oscillator_coefficients,
+          x,self.trial_coefficients,
           gradient_of_log_trial_fn,laplacian_of_log_trial_fn
       )
   #@-node:gcross.20090902085220.2362:accumulate_trial_derivatives
@@ -930,10 +929,6 @@ class HardSphereInteraction(Physics):
       if(number_of_attempts == 100):
           print >> sys.stderr, "Failed in 100 attempts to construct a system where no two particles violated the hard sphere condition."
           comm.Abort(-1)
-
-      self.system.physical_potentials.append(self)
-      self.system.greens_functions.append(self)
-      self.system.trial_functions.append(self)
   #@-node:gcross.20090902085220.2369:__init__
   #@+node:gcross.20090902085220.2370:accumulate_potential
   def accumulate_potential(self,x,xij2,U,gradU):
