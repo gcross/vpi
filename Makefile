@@ -13,6 +13,7 @@ CFLAGS = -I ${NUMPYDIR}/include -I ${PYTHONINCDIR} -I src
 FFLAGS = -cpp -fbounds-check -M src
 
 SOURCES = \
+  src/numeric_differentiation.f95 \
   src/angular_momentum.f95 \
   src/timers.f90 \
   src/rand_utils.f95 \
@@ -29,12 +30,13 @@ SOURCES = \
 
 OBJS = \
   obj/constants.o \
+  obj/xij.o \
+  obj/numeric_differentiation.o \
   obj/angular_momentum.o \
   obj/timers.o \
   obj/rand_utils.o \
   obj/gfn.o \
   obj/sample.o \
-  obj/xij.o \
   obj/observables.o \
   obj/thermalize.o \
   obj/histograms.o \

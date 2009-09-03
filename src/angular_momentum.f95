@@ -3,6 +3,8 @@
 !@@language fortran90
 module angular_momentum
 
+ use numeric_differentiation
+
  implicit none
 
  !@ << Constants >>
@@ -276,6 +278,131 @@ pure subroutine accumulate_effective_potential2 (&
 
 end subroutine
 !@-node:gcross.20090827135657.1433:accumulate_effective_potential2
+!@+node:gcross.20090903090230.2068:compute_feynman_phase
+pure function compute_feynman_phase( &
+    x, n_rotating_particles, &
+    rotation_axis_1, rotation_axis_2, &
+    n_particles, n_dimensions &
+  ) result (phase)
+  integer, intent(in) :: rotation_axis_1, rotation_axis_2, n_rotating_particles
+  integer, intent(in) :: n_particles, n_dimensions
+  double precision, dimension(n_particles, n_dimensions), intent(in) :: x
+
+  double precision :: phase
+
+  phase = dble(n_rotating_particles)/n_particles & 
+        * sum(atan2(x(:,rotation_axis_2),x(:,rotation_axis_1)))
+
+end function
+!@-node:gcross.20090903090230.2068:compute_feynman_phase
+!@+node:gcross.20090903090230.2070:compute_feynman_backflow
+pure function compute_feynman_backflow( &
+    x, xij2, gradient_of_log_trial_fn, &
+    rotation_axis_1, rotation_axis_2, &
+    n_particles, n_dimensions &
+  ) result (correction)
+  integer, intent(in) :: rotation_axis_1, rotation_axis_2
+  integer, intent(in) :: n_particles, n_dimensions
+  double precision, dimension(n_particles, n_dimensions), intent(in) :: x, gradient_of_log_trial_fn
+  double precision, dimension(n_particles, n_particles), intent(in) :: xij2
+
+  double precision :: correction
+
+  correction = sum(compute_term( &
+    gradient_of_log_trial_fn(:,rotation_axis_1), & ! gx
+    gradient_of_log_trial_fn(:,rotation_axis_2), & ! gy
+    x(:,rotation_axis_1),x(:,rotation_axis_2) &
+  ))
+
+contains
+
+  elemental function compute_term(gx,gy,x,y) result (term)
+    double precision, intent(in) :: gx, gy, x, y
+    double precision :: term
+
+    double precision :: r_squared
+
+    r_squared = x**2+y**2
+
+    term = gx*y/r_squared - gy*x/r_squared
+  end function
+
+end function
+!@-node:gcross.20090903090230.2070:compute_feynman_backflow
+!@+node:gcross.20090903090230.2073:compute_feynman_phase_with_correction
+pure function compute_feynman_phase_with_correction( &
+    x, xij2, gradient_of_log_trial_fn, &
+    n_rotating_particles, &
+    rotation_axis_1, rotation_axis_2, &
+    n_particles, n_dimensions &
+  ) result (phase)
+  integer, intent(in) :: rotation_axis_1, rotation_axis_2, n_rotating_particles
+  integer, intent(in) :: n_particles, n_dimensions
+  double precision, dimension(n_particles, n_dimensions), intent(in) :: x, gradient_of_log_trial_fn
+  double precision, dimension(n_particles, n_particles), intent(in) :: xij2
+
+  double precision :: phase
+
+  phase = compute_feynman_phase( &
+            x, n_rotating_particles, &
+            rotation_axis_1, rotation_axis_2, &
+            n_particles, n_dimensions &
+          ) &
+        + compute_feynman_backflow( &
+            x, xij2, gradient_of_log_trial_fn, &
+            rotation_axis_1, rotation_axis_2, &
+            n_particles, n_dimensions &
+          )
+
+end function
+!@-node:gcross.20090903090230.2073:compute_feynman_phase_with_correction
+!@+node:gcross.20090903090230.2072:accum_potential_via_numeric_diffs
+subroutine accum_potential_via_numeric_diffs (&
+    x, xij2, &
+    frame_angular_velocity, lambda, &
+    n_slices, n_particles, n_dimensions, &
+    compute_phase, &
+    U &
+  )
+
+  ! Input variables
+  integer, intent(in) :: n_slices, n_particles, n_dimensions
+  double precision, dimension ( n_slices, n_particles, n_dimensions ), intent(in) :: x
+  double precision, dimension ( n_slices, n_particles, n_particles ), intent(in) :: xij2
+  double precision, intent(in) :: frame_angular_velocity, lambda
+
+!f2py external, intent(callback) :: compute_phase
+  interface
+    pure function compute_phase(x,xij2,n_particles,n_dimensions) result (phase)
+      integer, intent(in) :: n_particles, n_dimensions
+      double precision, dimension ( n_particles, n_dimensions ), intent(in) :: x
+      double precision, dimension ( n_particles, n_particles ), intent(in) :: xij2
+      double precision :: phase
+    end function
+  end interface
+
+  ! Output variables
+  double precision, dimension( n_slices, n_particles ), intent(inout) :: U
+
+  ! Local variables
+  integer :: i, j
+  double precision, dimension( n_particles, n_dimensions ) :: phase_gradient
+  double precision :: phase_laplacian
+
+  do i = 1, n_slices
+    call numerically_differentiate_jastrow( &
+          x,xij2, &
+          n_particles,n_dimensions, &
+          compute_phase, &
+          phase_gradient,phase_laplacian &
+        )
+    forall(j=1:n_particles) &
+      U(i,j) = U(i,j) + & 
+        sum(phase_gradient(j,:)*(lambda*phase_gradient(j,:)-frame_angular_velocity))
+  end do
+
+end subroutine
+!@-node:gcross.20090903090230.2072:accum_potential_via_numeric_diffs
 !@-others
 
 end module angular_momentum

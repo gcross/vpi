@@ -224,8 +224,21 @@ class RadialDensityHistogram(Histogram):
             self.maximum_radius,
             self.histogram
         )
-    #@nonl
     #@-node:gcross.20090902085220.2191:update
+    #@+node:gcross.20090903090230.2077:write_out_totals
+    def write_out_totals(self,histogram):
+        ensure_path_to_file_exists(self.filename)
+        total_counts = float(sum(histogram))
+        bin_width = float(self.right-self.left)/self.number_of_bins
+        current = float(self.left)+bin_width/2
+        normalization_exponent = self.system.number_of_dimensions
+        with open(self.filename,"w") as f:
+            for count in histogram:
+                normalization = (current+bin_width/2)**normalization_exponent \
+                              - (current-bin_width/2)**normalization_exponent
+                print >> f, "{0} {1}".format(current,count/(total_counts*normalization))
+                current += bin_width
+    #@-node:gcross.20090903090230.2077:write_out_totals
     #@-others
 #@-node:gcross.20090902085220.2188:class RadialDensityHistogram
 #@+node:gcross.20090902085220.2192:class PlaneRadialDensityHistogram
@@ -253,6 +266,20 @@ class PlaneRadialDensityHistogram(Histogram):
         )
     #@nonl
     #@-node:gcross.20090902085220.2195:update
+    #@+node:gcross.20090903090230.2079:write_out_totals
+    def write_out_totals(self,histogram):
+        ensure_path_to_file_exists(self.filename)
+        total_counts = float(sum(histogram))
+        bin_width = float(self.right-self.left)/self.number_of_bins
+        current = float(self.left)+bin_width/2
+        normalization_exponent = 2
+        with open(self.filename,"w") as f:
+            for count in histogram:
+                normalization = (current+bin_width/2)**normalization_exponent \
+                              - (current-bin_width/2)**normalization_exponent
+                print >> f, "{0} {1}".format(current,count/(total_counts*normalization))
+                current += bin_width
+    #@-node:gcross.20090903090230.2079:write_out_totals
     #@-others
 #@-node:gcross.20090902085220.2192:class PlaneRadialDensityHistogram
 #@+node:gcross.20090902085220.2196:class RecipricalRadiusSquaredDensityHistogram
@@ -921,12 +948,12 @@ class HardSphereInteraction(Physics):
           vpif.hard_sphere_interaction.has_collision(
               system.xij2[0:1],
               self.hard_sphere_radius_squared
-          ) and number_of_attempts < 100
+          ) and number_of_attempts < 1000
       ):
           number_of_attempts += 1
           system.reinitialize_lattice()
 
-      if(number_of_attempts == 100):
+      if(number_of_attempts == 1000):
           print >> sys.stderr, "Failed in 100 attempts to construct a system where no two particles violated the hard sphere condition."
           comm.Abort(-1)
   #@-node:gcross.20090902085220.2369:__init__

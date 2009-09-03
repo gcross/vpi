@@ -24,6 +24,7 @@
 <v t="gcross.20090818081913.1354"><vh>@thin observables.f95</vh></v>
 <v t="gcross.20090819083142.1363"><vh>@thin histograms.f95</vh></v>
 <v t="gcross.20090819093822.1396"><vh>@thin lattice.f90</vh></v>
+<v t="gcross.20090903090230.2039"><vh>@thin numeric_differentiation.f95</vh></v>
 <v t="gcross.20090902085220.2158"><vh>@thin vpi.py</vh></v>
 <v t="gcross.20090901084550.2623"><vh>Physics</vh>
 <v t="gcross.20090901084550.2618"><vh>@thin harmonic_oscillator.f95</vh></v>
