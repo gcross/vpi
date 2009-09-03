@@ -64,8 +64,6 @@ pure subroutine accumulate_trial_derivatives( &
 
   hard_sphere_radius_squared = hard_sphere_radius ** 2
 
-  grad_lntfn = 0.0d0
-  lap_lntfn = 0.0d0
   do i = 1, n_particles
     do j = i + 1, n_particles
       ri2 = 1.0d0/xij2(i,j)
