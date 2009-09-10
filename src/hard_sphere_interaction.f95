@@ -80,6 +80,67 @@ pure subroutine accumulate_trial_derivatives( &
   end do
 end subroutine
 !@-node:gcross.20090901084550.2622:accumulate_trial_derivatives
+!@+node:gcross.20090908085435.1631:compute_gradient_backflow
+pure subroutine compute_gradient_backflow( &
+    x, xij2, &
+    hard_sphere_radius, rotation_rate, &
+    rotation_plane_axis_1, rotation_plane_axis_2, &
+    n_slices, n_particles, n_dimensions, &
+    gradient_backflow &
+  )
+  integer, intent(in) :: n_slices, n_particles, n_dimensions
+  double precision, dimension( n_slices, n_particles, n_dimensions ), intent(in) :: x
+  double precision, dimension( n_slices, n_particles, n_particles ), intent(in) :: xij2
+  double precision, intent(in) :: hard_sphere_radius, rotation_rate
+  integer, intent(in) :: rotation_plane_axis_1, rotation_plane_axis_2
+  double precision, dimension( n_slices, n_particles, n_dimensions ), intent(out) :: gradient_backflow
+
+  double precision :: recipricol_rho_ip_squared, recipricol_rho_ip_4th, r_ip_j_squared, r_ip_j, recipricol_rho_j_squared
+  double precision :: difference_recipical_rho_squared, common_factor, C_ip_j, r_ip_j_cubed, D_ip_j
+  double precision, dimension( n_dimensions ) :: term
+  integer :: s, ip, j, kp, k1, k2
+
+  ! Rename parameters to match notes
+  k1 = rotation_plane_axis_1
+  k2 = rotation_plane_axis_2
+
+  gradient_backflow = 0d0
+
+  do ip = 1, n_particles
+    do s = 1, n_slices
+      recipricol_rho_ip_squared = 1d0/(x(s,ip,k1)**2 + x(s,ip,k2)**2)
+      recipricol_rho_ip_4th = recipricol_rho_ip_squared**2
+      do j = 1, n_particles
+        if (j == ip) then
+          cycle
+        end if
+        r_ip_j_squared = xij2(s,ip,j)
+        r_ip_j = sqrt(r_ip_j_squared)
+        recipricol_rho_j_squared = 1d0/(x(s,j,k1)**2 + x(s,j,k2)**2)
+        difference_recipical_rho_squared = recipricol_rho_ip_squared - recipricol_rho_j_squared
+        common_factor = (1.0/r_ip_j_squared)*difference_recipical_rho_squared &
+                            *(3d0+hard_sphere_radius/(r_ip_j*(1-hard_sphere_radius/r_ip_j)))
+        term(:) = common_factor * (x(s,ip,:)-x(s,j,:))
+
+        term(k1) = term(k1) + 2*x(s,ip,k1)*recipricol_rho_ip_4th
+        term(k2) = term(k2) + 2*x(s,ip,k2)*recipricol_rho_ip_4th
+
+        C_ip_j = x(s,ip,k1)*x(s,j,k2)-x(s,ip,k2)*x(s,j,k1)
+        term(:) = (-C_ip_j)*term(:)
+
+        term(k1) = term(k1) + x(s,j,k2)*difference_recipical_rho_squared
+        term(k2) = term(k2) - x(s,j,k1)*difference_recipical_rho_squared
+
+        r_ip_j_cubed = r_ip_j * r_ip_j_squared
+        D_ip_j = r_ip_j_cubed*(1d0-hard_sphere_radius/r_ip_j)    
+        term(:) = hard_sphere_radius*rotation_rate/D_ip_j*term(:)
+
+        gradient_backflow(s,ip,:) = gradient_backflow(s,ip,:) + term(:)
+      end do
+    end do
+  end do
+end subroutine
+!@-node:gcross.20090908085435.1631:compute_gradient_backflow
 !@+node:gcross.20090828201103.2127:has_collision
 pure function has_collision(xij2,hard_sphere_radius_squared,n_slices,n_particles)
   integer, intent(in) :: n_slices, n_particles
