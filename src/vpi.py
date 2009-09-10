@@ -48,6 +48,10 @@ def ensure_path_to_file_exists(path):
 class MoveRejected(Exception):
         pass
 #@-node:gcross.20090902085220.2387:MoveRejected
+#@+node:gcross.20090908085435.1634:FailureToContructValidSystemException
+class FailureToContructValidSystemException(Exception):
+    pass
+#@-node:gcross.20090908085435.1634:FailureToContructValidSystemException
 #@-node:gcross.20090902085220.2386:Exception classes
 #@+node:gcross.20090902085220.2161:Observable classes
 #@+others
@@ -954,8 +958,7 @@ class HardSphereInteraction(Physics):
           system.reinitialize_lattice()
 
       if(number_of_attempts == 1000):
-          print >> sys.stderr, "Failed in 100 attempts to construct a system where no two particles violated the hard sphere condition."
-          comm.Abort(-1)
+          raise FailureToContructValidSystemException("Failed in 1000 attempts to construct a system where no two particles violated the hard sphere condition.")
   #@-node:gcross.20090902085220.2369:__init__
   #@+node:gcross.20090902085220.2370:accumulate_potential
   def accumulate_potential(self,x,xij2,U,gradU):
