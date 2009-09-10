@@ -127,14 +127,14 @@ pure function compute_greens_function( &
 
   do i = 1, n_particles
     if(i .ne. particle_number) then
-      do j = slice_start+1, center_slice_number, 2
+      do j = slice_start+1, center_slice_number
         r = sqrt( xij2(j-1,particle_number,i) )
         rp = sqrt( xij2(j,particle_number,i) )
         d = (r-hard_sphere_radius)
         dp = (rp-hard_sphere_radius)
         hs_gfn = hs_gfn*(1.0d0 - exp(-d*dp/dt))
       end do
-      do j = center_slice_number+2,slice_end,2
+      do j = center_slice_number+2,slice_end
         r = sqrt( xij2(j-1,particle_number,i) )
         rp = sqrt( xij2(j,particle_number,i) )
         d = (r-hard_sphere_radius)
