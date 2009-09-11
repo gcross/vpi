@@ -140,8 +140,6 @@ pure function gfn_hard_wall_contribution( &
 
 end function
 !@-node:gcross.20090828095451.1453:hard wall
-!@+node:gcross.20090828095451.1454:hard sphere
-!@-node:gcross.20090828095451.1454:hard sphere
 !@-others
 
 end module gfn
