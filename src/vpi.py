@@ -97,6 +97,11 @@ class AverageValuesEstimate(Observable):
         self.estimate += estimate
         self.estimate_squared += estimate**2
     #@-node:gcross.20090902085220.2170:add
+    #@+node:gcross.20090911091023.2447:reset
+    def reset(self):
+        self.estimate *= 0
+        self.estimate_squared *= 0
+    #@-node:gcross.20090911091023.2447:reset
     #@-others
 #@-node:gcross.20090902085220.2165:class AverageValuesEstimate
 #@+node:gcross.20090902085220.2171:class SingleAverageValueEstimate
@@ -169,6 +174,10 @@ class Histogram(Observable):
                 print >> f, "{0} {1}".format(current,count/total_counts)
                 current += bin_width
     #@-node:gcross.20090902085220.2183:write_out_totals
+    #@+node:gcross.20090911091023.2449:reset
+    def reset(self):
+        self.histogram *= 0
+    #@-node:gcross.20090911091023.2449:reset
     #@-others
 #@-node:gcross.20090902085220.2181:class Histogram
 #@+node:gcross.20090902085220.2184:class PositionDensity1DHistogram
@@ -1080,6 +1089,11 @@ class System(object):
         for observable in self.observables:
             observable.total_and_write()
     #@-node:gcross.20090902085220.2302:total_and_write_observables
+    #@+node:gcross.20090911091023.2450:reset_observables
+    def reset_observables(self):
+        for observable in self.observables:
+            observable.reset()
+    #@-node:gcross.20090911091023.2450:reset_observables
     #@-node:gcross.20090902085220.2300:Observable management
     #@+node:gcross.20090902085220.2334:Physics
     #@+node:gcross.20090902085220.2354:add_physics
