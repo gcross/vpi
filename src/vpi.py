@@ -1246,15 +1246,15 @@ class System(object):
                 slice_move_accepted_counts,move_type_accepted_counts,
                 compute_potential,compute_trial_weight,compute_greens_function,
             )
+
             for observable in observables:
                 observable.update()
-            if (number_completed % decile == 0) and (my_rank == 0):
+            if decile > 0 and (number_completed % decile == 0) and (my_rank == 0):
                 print "{0:.0%} complete;  local bridge move acceptance rate = {1:.0%}, local rigid move acceptance rate = {2:.0%}".format(
                     float(number_completed)/self.number_of_observations,
                     float(move_type_accepted_counts[0])/move_type_attempted_counts[0],
                     float(move_type_accepted_counts[1])/move_type_attempted_counts[1],
                 )
-        #@nonl
         #@-node:gcross.20090902085220.2307:<< Main iteration >>
         #@nl
     #@-node:gcross.20090902085220.2304:run
