@@ -78,12 +78,12 @@ class AverageValuesEstimate(Observable):
         self.estimate = zeros(shape,dtype=double)
         self.estimate_squared = zeros(shape,dtype=double)
     #@-node:gcross.20090902085220.2167:__init__
-    #@+node:gcross.20090902085220.2168:total_and_write
+    #@+node:gcross.20090902085220.2168:write_out_totals
     def write_out_totals(self,totals_and_errors):
         totals, totals_squared = totals_and_errors
         errors = sqrt((totals_squared-totals**2)/(self.total_number_of_observations * number_of_processors))
         self.write_out(totals,errors)
-    #@-node:gcross.20090902085220.2168:total_and_write
+    #@-node:gcross.20090902085220.2168:write_out_totals
     #@+node:gcross.20090902085220.2169:compute_total
     def compute_total(self):
         total_estimate_and_square = zeros(2*prod(self.estimate.shape),dtype='d',order='Fortran')
