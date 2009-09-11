@@ -42,6 +42,7 @@
 <v t="gcross.20090818081913.1356"><vh>@thin observables.py</vh></v>
 <v t="gcross.20090819083142.1375"><vh>@thin histograms.py</vh></v>
 <v t="gcross.20090819093822.1403"><vh>@thin lattice.py</vh></v>
+<v t="gcross.20090911091023.2483"><vh>@thin hard_sphere_interaction.py</vh></v>
 </v>
 <v t="gcross.20090818081913.1339"><vh>Examples</vh>
 <v t="gcross.20090818081913.1340"><vh>@path examples/harmonic-oscillator-trap</vh>
