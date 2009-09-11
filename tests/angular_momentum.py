@@ -71,44 +71,53 @@ class sum_over_symmetrizations(unittest.TestCase):
     #@-node:gcross.20090817102318.1727:test_correctnes
     #@-others
 #@-node:gcross.20090807171924.1722:sum_over_symmetrizations
-#@+node:gcross.20090817102318.1730:compute_angular_derivatives
-class compute_angular_derivatives(unittest.TestCase):
+#@+node:gcross.20090817102318.1730:accumulate_gradient_fancy
+class accumulate_gradient_fancy(unittest.TestCase):
     #@    @+others
     #@+node:gcross.20090825141639.1536:Basic properties
     #@+node:gcross.20090817102318.1731:test_finite
     @with_checker
     def test_finite(self,
+            n_slices = irange(1,4),
             n_particles = irange(1,10),
             fixed_rotation_axis = irange(1,3),
         ):
-        x = rand(n_particles,3)
+        x = rand(n_slices,n_particles,3)
         N_rotating_particles = randint(0,n_particles)
         rotation_plane_axis_1, rotation_plane_axis_2 = vpif.angular_momentum.get_rotation_plane_axes(fixed_rotation_axis)
-        first_derivatives = vpif.angular_momentum.compute_angular_derivatives(x,rotation_plane_axis_1,rotation_plane_axis_2,N_rotating_particles)
-        self.assert_(isfinite(first_derivatives).all())
-    #@nonl
+        gradient_phase = zeros(x.shape,dtype=double,order='Fortran')
+        vpif.angular_momentum.accumulate_gradient_fancy(
+            x,
+            N_rotating_particles,
+            rotation_plane_axis_1,rotation_plane_axis_2,
+            gradient_phase
+            )
+
+        self.assert_(isfinite(gradient_phase).all())
     #@-node:gcross.20090817102318.1731:test_finite
     #@-node:gcross.20090825141639.1536:Basic properties
     #@+node:gcross.20090825141639.1537:Correctness
-    #@+node:gcross.20090819152718.1587:test_correct_1st_derivatives
+    #@+node:gcross.20090819152718.1587:test_correct
     @with_checker(number_of_calls=10)
-    def test_correct_1st_derivatives(self,
+    def test_correct(self,
             N_particles  = irange(1,5),
             N_dimensions = irange(2,5),
         ):
-        N_rotating_particles = randint(1,N_particles)
-        x = rand(N_particles,N_dimensions)
+        N_rotating_particles = randint(0,N_particles)
+        x = rand(1,N_particles,N_dimensions)
         rotation_plane_axis_1 = randint(1,N_dimensions-1)
         rotation_plane_axis_2 = randint(rotation_plane_axis_1+1,N_dimensions)
         angles = arctan2(
-            x[:,rotation_plane_axis_2-1],
-            x[:,rotation_plane_axis_1-1]
+            x[0,:,rotation_plane_axis_2-1],
+            x[0,:,rotation_plane_axis_1-1]
         )
-        first_derivatives = vpif.angular_momentum.compute_angular_derivatives(
+        gradient_phase = zeros(x.shape,dtype=double,order='Fortran')
+        vpif.angular_momentum.accumulate_gradient_fancy(
             x,
+            N_rotating_particles,
             rotation_plane_axis_1,rotation_plane_axis_2,
-            N_rotating_particles
-        )
+            gradient_phase
+            )
         for i in xrange(len(angles)):
             numerical_derivative = derivative(
                 self.make_phase1(N_rotating_particles,angles,i),
@@ -117,12 +126,18 @@ class compute_angular_derivatives(unittest.TestCase):
                 n=1,
                 order=13
             )
+            rot_x = x[0,i,rotation_plane_axis_1-1]
+            rot_y = x[0,i,rotation_plane_axis_2-1]
+            rot_r_squared = rot_x**2 + rot_y**2
             self.assertAlmostEqual(
-                numerical_derivative,
-                first_derivatives[i]
+                numerical_derivative * rot_y/rot_r_squared,
+                gradient_phase[0,i,rotation_plane_axis_1-1]
             )
-    #@nonl
-    #@-node:gcross.20090819152718.1587:test_correct_1st_derivatives
+            self.assertAlmostEqual(
+               -numerical_derivative * rot_x/rot_r_squared,
+                gradient_phase[0,i,rotation_plane_axis_2-1]
+            )
+    #@-node:gcross.20090819152718.1587:test_correct
     #@+node:gcross.20090819152718.1588:phase
     @staticmethod
     def phase(N_rotating_particles, angles):
@@ -131,7 +146,12 @@ class compute_angular_derivatives(unittest.TestCase):
         for a in combinations(angles,N_rotating_particles):
             C += cos(sum(a))
             S += sin(sum(a))
-        return atan(S/C)
+        if C == -0:
+            return -pi/2
+        if C == +0:
+            return pi/2
+        else:
+            return atan(S/C)
     #@-node:gcross.20090819152718.1588:phase
     #@+node:gcross.20090819152718.1589:make_phase1
     def make_phase1(self,N_rotating_particles,angles,index):
@@ -142,49 +162,8 @@ class compute_angular_derivatives(unittest.TestCase):
         return phase1
     #@-node:gcross.20090819152718.1589:make_phase1
     #@-node:gcross.20090825141639.1537:Correctness
-    #@+node:gcross.20090825141639.1538:Special cases
-    #@+node:gcross.20090825141639.1540:test_case_Nrot_eq_0
-    @with_checker(number_of_calls=5)
-    def test_case_Nrot_eq_0(self,
-            n_particles = irange(1,10),
-            fixed_rotation_axis = irange(1,3),
-        ):
-        x = rand(n_particles,3)
-        N_rotating_particles = 0
-        rotation_plane_axis_1, rotation_plane_axis_2 = vpif.angular_momentum.get_rotation_plane_axes(fixed_rotation_axis)
-        first_derivatives = vpif.angular_momentum.compute_angular_derivatives(x,rotation_plane_axis_1,rotation_plane_axis_2,N_rotating_particles)
-        self.assert_((first_derivatives==0).all())
-    #@nonl
-    #@-node:gcross.20090825141639.1540:test_case_Nrot_eq_0
-    #@+node:gcross.20090825141639.1542:test_case_Nrot_eq_half_N
-    @with_checker(number_of_calls=5)
-    def test_case_Nrot_eq_half_N(self,
-            n_particles = irange(2,11,2),
-            fixed_rotation_axis = irange(1,3),
-        ):
-        x = rand(n_particles,3)
-        assert (n_particles % 2 == 0)
-        N_rotating_particles = n_particles//2
-        rotation_plane_axis_1, rotation_plane_axis_2 = vpif.angular_momentum.get_rotation_plane_axes(fixed_rotation_axis)
-        first_derivatives = vpif.angular_momentum.compute_angular_derivatives(x,rotation_plane_axis_1,rotation_plane_axis_2,N_rotating_particles)
-        for derivative in first_derivatives:
-            self.assertAlmostEqual(0.5,derivative)
-    #@-node:gcross.20090825141639.1542:test_case_Nrot_eq_half_N
-    #@+node:gcross.20090825141639.1544:test_case_Nrot_eq_N
-    @with_checker(number_of_calls=5)
-    def test_case_Nrot_eq_N(self,
-            n_particles = irange(1,10),
-            fixed_rotation_axis = irange(1,3),
-        ):
-        x = rand(n_particles,3)
-        N_rotating_particles = n_particles
-        rotation_plane_axis_1, rotation_plane_axis_2 = vpif.angular_momentum.get_rotation_plane_axes(fixed_rotation_axis)
-        first_derivatives = vpif.angular_momentum.compute_angular_derivatives(x,rotation_plane_axis_1,rotation_plane_axis_2,N_rotating_particles)
-        self.assert_((first_derivatives==1).all())
-    #@-node:gcross.20090825141639.1544:test_case_Nrot_eq_N
-    #@-node:gcross.20090825141639.1538:Special cases
     #@-others
-#@-node:gcross.20090817102318.1730:compute_angular_derivatives
+#@-node:gcross.20090817102318.1730:accumulate_gradient_fancy
 #@+node:gcross.20090813184545.1726:compute_rotational_potential
 class accumulate_rotation_potential(unittest.TestCase):
     #@    @+others
@@ -319,8 +298,8 @@ tests = [
     get_rotation_plane_axes,
     perform_special_matmul,
     sum_over_symmetrizations,
-    compute_angular_derivatives,
-    accumulate_rotation_potential
+    accumulate_gradient_fancy,
+    #accumulate_rotation_potential
     ]
 
 if __name__ == "__main__":
