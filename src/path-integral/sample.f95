@@ -1,5 +1,5 @@
 !@+leo-ver=4-thin
-!@+node:gcross.20090623152316.73:@thin sample.f90
+!@+node:gcross.20090623152316.73:@thin sample.f95
 !@@language fortran90
 module sample
 
@@ -441,5 +441,5 @@ end subroutine bbridge
 !@-others
 
 end module sample
-!@-node:gcross.20090623152316.73:@thin sample.f90
+!@-node:gcross.20090623152316.73:@thin sample.f95
 !@-leo

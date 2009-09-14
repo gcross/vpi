@@ -2,58 +2,54 @@
 #@+node:gcross.20090806151612.1842:@thin Makefile
 #@@language Makefile
 #@@tabwidth 4
-all: lib/vpif.so
+all: lib/vpif.so lib/vpi.py
 
 include paths.mk
 
 CC = gcc
 FC = gfortran
-FLAGS = -fPIC -O3
-CFLAGS = -I ${NUMPYDIR}/include -I ${PYTHONINCDIR} -I src
-FFLAGS = -cpp -fbounds-check -M src
+FLAGS = -fPIC -O3 -Jmods
+CFLAGS = -I ${NUMPYDIR}/include -I ${PYTHONINCDIR} -I src/wrappers
+FFLAGS = -cpp -fbounds-check
 
 SOURCES = \
-  src/numeric_differentiation.f95 \
-  src/angular_momentum.f95 \
-  src/timers.f90 \
-  src/rand_utils.f95 \
-  src/gfn.f95 \
-  src/sample.f90 \
-  src/xij.f95 \
-  src/observables.f95 \
-  src/thermalize.f90 \
-  src/histograms.f95 \
-  src/lattice.f90 \
-  src/harmonic_oscillator.f95 \
-  src/hard_sphere_interaction.f95 \
-  src/leonard_jones_interaction.f95
+  src/utils/timers.f95 \
+  src/utils/rand_utils.f95 \
+  src/utils/xij.f95 \
+  src/utils/numeric_differentiation.f95 \
+  src/measurement/observables.f95 \
+  src/measurement/histograms.f95 \
+  src/physics/angular_momentum.f95 \
+  src/physics/gfn.f95 \
+  src/physics/hard_sphere_interaction.f95 \
+  src/physics/harmonic_oscillator.f95 \
+  src/physics/leonard_jones_interaction.f95 \
+  src/path-integral/lattice.f95 \
+  src/path-integral/sample.f95 \
+  src/path-integral/thermalize.f95
 
 OBJS = \
-  obj/constants.o \
-  obj/xij.o \
-  obj/numeric_differentiation.o \
-  obj/angular_momentum.o \
-  obj/timers.o \
-  obj/rand_utils.o \
-  obj/gfn.o \
-  obj/sample.o \
-  obj/observables.o \
-  obj/thermalize.o \
-  obj/histograms.o \
-  obj/lattice.o \
-  obj/harmonic_oscillator.o \
-  obj/hard_sphere_interaction.o \
-  obj/leonard_jones_interaction.o \
-  obj/vpifmodule.o \
-  obj/vpif-f2pywrappers2.o \
-  obj/fortranobject.o
+  obj/utils/constants.o \
+  obj/utils/timers.o \
+  obj/utils/rand_utils.o \
+  obj/utils/xij.o \
+  obj/utils/numeric_differentiation.o \
+  obj/measurement/observables.o \
+  obj/measurement/histograms.o \
+  obj/physics/angular_momentum.o \
+  obj/physics/gfn.o \
+  obj/physics/hard_sphere_interaction.o \
+  obj/physics/harmonic_oscillator.o \
+  obj/physics/leonard_jones_interaction.o \
+  obj/path-integral/lattice.o \
+  obj/path-integral/sample.o \
+  obj/path-integral/thermalize.o \
+  obj/wrappers/vpifmodule.o \
+  obj/wrappers/vpif-f2pywrappers2.o \
+  obj/wrappers/fortranobject.o
 
-src/vpifmodule.c src/vpif-f2pywrappers2.f90: ${SOURCES} Makefile
-	f2py ${SOURCES} -m vpif
-	mv vpifmodule.c vpif-f2pywrappers2.f90 src
-
-obj/vpifmodule.o: src/vpifmodule.c
-	${CC} ${FLAGS} ${CFLAGS} -c $< -o $@
+src/wrappers/vpifmodule.c src/wrapers/vpif-f2pywrappers2.f90: ${SOURCES} Makefile
+	f2py ${SOURCES} -m vpif --build-dir src/wrappers
 
 obj/%.o: src/%.c Makefile
 	${CC} ${FLAGS} ${CFLAGS} -c $< -o $@
@@ -65,8 +61,10 @@ obj/%.o: src/%.f90 Makefile
 lib/vpif.so: ${OBJS}
 	gfortran ${PYTHONLINK} -shared -o lib/vpif.so -lgfortran -lblas ${OBJS}
 
+lib/vpi.py: src/vpi.py
+	cp $< $@
+
 clean:
-	rm -f obj/* lib/* src/*.mod src/vpifmodule.c src/vpif-f2pywrappers2.f90
-#@nonl
+	rm -f obj/*/* lib/* src/*/*.mod src/wrappers/vpifmodule.c src/wrappers/vpif-f2pywrappers2.f90
 #@-node:gcross.20090806151612.1842:@thin Makefile
 #@-leo

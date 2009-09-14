@@ -1,5 +1,5 @@
 !@+leo-ver=4-thin
-!@+node:gcross.20090819093822.1396:@thin lattice.f90
+!@+node:gcross.20090819093822.1396:@thin lattice.f95
 !@@language fortran90
 
 module lattice
@@ -36,5 +36,5 @@ end subroutine make_lattice
 !@-others
 
 end module lattice
-!@-node:gcross.20090819093822.1396:@thin lattice.f90
+!@-node:gcross.20090819093822.1396:@thin lattice.f95
 !@-leo

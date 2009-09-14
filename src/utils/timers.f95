@@ -1,5 +1,5 @@
 !@+leo-ver=4-thin
-!@+node:gcross.20090806151612.1841:@thin timers.f90
+!@+node:gcross.20090806151612.1841:@thin timers.f95
 !@@language fortran90
 MODULE timers
  implicit none
@@ -36,5 +36,5 @@ function sec_timer() result(t)
 end function sec_timer
 
 end module timers
-!@-node:gcross.20090806151612.1841:@thin timers.f90
+!@-node:gcross.20090806151612.1841:@thin timers.f95
 !@-leo

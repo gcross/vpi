@@ -1,5 +1,5 @@
 !@+leo-ver=4-thin
-!@+node:gcross.20090805153643.1843:@thin thermalize.f90
+!@+node:gcross.20090805153643.1843:@thin thermalize.f95
 !@@language fortran90
 module thermalize
 
@@ -392,5 +392,5 @@ end subroutine thermalize_path
 !@-others
 
 end module thermalize
-!@-node:gcross.20090805153643.1843:@thin thermalize.f90
+!@-node:gcross.20090805153643.1843:@thin thermalize.f95
 !@-leo

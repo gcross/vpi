@@ -1,5 +1,5 @@
 !@+leo-ver=4-thin
-!@+node:gcross.20090624144408.1462:@thin constants.f90
+!@+node:gcross.20090624144408.1462:@thin constants.f95
 !@@language fortran90
 
 module constants
@@ -14,5 +14,5 @@ module constants
   double precision, parameter :: realbignumber = 1e30
 
 end module constants
-!@-node:gcross.20090624144408.1462:@thin constants.f90
+!@-node:gcross.20090624144408.1462:@thin constants.f95
 !@-leo
