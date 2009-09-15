@@ -92,10 +92,12 @@ pure subroutine accumulate_gradient_fancy (&
 
   ! Local variables
   double complex, dimension(n_particles) :: amplitudes
-  double complex :: saved_amplitude, full_sum, full_sum_conj, partial_sum
+  double complex :: full_sum, full_sum_conj, partial_sum
   double precision :: full_sum_amplitude_squared
   integer :: s, i
 
+  !@  << Special cases >>
+  !@+node:gcross.20090915142144.1647:<< Special cases >>
   if(n_rotating_particles == 0) then
     return
   end if
@@ -117,6 +119,8 @@ pure subroutine accumulate_gradient_fancy (&
     end do
     return
   end if
+  !@-node:gcross.20090915142144.1647:<< Special cases >>
+  !@nl
 
   do s = 1, n_slices
 
@@ -132,27 +136,18 @@ pure subroutine accumulate_gradient_fancy (&
         call compute_and_accumulate_gradient(amplitudes(i),gradient_phase(s,i,:))
       end do
       cycle
-!@+at
-! To get the partial sums, i.e. the the sums which are required to have a
-! selected coordinate "i" appear, we compute the full sum but set the
-! amplitude of the coordinate "i" to zero in order to get a sum over all sets
-! of (m-1) coordinates which don't include "i"'s amplitude, then we multiply
-! by "i"'s amplitude.
-!@-at
-!@@c
     else
       do i = 1, n_particles
-        saved_amplitude = amplitudes(i)
-        amplitudes(i) = (0d0,0d0)
-        partial_sum = sum_over_symmetrizations(amplitudes,n_particles,n_rotating_particles-1)*saved_amplitude
+        call compute_partial_sum(amplitudes,i,n_particles,n_rotating_particles,partial_sum)
         call compute_and_accumulate_gradient(partial_sum,gradient_phase(s,i,:))
-        amplitudes(i) = saved_amplitude
       end do
     end if
   end do
 
-  contains
+contains
 
+  !@  << Helper routines >>
+  !@+node:gcross.20090915142144.1648:<< Helper routines >>
   pure subroutine compute_and_accumulate_gradient(amplitude,gradient_phase)
     double complex, intent(in) :: amplitude
     double precision, dimension(n_dimensions), intent(inout) :: gradient_phase
@@ -173,9 +168,41 @@ pure subroutine accumulate_gradient_fancy (&
           gradient_phase &
     )
   end subroutine
+  !@-node:gcross.20090915142144.1648:<< Helper routines >>
+  !@nl
 
 end subroutine
 !@-node:gcross.20090827135657.1422:accumulate_gradient_fancy
+!@+node:gcross.20090915142144.1645:compute_partial_sum
+pure subroutine compute_partial_sum( &
+    amplitudes, &
+    excluded_index, &
+    n_particles, n_rotating_particles, &
+    partial_sum &
+  )
+
+  double complex, dimension(n_particles), intent(inout) :: amplitudes
+  integer, intent(in) :: excluded_index, n_particles, n_rotating_particles
+  double complex, intent(out) :: partial_sum
+
+  double complex :: saved_amplitude
+
+!@+at
+! To get the partial sums, i.e. the the sums which are required to have a
+! selected coordinate "i" appear, we compute the full sum but set the
+! amplitude of the coordinate "i" to zero in order to get a sum over all sets
+! of (m-1) coordinates which don't include "i"'s amplitude, then we multiply
+! by "i"'s amplitude.
+!@-at
+!@@c
+
+  saved_amplitude = amplitudes(excluded_index)
+  amplitudes(excluded_index) = (0d0,0d0)
+  partial_sum = sum_over_symmetrizations(amplitudes,n_particles,n_rotating_particles-1)*saved_amplitude
+  amplitudes(excluded_index) = saved_amplitude
+
+end subroutine
+!@-node:gcross.20090915142144.1645:compute_partial_sum
 !@+node:gcross.20090915142144.1644:accum_angle_drv_into_gradient
 pure subroutine accum_angle_drv_into_gradient(&
     derivative_of_fn_by_angle, x, &
