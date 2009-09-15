@@ -173,6 +173,86 @@ contains
 
 end subroutine
 !@-node:gcross.20090827135657.1422:accumulate_gradient_fancy
+!@+node:gcross.20090915142144.1652:compute_gradient_fancy_amplitude
+pure subroutine compute_gradient_fancy_amplitude (&
+    x, &
+    n_rotating_particles, &
+    rotation_plane_axis_1, rotation_plane_axis_2, &
+    n_particles, n_dimensions, &
+    gradient_amplitude &
+  )
+
+  ! Input variables
+  integer, intent(in) :: n_particles, n_dimensions
+  double precision, dimension(n_particles, n_dimensions), intent(in) :: x
+  integer, intent(in) :: rotation_plane_axis_1, rotation_plane_axis_2, n_rotating_particles
+
+  ! Output variables
+  double precision, dimension(n_particles, n_dimensions), intent(out) :: gradient_amplitude
+
+  ! Local variables
+  double complex, dimension(n_particles) :: amplitudes
+  double complex :: full_sum, full_sum_conj, partial_sum
+  double precision :: full_sum_amplitude_squared
+  integer :: i
+
+  !@  << Special cases >>
+  !@+node:gcross.20090915142144.1653:<< Special cases >>
+  if(mod(n_rotating_particles,n_particles) == 0) then
+    gradient_amplitude = 0
+    return
+  end if
+  !@-node:gcross.20090915142144.1653:<< Special cases >>
+  !@nl
+
+  amplitudes(:) = &
+    (x(:,rotation_plane_axis_1)*(1.0d0,0) + x(:,rotation_plane_axis_2)*(0,1.0d0)) &
+  / sqrt(x(:,rotation_plane_axis_1)**2 + x(:,rotation_plane_axis_2)**2)
+  full_sum = sum_over_symmetrizations(amplitudes,n_particles,n_rotating_particles)
+  full_sum_conj = conjg(full_sum)
+  if(n_rotating_particles == 1) then
+    forall (i=1:n_particles) &
+      gradient_amplitude(i,:) = compute_gradient(amplitudes(i),i)
+  else
+    do i = 1, n_particles
+      call compute_partial_sum(amplitudes,i,n_particles,n_rotating_particles,partial_sum)
+      gradient_amplitude(i,:) = compute_gradient(partial_sum,i)
+    end do
+  end if
+
+contains
+
+  !@  << Helper routines >>
+  !@+node:gcross.20090915142144.1654:<< Helper routines >>
+  pure function compute_gradient(amplitude,i) result (gradient)
+    double complex, intent(in) :: amplitude
+    integer, intent(in) :: i
+    double precision, dimension(n_dimensions) :: gradient
+
+    double precision :: derivative
+
+    derivative = -2d0*imag(amplitude*full_sum_conj)
+
+    gradient = 0
+    call accumulate_gradient(derivative,i,gradient)
+  end function
+
+  pure subroutine accumulate_gradient(derivative,i,gradient_phase)
+    double precision, intent(in) :: derivative
+    integer, intent(in) :: i
+    double precision, dimension(n_dimensions), intent(inout) :: gradient_phase
+    call accum_angle_drv_into_gradient( &
+          derivative, x(i,:), &
+          rotation_plane_axis_1, rotation_plane_axis_2, &
+          n_dimensions, &
+          gradient_phase &
+    )
+  end subroutine
+  !@-node:gcross.20090915142144.1654:<< Helper routines >>
+  !@nl
+
+end subroutine
+!@-node:gcross.20090915142144.1652:compute_gradient_fancy_amplitude
 !@+node:gcross.20090915142144.1645:compute_partial_sum
 pure subroutine compute_partial_sum( &
     amplitudes, &

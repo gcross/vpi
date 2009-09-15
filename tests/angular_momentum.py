@@ -164,6 +164,90 @@ class accumulate_gradient_fancy(unittest.TestCase):
     #@-node:gcross.20090825141639.1537:Correctness
     #@-others
 #@-node:gcross.20090817102318.1730:accumulate_gradient_fancy
+#@+node:gcross.20090915142144.1662:compute_gradient_fancy_amplitude
+class compute_gradient_fancy_amplitude(unittest.TestCase):
+    #@    @+others
+    #@+node:gcross.20090915142144.1663:Basic properties
+    #@+node:gcross.20090915142144.1664:test_finite
+    @with_checker
+    def test_finite(self,
+            n_particles = irange(1,10),
+            fixed_rotation_axis = irange(1,3),
+        ):
+        x = rand(n_particles,3)
+        N_rotating_particles = randint(0,n_particles)
+        rotation_plane_axis_1, rotation_plane_axis_2 = vpif.angular_momentum.get_rotation_plane_axes(fixed_rotation_axis)
+        self.assert_(isfinite(
+            vpif.angular_momentum.compute_gradient_fancy_amplitude(
+                x,
+                N_rotating_particles,
+                rotation_plane_axis_1,rotation_plane_axis_2
+                )
+        ).all())
+    #@-node:gcross.20090915142144.1664:test_finite
+    #@-node:gcross.20090915142144.1663:Basic properties
+    #@+node:gcross.20090915142144.1665:Correctness
+    #@+node:gcross.20090915142144.1666:test_correct
+    @with_checker(number_of_calls=10)
+    def test_correct(self,
+            N_particles  = irange(1,5),
+            N_dimensions = irange(2,5),
+        ):
+        N_rotating_particles = randint(0,N_particles)
+        x = rand(N_particles,N_dimensions)
+        rotation_plane_axis_1 = randint(1,N_dimensions-1)
+        rotation_plane_axis_2 = randint(rotation_plane_axis_1+1,N_dimensions)
+        angles = arctan2(
+            x[:,rotation_plane_axis_2-1],
+            x[:,rotation_plane_axis_1-1]
+        )
+        gradient_amplitude = \
+            vpif.angular_momentum.compute_gradient_fancy_amplitude(
+                x,
+                N_rotating_particles,
+                rotation_plane_axis_1,rotation_plane_axis_2
+            )
+        for i in xrange(len(angles)):
+            numerical_derivative = derivative(
+                self.make_amplitude1(N_rotating_particles,angles,i),
+                angles[i],
+                dx=1e-6,
+                n=1,
+                order=13
+            )
+            rot_x = x[i,rotation_plane_axis_1-1]
+            rot_y = x[i,rotation_plane_axis_2-1]
+            rot_r_squared = rot_x**2 + rot_y**2
+            self.assertAlmostEqual(
+                numerical_derivative * rot_y/rot_r_squared,
+                gradient_amplitude[i,rotation_plane_axis_1-1]
+            )
+            self.assertAlmostEqual(
+               -numerical_derivative * rot_x/rot_r_squared,
+                gradient_amplitude[i,rotation_plane_axis_2-1]
+            )
+    #@-node:gcross.20090915142144.1666:test_correct
+    #@+node:gcross.20090915142144.1667:amplitude
+    @staticmethod
+    def amplitude(N_rotating_particles, angles):
+        C = 0
+        S = 0
+        for a in combinations(angles,N_rotating_particles):
+            C += cos(sum(a))
+            S += sin(sum(a))
+        return S**2+C**2
+    #@-node:gcross.20090915142144.1667:amplitude
+    #@+node:gcross.20090915142144.1668:make_amplitude1
+    def make_amplitude1(self,N_rotating_particles,angles,index):
+        angles = angles.copy()
+        def amplitude1(angle):
+            angles[index] = angle
+            return self.amplitude(N_rotating_particles,angles)
+        return amplitude1
+    #@-node:gcross.20090915142144.1668:make_amplitude1
+    #@-node:gcross.20090915142144.1665:Correctness
+    #@-others
+#@-node:gcross.20090915142144.1662:compute_gradient_fancy_amplitude
 #@+node:gcross.20090813184545.1726:compute_rotational_potential
 class accumulate_rotation_potential(unittest.TestCase):
     #@    @+others
@@ -299,6 +383,7 @@ tests = [
     perform_special_matmul,
     sum_over_symmetrizations,
     accumulate_gradient_fancy,
+    compute_gradient_fancy_amplitude,
     #accumulate_rotation_potential
     ]
 
