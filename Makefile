@@ -5,12 +5,7 @@
 all: lib/vpif.so lib/vpi.py
 
 include paths.mk
-
-CC = gcc
-FC = gfortran
-FLAGS = -fPIC -O3 -Jmods
-CFLAGS = -I ${NUMPYDIR}/include -I ${PYTHONINCDIR} -I src/wrappers
-FFLAGS = -cpp -fbounds-check
+include options.mk
 
 SOURCES = \
   src/utils/erfn.f95 \

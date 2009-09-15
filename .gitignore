@@ -16,3 +16,4 @@ vpifmodule.c
 .scons*
 *.pyc
 paths.mk
+options.mk
