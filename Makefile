@@ -30,6 +30,7 @@ SOURCES = \
 
 OBJS = \
   obj/utils/constants.o \
+  obj/utils/fresnel.o \
   obj/utils/timers.o \
   obj/utils/rand_utils.o \
   obj/utils/xij.o \
@@ -56,6 +57,8 @@ obj/%.o: src/%.c Makefile
 obj/%.o: src/%.f95 Makefile
 	${FC} ${FLAGS} ${FFLAGS} -c $< -o $@
 obj/%.o: src/%.f90 Makefile
+	${FC} ${FLAGS} ${FFLAGS} -c $< -o $@
+obj/%.o: src/%.f Makefile
 	${FC} ${FLAGS} ${FFLAGS} -c $< -o $@
 
 lib/vpif.so: ${OBJS}
