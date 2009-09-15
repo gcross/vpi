@@ -248,6 +248,53 @@ class compute_gradient_fancy_amplitude(unittest.TestCase):
     #@-node:gcross.20090915142144.1665:Correctness
     #@-others
 #@-node:gcross.20090915142144.1662:compute_gradient_fancy_amplitude
+#@+node:gcross.20090915142144.1679:compute_amps_and_sum_syms
+class compute_amps_and_sum_syms(unittest.TestCase):
+    #@    @+others
+    #@+node:gcross.20090915142144.1680:Basic properties
+    #@+node:gcross.20090915142144.1681:test_finite
+    @with_checker
+    def test_finite(self,
+            n_particles = irange(1,10),
+        ):
+        x = rand(n_particles)
+        y = rand(n_particles)
+        n_rotating_particles = randint(0,n_particles)
+        self.assert_(isfinite(
+            vpif.angular_momentum.compute_amps_and_sum_syms(
+                x,y,
+                n_rotating_particles
+                )
+        ).all())
+    #@-node:gcross.20090915142144.1681:test_finite
+    #@-node:gcross.20090915142144.1680:Basic properties
+    #@+node:gcross.20090915142144.1682:Correctness
+    #@+node:gcross.20090915142144.1683:test_correct
+    @with_checker(number_of_calls=10)
+    def test_correct(self,
+            n_particles = irange(1,10),
+        ):
+        x = rand(n_particles)
+        y = rand(n_particles)
+        n_rotating_particles = randint(0,n_particles)
+        computed_value = \
+            vpif.angular_momentum.compute_amps_and_sum_syms(
+                x,y,
+                n_rotating_particles
+                )
+        C = 0
+        S = 0
+        for a in combinations(arctan2(y,x),n_rotating_particles):
+            C += cos(sum(a))
+            S += sin(sum(a))
+        correct_value = C+1j*S
+
+        self.assertAlmostEqual(correct_value,computed_value)
+
+    #@-node:gcross.20090915142144.1683:test_correct
+    #@-node:gcross.20090915142144.1682:Correctness
+    #@-others
+#@-node:gcross.20090915142144.1679:compute_amps_and_sum_syms
 #@+node:gcross.20090813184545.1726:compute_rotational_potential
 class accumulate_rotation_potential(unittest.TestCase):
     #@    @+others
@@ -384,6 +431,7 @@ tests = [
     sum_over_symmetrizations,
     accumulate_gradient_fancy,
     compute_gradient_fancy_amplitude,
+    compute_amps_and_sum_syms,
     #accumulate_rotation_potential
     ]
 

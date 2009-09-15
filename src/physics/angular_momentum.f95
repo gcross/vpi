@@ -124,9 +124,11 @@ pure subroutine accumulate_gradient_fancy (&
 
   do s = 1, n_slices
 
-    amplitudes(:) = &
-      (x(s,:,rotation_plane_axis_1)*(1.0d0,0) + x(s,:,rotation_plane_axis_2)*(0,1.0d0)) &
-    / sqrt(x(s,:,rotation_plane_axis_1)**2 + x(s,:,rotation_plane_axis_2)**2)
+
+    amplitudes = compute_amplitude( &
+                    x(s,:,rotation_plane_axis_1), &
+                    x(s,:,rotation_plane_axis_2) &
+                )
     full_sum = sum_over_symmetrizations(amplitudes,n_particles,n_rotating_particles)
     full_sum_conj = conjg(full_sum)
     full_sum_amplitude_squared = real(full_sum*full_sum_conj)
@@ -205,9 +207,10 @@ pure subroutine compute_gradient_fancy_amplitude (&
   !@-node:gcross.20090915142144.1653:<< Special cases >>
   !@nl
 
-  amplitudes(:) = &
-    (x(:,rotation_plane_axis_1)*(1.0d0,0) + x(:,rotation_plane_axis_2)*(0,1.0d0)) &
-  / sqrt(x(:,rotation_plane_axis_1)**2 + x(:,rotation_plane_axis_2)**2)
+  amplitudes = compute_amplitude( &
+                    x(:,rotation_plane_axis_1), &
+                    x(:,rotation_plane_axis_2) &
+                )
   full_sum = sum_over_symmetrizations(amplitudes,n_particles,n_rotating_particles)
   full_sum_conj = conjg(full_sum)
   if(n_rotating_particles == 1) then
@@ -253,6 +256,32 @@ contains
 
 end subroutine
 !@-node:gcross.20090915142144.1652:compute_gradient_fancy_amplitude
+!@+node:gcross.20090915142144.1669:compute_amplitude
+elemental function compute_amplitude(x,y) result (amplitude)
+  double precision, intent(in) :: x, y
+  double complex :: amplitude
+
+  amplitude = (x*(1d0,0)+y*(0,1d0))/sqrt(x**2+y**2)
+end function
+!@-node:gcross.20090915142144.1669:compute_amplitude
+!@+node:gcross.20090915142144.1671:compute_amps_and_sum_syms
+pure function compute_amps_and_sum_syms( &
+    x, y, &
+    n_rotating_particles, &
+    n_particles &
+  ) result (result)
+  integer, intent(in) :: n_rotating_particles, n_particles
+  double precision, dimension(n_particles), intent(in) :: x, y
+
+  double complex :: result
+
+  result = sum_over_symmetrizations(  &
+    compute_amplitude(x(:),y(:)), &
+    n_particles,n_rotating_particles &
+  )
+
+end function
+!@-node:gcross.20090915142144.1671:compute_amps_and_sum_syms
 !@+node:gcross.20090915142144.1645:compute_partial_sum
 pure subroutine compute_partial_sum( &
     amplitudes, &
