@@ -182,7 +182,7 @@ pure subroutine accumulate_gradient_fancy (&
 
 end subroutine
 !@-node:gcross.20090827135657.1422:accumulate_gradient_fancy
-!@+node:gcross.20090903090230.2072:accumumulate_effective_potential
+!@+node:gcross.20090903090230.2072:accumulate_effective_potential
 subroutine accumulate_effective_potential (&
     gradient_phase, &
     frame_angular_velocity, lambda, &
@@ -205,8 +205,8 @@ subroutine accumulate_effective_potential (&
     U(s,i) = U(s,i) + sum(gradient_phase(s,i,:)*(lambda*gradient_phase(s,i,:)-frame_angular_velocity))
 
 end subroutine
-!@-node:gcross.20090903090230.2072:accumumulate_effective_potential
-!@+node:gcross.20090908085435.1633:accumumulate_gradient_feynman
+!@-node:gcross.20090903090230.2072:accumulate_effective_potential
+!@+node:gcross.20090908085435.1633:accumulate_gradient_feynman
 subroutine accumulate_gradient_feynman (&
     x, &
     rotation_rate, &
@@ -235,7 +235,7 @@ subroutine accumulate_gradient_feynman (&
   end forall
 
 end subroutine
-!@-node:gcross.20090908085435.1633:accumumulate_gradient_feynman
+!@-node:gcross.20090908085435.1633:accumulate_gradient_feynman
 !@-others
 
 end module angular_momentum
