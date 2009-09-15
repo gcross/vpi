@@ -13,6 +13,7 @@ CFLAGS = -I ${NUMPYDIR}/include -I ${PYTHONINCDIR} -I src/wrappers
 FFLAGS = -cpp -fbounds-check
 
 SOURCES = \
+  src/utils/erfn.f95 \
   src/utils/timers.f95 \
   src/utils/rand_utils.f95 \
   src/utils/xij.f95 \
@@ -30,7 +31,8 @@ SOURCES = \
 
 OBJS = \
   obj/utils/constants.o \
-  obj/utils/fresnel.o \
+  obj/utils/erf.o \
+  obj/utils/erfn.o \
   obj/utils/timers.o \
   obj/utils/rand_utils.o \
   obj/utils/xij.o \

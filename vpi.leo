@@ -32,7 +32,8 @@
 </v>
 <v t="gcross.20090914154930.1637"><vh>@path utils</vh>
 <v t="gcross.20090624144408.1462"><vh>@thin constants.f95</vh></v>
-<v t="gcross.20090914154930.1877"><vh>@thin fresnel.f</vh></v>
+<v t="gcross.20090914154930.2018"><vh>@thin erf.f</vh></v>
+<v t="gcross.20090914154930.2019"><vh>@thin erfn.f95</vh></v>
 <v t="gcross.20090903090230.2039"><vh>@thin numeric_differentiation.f95</vh></v>
 <v t="gcross.20090805153643.1852"><vh>@thin rand_utils.f95</vh></v>
 <v t="gcross.20090806151612.1841"><vh>@thin timers.f95</vh></v>
@@ -54,6 +55,7 @@
 <v t="gcross.20090819083142.1375"><vh>@thin histograms.py</vh></v>
 <v t="gcross.20090819093822.1403"><vh>@thin lattice.py</vh></v>
 <v t="gcross.20090911091023.2483"><vh>@thin hard_sphere_interaction.py</vh></v>
+<v t="gcross.20090914154930.2027"><vh>@thin erf.py</vh></v>
 </v>
 <v t="gcross.20090818081913.1339"><vh>Examples</vh>
 <v t="gcross.20090818081913.1340"><vh>@path examples/harmonic-oscillator-trap</vh>
