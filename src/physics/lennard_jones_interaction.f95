@@ -1,8 +1,8 @@
 !@+leo-ver=4-thin
-!@+node:gcross.20090901084550.2627:@thin leonard_jones_interaction.f95
+!@+node:gcross.20090901084550.2627:@thin lennard_jones_interaction.f95
 !@@language fortran90
 
-module leonard_jones_interaction
+module lennard_jones_interaction
   implicit none
 
 contains
@@ -40,5 +40,5 @@ end subroutine
 !@-others
 
 end module
-!@-node:gcross.20090901084550.2627:@thin leonard_jones_interaction.f95
+!@-node:gcross.20090901084550.2627:@thin lennard_jones_interaction.f95
 !@-leo

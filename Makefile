@@ -19,7 +19,7 @@ SOURCES = \
   src/physics/gfn.f95 \
   src/physics/hard_sphere_interaction.f95 \
   src/physics/harmonic_oscillator.f95 \
-  src/physics/leonard_jones_interaction.f95 \
+  src/physics/lennard_jones_interaction.f95 \
   src/path-integral/lattice.f95 \
   src/path-integral/sample.f95 \
   src/path-integral/thermalize.f95
@@ -38,7 +38,7 @@ OBJS = \
   obj/physics/gfn.o \
   obj/physics/hard_sphere_interaction.o \
   obj/physics/harmonic_oscillator.o \
-  obj/physics/leonard_jones_interaction.o \
+  obj/physics/lennard_jones_interaction.o \
   obj/path-integral/lattice.o \
   obj/path-integral/sample.o \
   obj/path-integral/thermalize.o \
