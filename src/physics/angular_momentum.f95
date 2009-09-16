@@ -203,8 +203,8 @@ pure subroutine compute_gradient_fancy_amplitude (&
 
   if(mod(n_rotating_particles,n_particles) == 0) then
     partial_sum = dble(n_rotating_particles/n_particles)*product(amplitudes)
-    gradient_amplitude(:,1) = -imag(partial_sum)
-    gradient_amplitude(:,2) = +real(partial_sum)
+    gradient_amplitude(:,1) = -imag(partial_sum)*sqrt(x(:,1)**2+x(:,2)**2)
+    gradient_amplitude(:,2) = +real(partial_sum)*sqrt(x(:,1)**2+x(:,2)**2)
     return
   end if
 
@@ -214,7 +214,7 @@ pure subroutine compute_gradient_fancy_amplitude (&
         amplitudes, &
         i, &
         n_particles, n_rotating_particles &
-      )
+      )*sqrt(x(i,1)**2+x(i,2)**2)
     gradient_amplitude(i,1) = -imag(partial_sum)
     gradient_amplitude(i,2) = +real(partial_sum)
   end do

@@ -206,7 +206,7 @@ class compute_gradient_fancy_amplitude(unittest.TestCase):
     #@+node:gcross.20090915142144.1666:test_correct
     @with_checker(number_of_calls=10)
     def test_correct(self,
-            N_particles  = irange(1,5),
+            N_particles = irange(1,5),
         ):
         N_rotating_particles = randint(0,N_particles)
         x = rand(N_particles,2)
@@ -219,7 +219,8 @@ class compute_gradient_fancy_amplitude(unittest.TestCase):
                 x,
                 N_rotating_particles
             )
-        for i in xrange(len(angles)):
+        for i in xrange(N_particles):
+            rho = norm(x[i])
             angles_copy = angles.copy()
             def C(angle):
                 angles_copy[i] = angle
@@ -230,7 +231,7 @@ class compute_gradient_fancy_amplitude(unittest.TestCase):
                 dx=1e-6,
                 n=1,
                 order=13
-            )
+            )*rho
             self.assertAlmostEqual(
                 numerical_derivative,
                 gradient_amplitude[i,0]
@@ -244,7 +245,7 @@ class compute_gradient_fancy_amplitude(unittest.TestCase):
                 dx=1e-6,
                 n=1,
                 order=13
-            )
+            )*rho
             self.assertAlmostEqual(
                 numerical_derivative,
                 gradient_amplitude[i,1]
