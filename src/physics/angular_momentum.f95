@@ -355,9 +355,9 @@ pure subroutine accum_angle_drv_into_gradient(&
   rot_r_squared = rot_x**2 + rot_y**2
 
   gradient(rotation_plane_axis_1) = gradient(rotation_plane_axis_1) &
-    + derivative_of_fn_by_angle * rot_y/rot_r_squared
+    - derivative_of_fn_by_angle * rot_y/rot_r_squared
   gradient(rotation_plane_axis_2) = gradient(rotation_plane_axis_2) &
-    - derivative_of_fn_by_angle * rot_x/rot_r_squared
+    + derivative_of_fn_by_angle * rot_x/rot_r_squared
 end subroutine
 !@nonl
 !@-node:gcross.20090915142144.1644:accum_angle_drv_into_gradient
