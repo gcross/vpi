@@ -191,16 +191,13 @@ class compute_gradient_fancy_amplitude(unittest.TestCase):
     @with_checker
     def test_finite(self,
             n_particles = irange(1,10),
-            fixed_rotation_axis = irange(1,3),
         ):
-        x = rand(n_particles,3)
+        x = rand(n_particles,2)
         N_rotating_particles = randint(0,n_particles)
-        rotation_plane_axis_1, rotation_plane_axis_2 = vpif.angular_momentum.get_rotation_plane_axes(fixed_rotation_axis)
         self.assert_(isfinite(
             vpif.angular_momentum.compute_gradient_fancy_amplitude(
                 x,
-                N_rotating_particles,
-                rotation_plane_axis_1,rotation_plane_axis_2
+                N_rotating_particles
                 )
         ).all())
     #@-node:gcross.20090915142144.1664:test_finite
@@ -220,82 +217,39 @@ class compute_gradient_fancy_amplitude(unittest.TestCase):
         gradient_amplitude = \
             vpif.angular_momentum.compute_gradient_fancy_amplitude(
                 x,
-                N_rotating_particles,
-                1,2
+                N_rotating_particles
             )
         for i in xrange(len(angles)):
+            angles_copy = angles.copy()
+            def C(angle):
+                angles_copy[i] = angle
+                return __builtin__.sum(imap(cos,imap(__builtin__.sum,combinations(angles_copy,N_rotating_particles))))
             numerical_derivative = derivative(
-                self.make_amplitude1(N_rotating_particles,angles,i),
+                C,
                 angles[i],
-                dx=1e-6,
-                n=1,
-                order=13
-            )
-            rot_x = x[i,0]
-            rot_y = x[i,1]
-            rot_r_squared = rot_x**2 + rot_y**2
-            self.assertAlmostEqual(
-               -numerical_derivative * rot_y/rot_r_squared,
-                gradient_amplitude[i,0]
-            )
-            self.assertAlmostEqual(
-               +numerical_derivative * rot_x/rot_r_squared,
-                gradient_amplitude[i,1]
-            )
-    #@-node:gcross.20090915142144.1666:test_correct
-    #@+node:gcross.20090915142144.1667:amplitude
-    @staticmethod
-    def amplitude(N_rotating_particles, angles):
-        C = 0
-        S = 0
-        for a in combinations(angles,N_rotating_particles):
-            C += cos(sum(a))
-            S += sin(sum(a))
-        return C**2+S**2
-    #@-node:gcross.20090915142144.1667:amplitude
-    #@+node:gcross.20090915142144.1668:make_amplitude1
-    def make_amplitude1(self,N_rotating_particles,angles,index):
-        angles = angles.copy()
-        def amplitude1(angle):
-            angles[index] = angle
-            return self.amplitude(N_rotating_particles,angles)
-        return amplitude1
-    #@-node:gcross.20090915142144.1668:make_amplitude1
-    #@+node:gcross.20090916095134.1672:test_correct_versus_other_routine
-    @with_checker(number_of_calls=10)
-    def test_correct_versus_other_routine(self,
-            N_particles  = irange(1,5),
-        ):
-        N_rotating_particles = randint(0,N_particles)
-        x = array(rand(N_particles,2),dtype=double,order='Fortran')
-        gradient_amplitude = \
-            vpif.angular_momentum.compute_gradient_fancy_amplitude(
-                x,
-                N_rotating_particles,
-                1,2
-            )
-        for (i,j) in itertools.product(xrange(N_particles),xrange(2)):
-            x_copy = x.copy()
-            def amplitude_squared(x):
-                x_copy[i,j] = x
-                return \
-                    vpif.angular_momentum.compute_amps_and_sum_syms_ampsq(
-                        x_copy,
-                        N_rotating_particles,
-                        1,2
-                    )
-            numerical_derivative = derivative(
-                amplitude_squared,
-                x[i,j],
                 dx=1e-6,
                 n=1,
                 order=13
             )
             self.assertAlmostEqual(
                 numerical_derivative,
-                gradient_amplitude[i,j]
+                gradient_amplitude[i,0]
             )
-    #@-node:gcross.20090916095134.1672:test_correct_versus_other_routine
+            def S(angle):
+                angles_copy[i] = angle
+                return __builtin__.sum(imap(sin,imap(__builtin__.sum,combinations(angles_copy,N_rotating_particles))))
+            numerical_derivative = derivative(
+                S,
+                angles[i],
+                dx=1e-6,
+                n=1,
+                order=13
+            )
+            self.assertAlmostEqual(
+                numerical_derivative,
+                gradient_amplitude[i,1]
+            )
+    #@-node:gcross.20090915142144.1666:test_correct
     #@-node:gcross.20090915142144.1665:Correctness
     #@-others
 #@-node:gcross.20090915142144.1662:compute_gradient_fancy_amplitude
@@ -346,53 +300,6 @@ class compute_amps_and_sum_syms(unittest.TestCase):
     #@-node:gcross.20090915142144.1682:Correctness
     #@-others
 #@-node:gcross.20090915142144.1679:compute_amps_and_sum_syms
-#@+node:gcross.20090915142144.1693:compute_amps_and_sum_syms_ampsq
-class compute_amps_and_sum_syms_ampsq(unittest.TestCase):
-    #@    @+others
-    #@+node:gcross.20090915142144.1694:Basic properties
-    #@+node:gcross.20090915142144.1695:test_finite
-    @with_checker
-    def test_finite(self,
-            n_particles = irange(1,10),
-        ):
-        x = array(rand(n_particles,2),dtype=double,order='Fortran')
-        n_rotating_particles = randint(0,n_particles)
-        self.assert_(isfinite(
-            vpif.angular_momentum.compute_amps_and_sum_syms_ampsq(
-                x,
-                n_rotating_particles,
-                1,2
-                )
-        ).all())
-    #@-node:gcross.20090915142144.1695:test_finite
-    #@-node:gcross.20090915142144.1694:Basic properties
-    #@+node:gcross.20090915142144.1696:Correctness
-    #@+node:gcross.20090915142144.1697:test_correct
-    @with_checker(number_of_calls=10)
-    def test_correct(self,
-            n_particles = irange(1,10),
-        ):
-        x = array(rand(n_particles,2),dtype=double,order='Fortran')
-        n_rotating_particles = randint(0,n_particles)
-        computed_value = \
-            vpif.angular_momentum.compute_amps_and_sum_syms_ampsq(
-                x,
-                n_rotating_particles,
-                1,2
-                )
-        C = 0
-        S = 0
-        for a in combinations(arctan2(x[:,1],x[:,0]),n_rotating_particles):
-            C += cos(sum(a))
-            S += sin(sum(a))
-        correct_value = C**2+S**2
-
-        self.assertAlmostEqual(correct_value,computed_value)
-
-    #@-node:gcross.20090915142144.1697:test_correct
-    #@-node:gcross.20090915142144.1696:Correctness
-    #@-others
-#@-node:gcross.20090915142144.1693:compute_amps_and_sum_syms_ampsq
 #@+node:gcross.20090813184545.1726:compute_rotational_potential
 class accumulate_rotation_potential(unittest.TestCase):
     #@    @+others
@@ -530,7 +437,6 @@ tests = [
     accumulate_gradient_fancy,
     compute_gradient_fancy_amplitude,
     compute_amps_and_sum_syms,
-    compute_amps_and_sum_syms_ampsq,
     compute_partial_sum,
     #accumulate_rotation_potential
     ]
