@@ -71,6 +71,25 @@ class sum_over_symmetrizations(unittest.TestCase):
     #@-node:gcross.20090817102318.1727:test_correctnes
     #@-others
 #@-node:gcross.20090807171924.1722:sum_over_symmetrizations
+#@+node:gcross.20090916114839.1816:compute_partial_sum
+class compute_partial_sum(unittest.TestCase):
+    #@    @+others
+    #@+node:gcross.20090916114839.1817:test_correctnes
+    @with_checker
+    def test_correctness(self, n1 = irange(1,6), n2 = irange(1,8)):
+        number_of_particles = max(n1,n2)
+        number_excited = min(n1,n2)
+        excluded_index = randint(0,number_of_particles-1)
+        amplitudes = exp(rand(number_of_particles)+1j*rand(number_of_particles))
+        computed_partial_sum = 0
+        for selected_indices in combinations(range(number_of_particles),number_excited):
+            if excluded_index in selected_indices:
+                computed_partial_sum += prod(amplitudes[list(selected_indices)])
+        formula_partial_sum = vpif.angular_momentum.compute_partial_sum(amplitudes,excluded_index+1,number_excited)
+        self.assertAlmostEqual(computed_partial_sum,formula_partial_sum)
+    #@-node:gcross.20090916114839.1817:test_correctnes
+    #@-others
+#@-node:gcross.20090916114839.1816:compute_partial_sum
 #@+node:gcross.20090817102318.1730:accumulate_gradient_fancy
 class accumulate_gradient_fancy(unittest.TestCase):
     #@    @+others
@@ -512,6 +531,7 @@ tests = [
     compute_gradient_fancy_amplitude,
     compute_amps_and_sum_syms,
     compute_amps_and_sum_syms_ampsq,
+    compute_partial_sum,
     #accumulate_rotation_potential
     ]
 
