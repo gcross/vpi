@@ -284,6 +284,28 @@ pure function compute_amps_and_sum_syms( &
 
 end function
 !@-node:gcross.20090915142144.1671:compute_amps_and_sum_syms
+!@+node:gcross.20090915142144.1687:compute_amps_and_sum_syms_ampsq
+pure function compute_amps_and_sum_syms_ampsq( &
+    x, &
+    n_rotating_particles, &
+    rotation_axis_1, rotation_axis_2, &
+    n_particles, n_dimensions &
+  ) result (result)
+  integer, intent(in) :: rotation_axis_1, rotation_axis_2
+  integer, intent(in) :: n_rotating_particles, n_particles, n_dimensions
+  double precision, dimension(n_particles,n_dimensions), intent(in) :: x
+
+  double precision :: result
+
+  result = abs(compute_amps_and_sum_syms( &
+    x, &
+    n_rotating_particles, &
+    rotation_axis_1, rotation_axis_2, &
+    n_particles, n_dimensions &
+  ))**2
+
+end function
+!@-node:gcross.20090915142144.1687:compute_amps_and_sum_syms_ampsq
 !@+node:gcross.20090915142144.1645:compute_partial_sum
 pure subroutine compute_partial_sum( &
     amplitudes, &

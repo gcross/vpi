@@ -295,6 +295,53 @@ class compute_amps_and_sum_syms(unittest.TestCase):
     #@-node:gcross.20090915142144.1682:Correctness
     #@-others
 #@-node:gcross.20090915142144.1679:compute_amps_and_sum_syms
+#@+node:gcross.20090915142144.1693:compute_amps_and_sum_syms_ampsq
+class compute_amps_and_sum_syms_ampsq(unittest.TestCase):
+    #@    @+others
+    #@+node:gcross.20090915142144.1694:Basic properties
+    #@+node:gcross.20090915142144.1695:test_finite
+    @with_checker
+    def test_finite(self,
+            n_particles = irange(1,10),
+        ):
+        x = array(rand(n_particles,2),dtype=double,order='Fortran')
+        n_rotating_particles = randint(0,n_particles)
+        self.assert_(isfinite(
+            vpif.angular_momentum.compute_amps_and_sum_syms_ampsq(
+                x,
+                n_rotating_particles,
+                1,2
+                )
+        ).all())
+    #@-node:gcross.20090915142144.1695:test_finite
+    #@-node:gcross.20090915142144.1694:Basic properties
+    #@+node:gcross.20090915142144.1696:Correctness
+    #@+node:gcross.20090915142144.1697:test_correct
+    @with_checker(number_of_calls=10)
+    def test_correct(self,
+            n_particles = irange(1,10),
+        ):
+        x = array(rand(n_particles,2),dtype=double,order='Fortran')
+        n_rotating_particles = randint(0,n_particles)
+        computed_value = \
+            vpif.angular_momentum.compute_amps_and_sum_syms_ampsq(
+                x,
+                n_rotating_particles,
+                1,2
+                )
+        C = 0
+        S = 0
+        for a in combinations(arctan2(x[:,1],x[:,0]),n_rotating_particles):
+            C += cos(sum(a))
+            S += sin(sum(a))
+        correct_value = C**2+S**2
+
+        self.assertAlmostEqual(correct_value,computed_value)
+
+    #@-node:gcross.20090915142144.1697:test_correct
+    #@-node:gcross.20090915142144.1696:Correctness
+    #@-others
+#@-node:gcross.20090915142144.1693:compute_amps_and_sum_syms_ampsq
 #@+node:gcross.20090813184545.1726:compute_rotational_potential
 class accumulate_rotation_potential(unittest.TestCase):
     #@    @+others
@@ -432,6 +479,7 @@ tests = [
     accumulate_gradient_fancy,
     compute_gradient_fancy_amplitude,
     compute_amps_and_sum_syms,
+    compute_amps_and_sum_syms_ampsq,
     #accumulate_rotation_potential
     ]
 
