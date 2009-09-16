@@ -257,13 +257,13 @@ class compute_amps_and_sum_syms(unittest.TestCase):
     def test_finite(self,
             n_particles = irange(1,10),
         ):
-        x = rand(n_particles)
-        y = rand(n_particles)
+        x = array(rand(n_particles,2),dtype=double,order='Fortran')
         n_rotating_particles = randint(0,n_particles)
         self.assert_(isfinite(
             vpif.angular_momentum.compute_amps_and_sum_syms(
-                x,y,
-                n_rotating_particles
+                x,
+                n_rotating_particles,
+                1,2
                 )
         ).all())
     #@-node:gcross.20090915142144.1681:test_finite
@@ -274,17 +274,17 @@ class compute_amps_and_sum_syms(unittest.TestCase):
     def test_correct(self,
             n_particles = irange(1,10),
         ):
-        x = rand(n_particles)
-        y = rand(n_particles)
+        x = array(rand(n_particles,2),dtype=double,order='Fortran')
         n_rotating_particles = randint(0,n_particles)
         computed_value = \
             vpif.angular_momentum.compute_amps_and_sum_syms(
-                x,y,
-                n_rotating_particles
+                x,
+                n_rotating_particles,
+                1,2
                 )
         C = 0
         S = 0
-        for a in combinations(arctan2(y,x),n_rotating_particles):
+        for a in combinations(arctan2(x[:,1],x[:,0]),n_rotating_particles):
             C += cos(sum(a))
             S += sin(sum(a))
         correct_value = C+1j*S

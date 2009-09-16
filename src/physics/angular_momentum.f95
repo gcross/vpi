@@ -266,17 +266,19 @@ end function
 !@-node:gcross.20090915142144.1669:compute_amplitude
 !@+node:gcross.20090915142144.1671:compute_amps_and_sum_syms
 pure function compute_amps_and_sum_syms( &
-    x, y, &
+    x, &
     n_rotating_particles, &
-    n_particles &
+    rotation_axis_1, rotation_axis_2, &
+    n_particles, n_dimensions &
   ) result (result)
-  integer, intent(in) :: n_rotating_particles, n_particles
-  double precision, dimension(n_particles), intent(in) :: x, y
+  integer, intent(in) :: rotation_axis_1, rotation_axis_2
+  integer, intent(in) :: n_rotating_particles, n_particles, n_dimensions
+  double precision, dimension(n_particles,n_dimensions), intent(in) :: x
 
   double complex :: result
 
   result = sum_over_symmetrizations(  &
-    compute_amplitude(x(:),y(:)), &
+    compute_amplitude(x(:,rotation_axis_1),x(:,rotation_axis_2)), &
     n_particles,n_rotating_particles &
   )
 
