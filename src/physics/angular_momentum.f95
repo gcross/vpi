@@ -261,7 +261,7 @@ elemental function compute_amplitude(x,y) result (amplitude)
   double precision, intent(in) :: x, y
   double complex :: amplitude
 
-  amplitude = (x*(1d0,0)+y*(0,1d0))/sqrt(x**2+y**2)
+  amplitude = cmplx(x,y,kind(x))/sqrt(x**2+y**2)
 end function
 !@-node:gcross.20090915142144.1669:compute_amplitude
 !@+node:gcross.20090915142144.1671:compute_amps_and_sum_syms
