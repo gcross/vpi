@@ -8,6 +8,7 @@ from paycheck import *
 from numpy import *
 from numpy.random import rand
 from numpy.linalg import norm
+from scipy.linalg import lstsq
 from scipy.misc import derivative
 from random import randint
 import itertools
@@ -303,6 +304,65 @@ class compute_amps_and_sum_syms(unittest.TestCase):
     #@-node:gcross.20090915142144.1682:Correctness
     #@-others
 #@-node:gcross.20090915142144.1679:compute_amps_and_sum_syms
+#@+node:gcross.20090916153857.1676:estimate_distance_to_node
+class estimate_distance_to_node(unittest.TestCase):
+    #@    @+others
+    #@+node:gcross.20090916153857.1677:Basic properties
+    #@+node:gcross.20090916153857.1678:test_finite
+    @with_checker
+    def dont_test_finite(self,
+            n_particles = irange(2,10),
+        ):
+        x = array(rand(n_particles,2),dtype=double,order='Fortran')
+        n_rotating_particles = randint(0,n_particles)
+        self.assert_(isfinite(
+            vpif.angular_momentum.estimate_distance_to_node(
+                x,
+                n_rotating_particles,
+                1,2
+            )
+        ).all())
+    #@-node:gcross.20090916153857.1678:test_finite
+    #@-node:gcross.20090916153857.1677:Basic properties
+    #@+node:gcross.20090916153857.1679:Correctness
+    #@+node:gcross.20090916153857.1680:test_correct
+    @with_checker
+    def test_correct(self,
+            n_particles = irange(2,10),
+        ):
+        x = array(rand(n_particles,2),dtype=double,order='Fortran')
+        n_rotating_particles = randint(0,n_particles)
+
+        amplitude = vpif.angular_momentum.compute_amps_and_sum_syms(
+            x,
+            n_rotating_particles,
+            1,2
+        )
+
+        correct_value = norm(lstsq(
+            vpif.angular_momentum.compute_gradient_fancy_amplitude(
+                x,
+                n_rotating_particles,
+                1,2
+            ).transpose(),
+            array([real(amplitude),imag(amplitude)]),
+            cond=-1,
+            overwrite_a=True,
+            overwrite_b=True
+        )[0])
+
+        computed_value = \
+            vpif.angular_momentum.estimate_distance_to_node(
+                x,
+                n_rotating_particles,
+                1,2
+            )
+
+        self.assertAlmostEqual(correct_value,computed_value)
+    #@-node:gcross.20090916153857.1680:test_correct
+    #@-node:gcross.20090916153857.1679:Correctness
+    #@-others
+#@-node:gcross.20090916153857.1676:estimate_distance_to_node
 #@+node:gcross.20090813184545.1726:compute_rotational_potential
 class accumulate_rotation_potential(unittest.TestCase):
     #@    @+others
@@ -441,6 +501,7 @@ tests = [
     compute_gradient_fancy_amplitude,
     compute_amps_and_sum_syms,
     compute_partial_sum,
+    estimate_distance_to_node,
     #accumulate_rotation_potential
     ]
 

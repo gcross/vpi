@@ -59,7 +59,7 @@ obj/%.o: src/%.f Makefile
 	${FC} ${FLAGS} ${FFLAGS} -c $< -o $@
 
 lib/vpif.so: ${OBJS}
-	gfortran ${PYTHONLINK} ${FLAGS} -shared -o lib/vpif.so -lgfortran -lblas ${OBJS}
+	gfortran ${PYTHONLINK} ${FLAGS} -shared -o lib/vpif.so -lgfortran -lblas -llapack ${OBJS}
 
 lib/vpi.py: src/vpi.py
 	cp $< $@

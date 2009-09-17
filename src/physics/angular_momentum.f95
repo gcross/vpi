@@ -13,6 +13,33 @@ module angular_momentum
  !@-node:gcross.20090807144330.2252:<< Constants >>
  !@nl
 
+ !@ << Interfaces >>
+ !@+node:gcross.20090916153857.1668:<< Interfaces >>
+ interface
+   !@  @+others
+   !@+node:gcross.20090916153857.1669:dnrm2
+   pure function dnrm2(n,x,incx) result(norm)
+     integer, intent(in) :: n, incx
+     double precision, dimension(n), intent(in) :: x
+     double precision :: norm
+   end function
+   !@-node:gcross.20090916153857.1669:dnrm2
+   !@+node:gcross.20090916153857.1670:dgels
+   pure subroutine dgelss(m,n,nrhs,a,lda,b,ldb,s,rcond,rank,work,lwork,info)
+     integer, intent(in) :: m,n,nrhs,lda,ldb,lwork
+     integer, intent(out) :: info, rank
+     double precision, dimension(lda,n), intent(inout) :: a
+     double precision, dimension(ldb,nrhs), intent(inout) :: b
+     double precision, intent(inout) :: work
+     double precision, intent(in) :: rcond
+     double precision, dimension(min(m,n)), intent(out) :: s
+   end subroutine
+   !@-node:gcross.20090916153857.1670:dgels
+   !@-others
+ end interface
+ !@-node:gcross.20090916153857.1668:<< Interfaces >>
+ !@nl
+
  contains
 
 !@+others
@@ -352,6 +379,79 @@ subroutine accumulate_gradient_feynman (&
 
 end subroutine
 !@-node:gcross.20090908085435.1633:accumulate_gradient_feynman
+!@+node:gcross.20090916153857.1667:estimate_distance_to_node
+pure function estimate_distance_to_node( &
+    x, &
+    n_rotating_particles, &
+    rotation_plane_axis_1, rotation_plane_axis_2, &
+    n_particles, n_dimensions &
+  ) result (distance)
+  integer, intent(in) :: rotation_plane_axis_1, rotation_plane_axis_2
+  integer, intent(in) :: n_particles, n_dimensions, n_rotating_particles
+  double precision, dimension( n_particles, n_dimensions ), intent(in) :: x
+  double precision :: distance
+
+  double precision, dimension( n_particles, 2 ) :: gradient
+  double precision, dimension( 2, n_particles ) :: matrix
+  double complex :: current_amplitude
+  double precision, dimension( n_particles ) :: displacement_from_node
+  double precision :: work_array_size_as_real
+  integer :: work_array_size
+  double precision, allocatable, dimension(:) :: work_array
+  integer :: info, rank
+  double precision, dimension(n_particles) :: dummy
+
+  call compute_gradient_fancy_amplitude ( &
+    x, &
+    n_rotating_particles, &
+    rotation_plane_axis_1, rotation_plane_axis_2, &
+    n_particles, n_dimensions, &
+    gradient &
+  )
+
+  current_amplitude = compute_amps_and_sum_syms( &
+    x, &
+    n_rotating_particles, &
+    rotation_plane_axis_1, rotation_plane_axis_2, &
+    n_particles, n_dimensions &
+  )
+
+  ! initialize least squares problem
+  displacement_from_node(1) = real(current_amplitude)
+  displacement_from_node(2) = imag(current_amplitude)
+
+  matrix = transpose(gradient)
+
+  work_array_size_as_real = 0
+
+  call dgelss( &
+    2, n_particles, 1, &
+    matrix, 2, &
+    displacement_from_node, n_particles, &
+    dummy, -1d0, rank, &
+    work_array_size_as_real, -1, &
+    info &
+  )
+
+  work_array_size = floor(work_array_size_as_real)
+
+  allocate(work_array(work_array_size))
+
+  call dgelss( &
+    2, n_particles, 1, &
+    matrix, 2, &
+    displacement_from_node, n_particles, &
+    dummy, -1d0, rank, &
+    work_array(1), work_array_size, &
+    info &
+  )
+
+  deallocate(work_array)
+
+  distance = dnrm2(n_particles,displacement_from_node,1)
+
+end function
+!@-node:gcross.20090916153857.1667:estimate_distance_to_node
 !@-others
 
 end module angular_momentum
