@@ -359,6 +359,8 @@ end interface
                 particle_number, &
                 n_slices, n_particles, n_dimensions &
               )
+    else
+      lngfn = 0
     end if
     !@-node:gcross.20090817102318.2266:<< Compute contribution from potentials >>
     !@nl
