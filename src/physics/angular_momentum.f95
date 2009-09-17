@@ -103,7 +103,7 @@ end function
 !@+node:gcross.20090827135657.1422:accumulate_gradient_fancy
 pure subroutine accumulate_gradient_fancy (&
     x, &
-    n_rotating_particles, &
+    n_total_rotating_particles, &
     rotation_plane_axis_1, rotation_plane_axis_2, &
     n_slices, n_particles, n_dimensions, &
     gradient_phase &
@@ -112,7 +112,7 @@ pure subroutine accumulate_gradient_fancy (&
   ! Input variables
   integer, intent(in) :: n_slices, n_particles, n_dimensions
   double precision, dimension(n_slices, n_particles, n_dimensions), intent(in) :: x
-  integer, intent(in) :: rotation_plane_axis_1, rotation_plane_axis_2, n_rotating_particles
+  integer, intent(in) :: rotation_plane_axis_1, rotation_plane_axis_2, n_total_rotating_particles
 
   ! Output variables
   double precision, dimension(n_slices, n_particles, n_dimensions), intent(inout) :: gradient_phase
@@ -121,14 +121,22 @@ pure subroutine accumulate_gradient_fancy (&
   double complex, dimension(n_particles) :: amplitudes
   double complex :: full_sum, full_sum_conj
   double precision :: full_sum_amplitude_squared
-  integer :: s, i
+  integer :: s, i, n_rotating_particles
+
+  n_rotating_particles = mod(n_total_rotating_particles,n_particles)
+
+  if (n_total_rotating_particles >= n_particles) then
+    do s = 1, n_slices
+      do i = 1, n_particles
+        call accumulate_gradient(dble(n_total_rotating_particles/n_particles),gradient_phase(s,i,:))
+      end do
+    end do
+    ! note that there is no return here since this is an ADDITIONAL contribution on top,
+    ! not a special case
+  end if
 
   !@  << Special cases >>
   !@+node:gcross.20090915142144.1647:<< Special cases >>
-  if(n_rotating_particles == 0) then
-    return
-  end if
-
   if(mod(n_particles,2) == 0 .and. n_rotating_particles == N_particles / 2) then
     do i = 1, n_particles
       do s = 1, n_slices
@@ -138,12 +146,7 @@ pure subroutine accumulate_gradient_fancy (&
     return
   end if
 
-  if(n_rotating_particles == n_particles) then
-    do i = 1, n_particles
-      do s = 1, n_slices
-        call accumulate_gradient(1.0d0,gradient_phase(s,i,:))
-      end do
-    end do
+  if(n_rotating_particles == 0) then
     return
   end if
   !@-node:gcross.20090915142144.1647:<< Special cases >>
@@ -206,14 +209,14 @@ end subroutine
 !@+node:gcross.20090915142144.1652:compute_gradient_fancy_amplitude
 pure subroutine compute_gradient_fancy_amplitude (&
     x, &
-    n_rotating_particles, &
+    n_total_rotating_particles, &
     rotation_plane_axis_1, rotation_plane_axis_2, &
     n_particles, n_dimensions, &
     gradient_amplitude &
   )
 
   ! Input variables
-  integer, intent(in) :: n_particles, n_dimensions, n_rotating_particles
+  integer, intent(in) :: n_particles, n_dimensions, n_total_rotating_particles
   integer, intent(in) :: rotation_plane_axis_1, rotation_plane_axis_2
   double precision, dimension(n_particles,n_dimensions), intent(in) :: x
 
@@ -223,30 +226,41 @@ pure subroutine compute_gradient_fancy_amplitude (&
   ! Local variables
   double complex, dimension(n_particles) :: amplitudes
   double complex :: partial_sum
-  integer :: i
+  integer :: i, n_rotating_particles
 
   amplitudes = compute_amplitude( &
                     x(:,rotation_plane_axis_1), &
                     x(:,rotation_plane_axis_2) &
                 )
 
-  if(mod(n_rotating_particles,n_particles) == 0) then
-    partial_sum = dble(n_rotating_particles/n_particles)*product(amplitudes)
-    gradient_amplitude(:,1) = -imag(partial_sum)*sqrt(x(:,rotation_plane_axis_1)**2+x(:,rotation_plane_axis_2)**2)
-    gradient_amplitude(:,2) = +real(partial_sum)*sqrt(x(:,rotation_plane_axis_1)**2+x(:,rotation_plane_axis_2)**2)
+  n_rotating_particles = mod(n_total_rotating_particles,n_particles)
+
+  if(n_total_rotating_particles >= n_particles) then
+    partial_sum = dble(n_total_rotating_particles/n_particles)*product(amplitudes)
+    gradient_amplitude(:,1) = &
+      -imag(partial_sum)*sqrt(x(:,rotation_plane_axis_1)**2+x(:,rotation_plane_axis_2)**2)
+    gradient_amplitude(:,2) = &
+      +real(partial_sum)*sqrt(x(:,rotation_plane_axis_1)**2+x(:,rotation_plane_axis_2)**2)
     return
+  else
+    gradient_amplitude = 0
   end if
 
-  do i = 1, n_particles
-    partial_sum = &
-      compute_partial_sum( &
-        amplitudes, &
-        i, &
-        n_particles, n_rotating_particles &
-      )*sqrt(x(i,rotation_plane_axis_1)**2+x(i,rotation_plane_axis_2)**2)
-    gradient_amplitude(i,1) = -imag(partial_sum)
-    gradient_amplitude(i,2) = +real(partial_sum)
-  end do
+
+  if(n_rotating_particles == 0) then
+    return
+  else
+    do i = 1, n_particles
+      partial_sum = &
+        compute_partial_sum( &
+          amplitudes, &
+          i, &
+          n_particles, n_rotating_particles &
+        )*sqrt(x(i,rotation_plane_axis_1)**2+x(i,rotation_plane_axis_2)**2)
+      gradient_amplitude(i,1) = -imag(partial_sum)
+      gradient_amplitude(i,2) = +real(partial_sum)
+    end do
+  end if
 
 end subroutine
 !@-node:gcross.20090915142144.1652:compute_gradient_fancy_amplitude
@@ -261,20 +275,35 @@ end function
 !@+node:gcross.20090915142144.1671:compute_amps_and_sum_syms
 pure function compute_amps_and_sum_syms( &
     x, &
-    n_rotating_particles, &
+    n_total_rotating_particles, &
     rotation_plane_axis_1, rotation_plane_axis_2, &
     n_particles, n_dimensions &
   ) result (result)
   integer, intent(in) :: rotation_plane_axis_1, rotation_plane_axis_2
-  integer, intent(in) :: n_rotating_particles, n_particles, n_dimensions
+  integer, intent(in) :: n_total_rotating_particles, n_particles, n_dimensions
   double precision, dimension(n_particles,n_dimensions), intent(in) :: x
 
+  double complex, dimension(n_particles) :: amplitudes
   double complex :: result
+  integer :: n_rotating_particles
 
-  result = sum_over_symmetrizations(  &
-    compute_amplitude(x(:,rotation_plane_axis_1),x(:,rotation_plane_axis_2)), &
-    n_particles,n_rotating_particles &
-  )
+  amplitudes = compute_amplitude( &
+      x(:,rotation_plane_axis_1), &
+      x(:,rotation_plane_axis_2) &
+    )
+
+  n_rotating_particles = mod(n_total_rotating_particles,n_particles)
+
+  result = product(amplitudes)**(n_total_rotating_particles/n_particles)
+
+  if(n_rotating_particles == 1) then
+    result = result * sum(amplitudes)
+  else
+    result = result * sum_over_symmetrizations(  &
+      amplitudes, &
+      n_particles,n_rotating_particles &
+    )
+  end if
 
 end function
 !@-node:gcross.20090915142144.1671:compute_amps_and_sum_syms
@@ -477,6 +506,11 @@ pure function compute_greens_function( &
 
   integer :: s
   double precision, dimension( n_slices ) :: distances
+
+  if ( mod(n_rotating_particles,n_particles) == 0 ) then
+    ln_gfn = 0d0
+    return
+  end if
 
   forall (s=slice_start:slice_end) &
     distances(s) = &

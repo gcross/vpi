@@ -265,7 +265,7 @@ class compute_amps_and_sum_syms(unittest.TestCase):
     #@-node:gcross.20090915142144.1680:Basic properties
     #@+node:gcross.20090915142144.1682:Correctness
     #@+node:gcross.20090915142144.1683:test_correct
-    @with_checker(number_of_calls=10)
+    @with_checker
     def test_correct(self,
             n_particles = irange(1,10),
         ):
@@ -285,7 +285,6 @@ class compute_amps_and_sum_syms(unittest.TestCase):
         correct_value = C+1j*S
 
         self.assertAlmostEqual(correct_value,computed_value)
-
     #@-node:gcross.20090915142144.1683:test_correct
     #@-node:gcross.20090915142144.1682:Correctness
     #@-others
