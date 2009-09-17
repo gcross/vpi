@@ -119,7 +119,7 @@ pure subroutine accumulate_gradient_fancy (&
 
   ! Local variables
   double complex, dimension(n_particles) :: amplitudes
-  double complex :: full_sum, full_sum_conj, partial_sum
+  double complex :: full_sum, full_sum_conj
   double precision :: full_sum_amplitude_squared
   integer :: s, i
 
@@ -458,17 +458,16 @@ pure function compute_greens_function( &
     x, &
     lambda, dt, &
     slice_start, slice_end, &
-    particle_number, &
     n_rotating_particles, &
     rotation_plane_axis_1, rotation_plane_axis_2, &
     n_slices, n_particles, n_dimensions &
   ) result ( ln_gfn )
-  integer, intent(in) :: slice_start, slice_end, particle_number
+  integer, intent(in) :: slice_start, slice_end
   integer, intent(in) :: rotation_plane_axis_1, rotation_plane_axis_2
   integer, intent(in) :: n_slices, n_particles, n_dimensions, n_rotating_particles
   double precision, dimension( n_slices, n_particles, n_dimensions ), intent(in) :: x
   double precision, intent(in) :: lambda, dt
-  double precision :: gfn, ln_gfn
+  double precision :: ln_gfn
 
   integer :: s
   double precision, dimension( n_slices ) :: distances
@@ -506,7 +505,7 @@ pure function compute_green_fn_from_distances( &
   double precision, dimension ( n_slices ), intent(in) :: distances
   double precision :: gfn
 
-  integer :: s, center_slice_number
+  integer :: center_slice_number
 
   center_slice_number = n_slices / 2
 

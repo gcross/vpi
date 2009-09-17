@@ -242,9 +242,9 @@ subroutine cascading_swap_move(qin, qout, part_num, swap_dim, N_SLICE, N_PARTICL
   double precision, dimension ( N_SLICE , N_PARTICLE, N_DIM ) :: qout
   integer :: part_num, swap_dim
   double precision, intent(in), optional :: pbc_period_length
-  integer, dimension(N_PARTICLE) :: plist,alist,clist
-  integer :: pcnt,acnt,t_acnt,ccnt
-  integer :: j,k,tmp
+  integer, dimension(N_PARTICLE) :: plist,alist
+  integer :: pcnt,acnt
+  integer :: j
   integer :: ip_swap
   double precision :: rnd
 
@@ -322,7 +322,6 @@ subroutine bbridge(q0, q1, pnum, low_dim, high_dim, btype, i0, i1, lambda, dtau,
 
   integer :: i
   integer :: j,cnt
-  integer :: s0,s1
   integer :: ndim
   double precision :: t1,t2,mean,sigma,sigmasq
   double precision :: a,b

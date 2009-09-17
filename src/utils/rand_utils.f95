@@ -16,7 +16,6 @@ subroutine init_seed(pid)
   integer :: seedsize
   integer :: i
   double precision time0
-  character (len=30) :: seed_in, seed_out
 
    call random_seed(size=seedsize)  ! find out the size of seed
    call random_seed(get=seed)  ! get the current seeds

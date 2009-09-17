@@ -98,7 +98,7 @@ pure subroutine compute_gradient_backflow( &
   double precision :: recipricol_rho_ip_squared, recipricol_rho_ip_4th, r_ip_j_squared, r_ip_j, recipricol_rho_j_squared
   double precision :: difference_recipical_rho_squared, common_factor, C_ip_j, r_ip_j_cubed, D_ip_j
   double precision, dimension( n_dimensions ) :: term
-  integer :: s, ip, j, kp, k1, k2
+  integer :: s, ip, j, k1, k2
 
   ! Rename parameters to match notes
   k1 = rotation_plane_axis_1
@@ -230,7 +230,7 @@ pure function compute_greens_function2( &
   double precision :: tmp
 
   double precision, dimension ( n_dimensions ) :: dx,dxp,dx12
-  double precision :: u,r,rp,drp,D,r12
+  double precision :: u,r,rp,D,r12
   double precision :: hard_sphere_radius_squared
   integer :: i,j
   integer :: center_slice_number

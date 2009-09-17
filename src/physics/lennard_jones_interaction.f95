@@ -12,10 +12,10 @@ contains
 pure subroutine accumulate_potential( &
     xij2, &
     coefficient, cross_over_point_squared, &
-    n_slices, n_particles, n_dimensions, &
+    n_slices, n_particles, &
     U &
   )
-  integer, intent(in) :: n_slices, n_particles, n_dimensions
+  integer, intent(in) :: n_slices, n_particles
   double precision, dimension ( n_slices, n_particles, n_particles ), intent(in) :: xij2
   double precision, dimension( n_slices, n_particles ), intent(inout) :: U
   double precision, intent(in) :: coefficient, cross_over_point_squared
