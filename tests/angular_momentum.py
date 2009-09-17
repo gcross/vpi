@@ -127,10 +127,6 @@ class accumulate_gradient_fancy(unittest.TestCase):
         x = rand(1,N_particles,N_dimensions)
         rotation_plane_axis_1 = randint(1,N_dimensions-1)
         rotation_plane_axis_2 = randint(rotation_plane_axis_1+1,N_dimensions)
-        angles = arctan2(
-            x[0,:,rotation_plane_axis_2-1],
-            x[0,:,rotation_plane_axis_1-1]
-        )
         gradient_phase = zeros(x.shape,dtype=double,order='Fortran')
         vpif.angular_momentum.accumulate_gradient_fancy(
             x,
@@ -138,49 +134,39 @@ class accumulate_gradient_fancy(unittest.TestCase):
             rotation_plane_axis_1,rotation_plane_axis_2,
             gradient_phase
             )
-        for i in xrange(len(angles)):
-            numerical_derivative = derivative(
-                self.make_phase1(N_rotating_particles,angles,i),
-                angles[i],
-                dx=1e-6,
-                n=1,
-                order=13
-            )
-            rot_x = x[0,i,rotation_plane_axis_1-1]
-            rot_y = x[0,i,rotation_plane_axis_2-1]
-            rot_r_squared = rot_x**2 + rot_y**2
-            self.assertAlmostEqual(
-               -numerical_derivative * rot_y/rot_r_squared,
-                gradient_phase[0,i,rotation_plane_axis_1-1]
-            )
-            self.assertAlmostEqual(
-               +numerical_derivative * rot_x/rot_r_squared,
-                gradient_phase[0,i,rotation_plane_axis_2-1]
-            )
+        for i in xrange(N_particles):
+            for j in xrange(N_dimensions):
+                x_copy = x.copy()
+                def phase(x):
+                    x_copy[0,i,j] = x
+                    angles = arctan2(
+                                x_copy[0,:,rotation_plane_axis_2-1],
+                                x_copy[0,:,rotation_plane_axis_1-1]
+                            )
+                    C = 0
+                    S = 0
+                    for a in combinations(angles,N_rotating_particles):
+                        C += cos(sum(a))
+                        S += sin(sum(a))
+                    if C == -0:
+                        return -pi/2
+                    if C == +0:
+                        return pi/2
+                    else:
+                        return atan(S/C)
+
+                numerical_derivative = derivative(
+                    phase,
+                    x[0,i,j],
+                    dx=1e-6,
+                    n=1,
+                    order=13
+                )
+                self.assertAlmostEqual(
+                    numerical_derivative,
+                    gradient_phase[0,i,j]
+                )
     #@-node:gcross.20090819152718.1587:test_correct
-    #@+node:gcross.20090819152718.1588:phase
-    @staticmethod
-    def phase(N_rotating_particles, angles):
-        C = 0
-        S = 0
-        for a in combinations(angles,N_rotating_particles):
-            C += cos(sum(a))
-            S += sin(sum(a))
-        if C == -0:
-            return -pi/2
-        if C == +0:
-            return pi/2
-        else:
-            return atan(S/C)
-    #@-node:gcross.20090819152718.1588:phase
-    #@+node:gcross.20090819152718.1589:make_phase1
-    def make_phase1(self,N_rotating_particles,angles,index):
-        angles = angles.copy()
-        def phase1(angle):
-            angles[index] = angle
-            return self.phase(N_rotating_particles,angles)
-        return phase1
-    #@-node:gcross.20090819152718.1589:make_phase1
     #@-node:gcross.20090825141639.1537:Correctness
     #@-others
 #@-node:gcross.20090817102318.1730:accumulate_gradient_fancy
@@ -364,130 +350,184 @@ class estimate_distance_to_node(unittest.TestCase):
     #@-others
 #@-node:gcross.20090916153857.1676:estimate_distance_to_node
 #@+node:gcross.20090813184545.1726:compute_rotational_potential
-class accumulate_rotation_potential(unittest.TestCase):
+class compute_rotational_potential(unittest.TestCase):
     #@    @+others
     #@+node:gcross.20090817102318.1733:test_finite
     @with_checker
     def test_finite(self,
             lambda_ = unit_interval_float,
-            n_particles = irange(1,10),
-            fixed_rotation_axis = irange(1,3),
+            n_particles = irange(2,10),
+            n_dimensions = irange(2,5),
             frame_angular_velocity=unit_interval_float,
         ):
-        n_dimensions = 3
-        rotation_plane_axis_1, rotation_plane_axis_2 = vpif.angular_momentum.get_rotation_plane_axes(fixed_rotation_axis)
-        x = rand(n_particles,n_dimensions)
+        rotation_plane_axis_1 = randint(1,n_dimensions-1)
+        rotation_plane_axis_2 = randint(rotation_plane_axis_1+1,n_dimensions)
+        n_rotating_particles = randint(0,n_particles)
+        n_slices = 1
+        x = array(rand(n_slices,n_particles,n_dimensions),dtype=double,order='Fortran')
+        gradient_phase = zeros((n_slices,n_particles,n_dimensions),dtype=double,order='Fortran')
+        vpif.angular_momentum.accumulate_gradient_fancy(
+            x,
+            n_rotating_particles,
+            rotation_plane_axis_1, rotation_plane_axis_2,
+            gradient_phase
+        )
         N_rotating_particles = randint(0,n_particles)
-        U = zeros((n_particles,),dtype=double,order='Fortran')
-        first_angular_derivatives = rand(n_particles)
-        vpif.angular_momentum.accumulate_rotation_potential(
-            x,lambda_,
-            first_angular_derivatives,
-            rotation_plane_axis_1,rotation_plane_axis_2,
-            frame_angular_velocity,
+        U = zeros((n_slices,n_particles,),dtype=double,order='Fortran')
+        vpif.angular_momentum.accumulate_effective_potential (
+            x, gradient_phase,
+            frame_angular_velocity, lambda_,
+            rotation_plane_axis_1, rotation_plane_axis_2,
             U
         )
         self.assert_(isfinite(U).all())
-    #@nonl
     #@-node:gcross.20090817102318.1733:test_finite
     #@+node:gcross.20090817102318.1726:test_clumping
     @with_checker
     def test_clumping(self,
-            n_particles=irange(2,10),
+            n_particles=irange(3,10),
             angular_width_1=frange(0,0.6),
             angular_width_2=frange(0,0.6),
         ):
-        n_dimensions = 3
-        x = zeros((n_particles,n_dimensions),dtype=double,order='Fortran')
-        U = zeros((n_particles),dtype=double,order='Fortran')
-        N_rotating_particles = randint(1,n_particles)
+        n_slices = 1
+        n_dimensions = 2
+        x = zeros((n_slices,n_particles,n_dimensions),dtype=double,order='Fortran')
+        n_rotating_particles = randint(1,n_particles-1)
+        if n_particles % 2 == 0:
+            while n_rotating_particles == n_particles / 2:
+                n_rotating_particles = randint(1,n_particles-1)
         frame_angular_velocity = 0.0
-        fixed_rotation_axis = 3
-        rotation_plane_axis_1, rotation_plane_axis_2 = vpif.angular_momentum.get_rotation_plane_axes(fixed_rotation_axis)
+        rotation_plane_axis_1 = 1
+        rotation_plane_axis_2 = 2
         potentials = []
         for angular_width in sorted([angular_width_1,angular_width_2]):
             angles = (array(range(n_particles))*angular_width).reshape(1,n_particles)
-            radii = rand(n_particles)
-            x[:,0] = radii*cos(angles)
-            x[:,1] = radii*sin(angles)
-            x[:,2] = rand(n_particles)
-            first_angular_derivatives = vpif.angular_momentum.compute_angular_derivatives(
+            x[:,:,0] = cos(angles)
+            x[:,:,1] = sin(angles)
+
+            gradient_phase = zeros((n_slices,n_particles,n_dimensions),dtype=double,order='Fortran')
+            vpif.angular_momentum.accumulate_gradient_fancy(
                 x,
-                rotation_plane_axis_1, rotation_plane_axis_2, N_rotating_particles
+                n_rotating_particles,
+                rotation_plane_axis_1, rotation_plane_axis_2,
+                gradient_phase
             )
-            U = zeros((n_particles,),dtype=double,order='Fortran')
-            vpif.angular_momentum.accumulate_rotation_potential(
-                x,0.5,
-                first_angular_derivatives,
-                rotation_plane_axis_1,rotation_plane_axis_2,
-                frame_angular_velocity,
+            U = zeros((n_slices,n_particles,),dtype=double,order='Fortran')
+            vpif.angular_momentum.accumulate_effective_potential (
+                x, gradient_phase,
+                frame_angular_velocity, 0.5,
+                rotation_plane_axis_1, rotation_plane_axis_2,
                 U
             )
-            potentials.append((angular_width,sum(U)))
+            potentials.append(sum(U))
         self.assert_(potentials[1] >= potentials[0])
-    #@nonl
     #@-node:gcross.20090817102318.1726:test_clumping
+    #@+node:gcross.20090917135933.1821:test_centrifuge
+    @with_checker
+    def test_centrifuge(self,
+            n_particles = irange(1,10),
+            n_dimensions = irange(2,5),
+            lambda_ = unit_interval_float,
+            radius_a = positive_float,
+            radius_b = positive_float
+        ):
+        frame_angular_velocity = 0
+        n_slices = 1
+        rotation_plane_axis_1 = 1
+        rotation_plane_axis_2 = 2
+        n_rotating_particles = randint(1,n_particles)
+        x = array(rand(n_slices,n_particles,n_dimensions),dtype=double,order='Fortran')
+        for s in xrange(n_slices):
+            for i in xrange(n_particles):
+                x[s,i] /= norm(x[s,i])
+        potentials = []
+        for radius in sorted([radius_a,radius_b]):
+            x_copy = x.copy() * radius
+            gradient_phase = zeros((n_slices,n_particles,n_dimensions),dtype=double,order='Fortran')
+            vpif.angular_momentum.accumulate_gradient_fancy(
+                x_copy,
+                n_rotating_particles,
+                rotation_plane_axis_1, rotation_plane_axis_2,
+                gradient_phase
+            )
+            N_rotating_particles = randint(0,n_particles)
+            U = zeros((n_slices,n_particles,),dtype=double,order='Fortran')
+            vpif.angular_momentum.accumulate_effective_potential (
+                x, gradient_phase,
+                frame_angular_velocity, lambda_,
+                rotation_plane_axis_1, rotation_plane_axis_2,
+                U
+            )
+            potentials.append(sum(U))
+        self.assert_(potentials[0] > potentials[1])
+    #@-node:gcross.20090917135933.1821:test_centrifuge
     #@+node:gcross.20090817102318.1751:test_angular_momentum_raises_potential
     @with_checker
     def test_angular_momentum_raises_potential(self,
             n_particles = irange(1,10),
-            fixed_rotation_axis = irange(1,3),
+            n_dimensions = irange(2,5),
+            lambda_ = unit_interval_float,
         ):
-        n_dimensions = 3
-        rotation_plane_axis_1, rotation_plane_axis_2 = vpif.angular_momentum.get_rotation_plane_axes(fixed_rotation_axis)
-        x = rand(n_particles,n_dimensions)
+        frame_angular_velocity = 0
+        n_slices = 1
+        rotation_plane_axis_1 = 1
+        rotation_plane_axis_2 = 2
+        x = rand(n_slices,n_particles,n_dimensions)
         potentials = []
-        for N_rotating_particles in [0,randint(1,n_particles)]:
-            first_angular_derivatives = vpif.angular_momentum.compute_angular_derivatives(
+        for n_rotating_particles in [0,randint(1,n_particles)]:
+            gradient_phase = zeros((n_slices,n_particles,n_dimensions),dtype=double,order='Fortran')
+            vpif.angular_momentum.accumulate_gradient_fancy(
                 x,
-                rotation_plane_axis_1, rotation_plane_axis_2, N_rotating_particles
+                n_rotating_particles,
+                rotation_plane_axis_1, rotation_plane_axis_2,
+                gradient_phase
             )
-            U = zeros((n_particles,),dtype=double,order='Fortran')
-            vpif.angular_momentum.accumulate_rotation_potential(
-                x,0.5,
-                first_angular_derivatives,
-                rotation_plane_axis_1,rotation_plane_axis_2,
-                0,
+            U = zeros((n_slices,n_particles,),dtype=double,order='Fortran')
+            vpif.angular_momentum.accumulate_effective_potential (
+                x, gradient_phase,
+                frame_angular_velocity, lambda_,
+                rotation_plane_axis_1, rotation_plane_axis_2,
                 U
             )
             potentials.append(sum(U))
         self.assert_(potentials[0] < potentials[1])
-    #@nonl
     #@-node:gcross.20090817102318.1751:test_angular_momentum_raises_potential
     #@+node:gcross.20090817102318.1753:test_angular_momentum_cancels_frame_rotation
     @with_checker
     def test_angular_momentum_cancels_frame_rotation(self,
             n_particles = irange(1,10),
-            fixed_rotation_axis = irange(1,3),
+            n_dimensions = irange(2,4),
             frame_angular_velocity=unit_interval_float,
         ):
-        n_dimensions = 3
-        rotation_plane_axis_1, rotation_plane_axis_2 = vpif.angular_momentum.get_rotation_plane_axes(fixed_rotation_axis)
-        x = rand(n_particles,3)
-        for i in xrange(n_particles):
-            x[i,fixed_rotation_axis-1] = 0
-            x[i] /= norm(x[i])
+        lambda_ = 0.5
+        n_slices = 1
+        rotation_plane_axis_1 = 1
+        rotation_plane_axis_2 = 2
+        x = rand(n_slices,n_particles,n_dimensions)
+        for s in xrange(n_slices):
+            for i in xrange(n_particles):
+                x[s,i,:2] /= norm(x[s,i,:2])
         potentials = []
-        preferred_momentum = round(frame_angular_velocity*n_particles)
+        preferred_momentum = int(round(frame_angular_velocity*n_particles))
         chosen_momentum = preferred_momentum
         while(chosen_momentum == preferred_momentum):
             chosen_momentum = randint(0,n_particles)
-        for N_rotating_particles in [preferred_momentum,chosen_momentum]:
-            first_angular_derivatives = vpif.angular_momentum.compute_angular_derivatives(
+        for n_rotating_particles in [preferred_momentum,chosen_momentum]:
+            gradient_phase = zeros((n_slices,n_particles,n_dimensions),dtype=double,order='Fortran')
+            vpif.angular_momentum.accumulate_gradient_fancy(
                 x,
-                rotation_plane_axis_1, rotation_plane_axis_2, N_rotating_particles
+                n_rotating_particles,
+                rotation_plane_axis_1, rotation_plane_axis_2,
+                gradient_phase
             )
-            U = zeros((n_particles,),dtype=double,order='Fortran')
-            vpif.angular_momentum.accumulate_rotation_potential(
-                x,0.5,
-                first_angular_derivatives,
-                rotation_plane_axis_1,rotation_plane_axis_2,
-                frame_angular_velocity,
+            U = zeros((n_slices,n_particles,),dtype=double,order='Fortran')
+            vpif.angular_momentum.accumulate_effective_potential (
+                x, gradient_phase,
+                frame_angular_velocity, lambda_,
+                rotation_plane_axis_1, rotation_plane_axis_2,
                 U
             )
             potentials.append(sum(U))
-        self.assert_(potentials[0] < potentials[1])
-    #@nonl
     #@-node:gcross.20090817102318.1753:test_angular_momentum_cancels_frame_rotation
     #@-others
 #@-node:gcross.20090813184545.1726:compute_rotational_potential
@@ -502,7 +542,7 @@ tests = [
     compute_amps_and_sum_syms,
     compute_partial_sum,
     estimate_distance_to_node,
-    #accumulate_rotation_potential
+    compute_rotational_potential
     ]
 
 if __name__ == "__main__":
