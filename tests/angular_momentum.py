@@ -197,7 +197,8 @@ class compute_gradient_fancy_amplitude(unittest.TestCase):
         self.assert_(isfinite(
             vpif.angular_momentum.compute_gradient_fancy_amplitude(
                 x,
-                N_rotating_particles
+                N_rotating_particles,
+                1,2
                 )
         ).all())
     #@-node:gcross.20090915142144.1664:test_finite
@@ -217,7 +218,8 @@ class compute_gradient_fancy_amplitude(unittest.TestCase):
         gradient_amplitude = \
             vpif.angular_momentum.compute_gradient_fancy_amplitude(
                 x,
-                N_rotating_particles
+                N_rotating_particles,
+                1,2
             )
         for i in xrange(N_particles):
             rho = norm(x[i])

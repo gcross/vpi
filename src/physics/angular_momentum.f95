@@ -180,13 +180,15 @@ end subroutine
 pure subroutine compute_gradient_fancy_amplitude (&
     x, &
     n_rotating_particles, &
-    n_particles, &
+    rotation_plane_axis_1, rotation_plane_axis_2, &
+    n_particles, n_dimensions, &
     gradient_amplitude &
   )
 
   ! Input variables
-  integer, intent(in) :: n_particles, n_rotating_particles
-  double precision, dimension(n_particles,2), intent(in) :: x
+  integer, intent(in) :: n_particles, n_dimensions, n_rotating_particles
+  integer, intent(in) :: rotation_plane_axis_1, rotation_plane_axis_2
+  double precision, dimension(n_particles,n_dimensions), intent(in) :: x
 
   ! Output variables
   double precision, dimension(n_particles,2), intent(out) :: gradient_amplitude
@@ -197,14 +199,14 @@ pure subroutine compute_gradient_fancy_amplitude (&
   integer :: i
 
   amplitudes = compute_amplitude( &
-                    x(:,1), &
-                    x(:,2) &
+                    x(:,rotation_plane_axis_1), &
+                    x(:,rotation_plane_axis_2) &
                 )
 
   if(mod(n_rotating_particles,n_particles) == 0) then
     partial_sum = dble(n_rotating_particles/n_particles)*product(amplitudes)
-    gradient_amplitude(:,1) = -imag(partial_sum)*sqrt(x(:,1)**2+x(:,2)**2)
-    gradient_amplitude(:,2) = +real(partial_sum)*sqrt(x(:,1)**2+x(:,2)**2)
+    gradient_amplitude(:,1) = -imag(partial_sum)*sqrt(x(:,rotation_plane_axis_1)**2+x(:,rotation_plane_axis_2)**2)
+    gradient_amplitude(:,2) = +real(partial_sum)*sqrt(x(:,rotation_plane_axis_1)**2+x(:,rotation_plane_axis_2)**2)
     return
   end if
 
@@ -214,7 +216,7 @@ pure subroutine compute_gradient_fancy_amplitude (&
         amplitudes, &
         i, &
         n_particles, n_rotating_particles &
-      )*sqrt(x(i,1)**2+x(i,2)**2)
+      )*sqrt(x(i,rotation_plane_axis_1)**2+x(i,rotation_plane_axis_2)**2)
     gradient_amplitude(i,1) = -imag(partial_sum)
     gradient_amplitude(i,2) = +real(partial_sum)
   end do
@@ -233,17 +235,17 @@ end function
 pure function compute_amps_and_sum_syms( &
     x, &
     n_rotating_particles, &
-    rotation_axis_1, rotation_axis_2, &
+    rotation_plane_axis_1, rotation_plane_axis_2, &
     n_particles, n_dimensions &
   ) result (result)
-  integer, intent(in) :: rotation_axis_1, rotation_axis_2
+  integer, intent(in) :: rotation_plane_axis_1, rotation_plane_axis_2
   integer, intent(in) :: n_rotating_particles, n_particles, n_dimensions
   double precision, dimension(n_particles,n_dimensions), intent(in) :: x
 
   double complex :: result
 
   result = sum_over_symmetrizations(  &
-    compute_amplitude(x(:,rotation_axis_1),x(:,rotation_axis_2)), &
+    compute_amplitude(x(:,rotation_plane_axis_1),x(:,rotation_plane_axis_2)), &
     n_particles,n_rotating_particles &
   )
 
