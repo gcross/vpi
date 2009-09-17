@@ -452,6 +452,84 @@ pure function estimate_distance_to_node( &
 
 end function
 !@-node:gcross.20090916153857.1667:estimate_distance_to_node
+!@+node:gcross.20090916153857.1666:compute_greens_function
+! image approximation
+pure function compute_greens_function( &
+    x, &
+    lambda, dt, &
+    slice_start, slice_end, &
+    particle_number, &
+    n_rotating_particles, &
+    rotation_plane_axis_1, rotation_plane_axis_2, &
+    n_slices, n_particles, n_dimensions &
+  ) result ( ln_gfn )
+  integer, intent(in) :: slice_start, slice_end, particle_number
+  integer, intent(in) :: rotation_plane_axis_1, rotation_plane_axis_2
+  integer, intent(in) :: n_slices, n_particles, n_dimensions, n_rotating_particles
+  double precision, dimension( n_slices, n_particles, n_dimensions ), intent(in) :: x
+  double precision, intent(in) :: lambda, dt
+  double precision :: gfn, ln_gfn
+
+  integer :: s
+  double precision, dimension( n_slices ) :: distances
+
+  forall (s=slice_start:slice_end) &
+    distances(s) = &
+      estimate_distance_to_node( &
+        x(s,:,:), &
+        n_rotating_particles, &
+        rotation_plane_axis_1, rotation_plane_axis_2, &
+        n_particles, n_dimensions &
+      )
+
+  ln_gfn = log( &
+    compute_green_fn_from_distances( &
+      distances, &
+      lambda*dt, &
+      slice_start, slice_end, &
+      n_slices &
+    ) &
+  )
+
+end function
+!@-node:gcross.20090916153857.1666:compute_greens_function
+!@+node:gcross.20090916153857.1828:compute_green_fn_from_distances
+! image approximation
+pure function compute_green_fn_from_distances( &
+    distances, &
+    denominator, &
+    slice_start, slice_end, &
+    n_slices &
+  ) result ( gfn )
+  integer, intent(in) :: slice_start, slice_end, n_slices
+  double precision, intent(in) :: denominator
+  double precision, dimension ( n_slices ), intent(in) :: distances
+  double precision :: gfn
+
+  integer :: s, center_slice_number
+
+  center_slice_number = n_slices / 2
+
+  gfn = 1d0 &
+    * product(compute_slice_gfn( &
+        distances(slice_start:center_slice_number-1), &
+        distances(slice_start+1:center_slice_number) &
+      )) &
+    * product(compute_slice_gfn( &
+        distances(center_slice_number+1:slice_end-1), &
+        distances(center_slice_number+2:slice_end) &
+      ))
+
+contains
+
+  elemental function compute_slice_gfn(d1,d2) result (slice_gfn)
+    double precision, intent(in) :: d1, d2
+    double precision :: slice_gfn
+    slice_gfn = 1d0 - exp(-d1*d2/denominator)
+  end function
+
+end function
+!@-node:gcross.20090916153857.1828:compute_green_fn_from_distances
 !@-others
 
 end module angular_momentum
