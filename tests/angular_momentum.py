@@ -530,6 +530,104 @@ class compute_rotational_potential(unittest.TestCase):
     #@-node:gcross.20090817102318.1753:test_angular_momentum_cancels_frame_rotation
     #@-others
 #@-node:gcross.20090813184545.1726:compute_rotational_potential
+#@+node:gcross.20090918120753.2604:compute_green_fn_from_distances
+#@@language python
+
+class compute_green_fn_from_distances(unittest.TestCase):
+    #@    @+others
+    #@+node:gcross.20090918120753.2610:test_finite
+    @with_checker
+    def test_finite(self,
+            n_slices = irange(6,100),
+            magnitude = float,
+            denominator = unit_interval_float,
+        ):
+        start_slice = randint(1,n_slices-1)
+        end_slice = randint(start_slice+1,n_slices)
+        distances = rand(n_slices) * magnitude
+        self.assert_(isfinite(
+            vpif.angular_momentum.compute_green_fn_from_distances(
+                distances,
+                denominator,
+                start_slice, end_slice,
+            )
+        ))
+    #@-node:gcross.20090918120753.2610:test_finite
+    #@+node:gcross.20090918120753.2616:test_finite_log
+    @with_checker
+    def test_finite_log(self,
+            n_slices = irange(6,100),
+            denominator = unit_interval_float,
+        ):
+        start_slice = randint(1,n_slices-1)
+        end_slice = randint(start_slice+1,n_slices)
+        distances = rand(n_slices)
+        self.assert_(isfinite(log(
+            vpif.angular_momentum.compute_green_fn_from_distances(
+                distances,
+                denominator,
+                start_slice, end_slice,
+            )
+        )))
+    #@-node:gcross.20090918120753.2616:test_finite_log
+    #@+node:gcross.20090918120753.2618:test_finite_log_half_path
+    @with_checker
+    def test_finite_log_half_path(self,
+            n_slices = irange(6,100),
+            denominator = unit_interval_float,
+        ):
+        start_slice = randint(n_slices/2+2,n_slices-1)
+        end_slice = randint(start_slice+1,n_slices)
+        distances = rand(n_slices)
+        self.assert_(isfinite(log(
+            vpif.angular_momentum.compute_green_fn_from_distances(
+                distances,
+                denominator,
+                start_slice, end_slice,
+            )
+        )))
+    #@-node:gcross.20090918120753.2618:test_finite_log_half_path
+    #@+node:gcross.20090918120753.2620:test_ignores_outside_distances
+    @with_checker
+    def test_ignores_outside_distances(self,
+            n_slices = irange(6,102,4),
+            denominator = unit_interval_float,
+        ):
+        start_slice = randint(1,n_slices-1)
+        end_slice = randint(start_slice+1,n_slices)
+
+        distances = rand(n_slices)
+
+        distances[:start_slice-1] = 0
+        distances[end_slice:start_slice] = 0
+
+        self.assert_(
+            vpif.angular_momentum.compute_green_fn_from_distances(
+                distances,
+                denominator,
+                start_slice, end_slice,
+            ) > 0
+        )
+    #@-node:gcross.20090918120753.2620:test_ignores_outside_distances
+    #@+node:gcross.20090918120753.2612:test_unit_interval
+    @with_checker
+    def test_unit_interval(self,
+            n_slices = irange(6,102),
+            magnitude = float,
+            denominator = unit_interval_float,
+        ):
+        distances = rand(n_slices) * abs(magnitude)
+        greens_fn = \
+            vpif.angular_momentum.compute_green_fn_from_distances(
+                distances,
+                denominator,
+                1, n_slices,
+            )
+        self.assert_(greens_fn >= 0)
+        self.assert_(greens_fn <= 1)
+    #@-node:gcross.20090918120753.2612:test_unit_interval
+    #@-others
+#@-node:gcross.20090918120753.2604:compute_green_fn_from_distances
 #@-others
 
 tests = [
@@ -541,7 +639,8 @@ tests = [
     compute_amps_and_sum_syms,
     compute_partial_sum,
     estimate_distance_to_node,
-    compute_rotational_potential
+    compute_rotational_potential,
+    compute_green_fn_from_distances,
     ]
 
 if __name__ == "__main__":

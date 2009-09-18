@@ -549,15 +549,23 @@ pure function compute_green_fn_from_distances( &
 
   center_slice_number = n_slices / 2
 
-  gfn = 1d0 &
-    * product(compute_slice_gfn( &
-        distances(slice_start:center_slice_number-1), &
-        distances(slice_start+1:center_slice_number) &
-      )) &
-    * product(compute_slice_gfn( &
-        distances(center_slice_number+1:slice_end-1), &
-        distances(center_slice_number+2:slice_end) &
-      ))
+  if(slice_start <= center_slice_number .and. slice_end >= center_slice_number) then  
+    gfn = 1d0 &
+      * product(compute_slice_gfn( &
+          distances(slice_start:center_slice_number-1), &
+          distances(slice_start+1:center_slice_number) &
+        )) &
+      * product(compute_slice_gfn( &
+          distances(center_slice_number+1:slice_end-1), &
+          distances(center_slice_number+2:slice_end) &
+        ))
+  else
+    gfn = &
+        product(compute_slice_gfn( &
+          distances(slice_start:slice_end-1), &
+          distances(slice_start+1:slice_end) &
+        ))
+  end if
 
 contains
 
