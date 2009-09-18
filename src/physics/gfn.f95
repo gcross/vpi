@@ -140,6 +140,51 @@ pure function gfn_hard_wall_contribution( &
 
 end function
 !@-node:gcross.20090828095451.1453:hard wall
+!@+node:gcross.20090916153857.1828:compute_green_fn_from_distances
+! image approximation
+pure function compute_green_fn_from_distances( &
+    distances, &
+    denominator, &
+    slice_start, slice_end, &
+    n_slices &
+  ) result ( gfn )
+  integer, intent(in) :: slice_start, slice_end, n_slices
+  double precision, intent(in) :: denominator
+  double precision, dimension ( n_slices ), intent(in) :: distances
+  double precision :: gfn
+
+  integer :: center_slice_number
+
+  center_slice_number = n_slices / 2
+
+  if(slice_start <= center_slice_number .and. slice_end >= center_slice_number) then  
+    gfn = 1d0 &
+      * product(compute_slice_gfn( &
+          distances(slice_start:center_slice_number-1), &
+          distances(slice_start+1:center_slice_number) &
+        )) &
+      * product(compute_slice_gfn( &
+          distances(center_slice_number+1:slice_end-1), &
+          distances(center_slice_number+2:slice_end) &
+        ))
+  else
+    gfn = &
+        product(compute_slice_gfn( &
+          distances(slice_start:slice_end-1), &
+          distances(slice_start+1:slice_end) &
+        ))
+  end if
+
+contains
+
+  elemental function compute_slice_gfn(d1,d2) result (slice_gfn)
+    double precision, intent(in) :: d1, d2
+    double precision :: slice_gfn
+    slice_gfn = 1d0 - exp(-d1*d2/denominator)
+  end function
+
+end function
+!@-node:gcross.20090916153857.1828:compute_green_fn_from_distances
 !@-others
 
 end module gfn

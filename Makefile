@@ -34,8 +34,8 @@ OBJS = \
   obj/utils/numeric_differentiation.o \
   obj/measurement/observables.o \
   obj/measurement/histograms.o \
-  obj/physics/angular_momentum.o \
   obj/physics/gfn.o \
+  obj/physics/angular_momentum.o \
   obj/physics/hard_sphere_interaction.o \
   obj/physics/harmonic_oscillator.o \
   obj/physics/lennard_jones_interaction.o \

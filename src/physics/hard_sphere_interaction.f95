@@ -3,6 +3,9 @@
 !@@language fortran90
 
 module hard_sphere_interaction
+
+  use gfn
+
   implicit none
 
 contains
@@ -176,36 +179,38 @@ pure function compute_greens_function( &
   double precision, intent(in) :: dt, hard_sphere_radius
   double precision, dimension ( n_slices, n_particles, n_particles ), intent(in) :: xij2
 
-  double precision :: hs_gfn, ln_gfn
+  double precision :: gfn, ln_gfn
+  integer :: i
 
-  double precision :: r,rp,d,dp
-  integer :: i,j
-  integer :: center_slice_number
+  gfn = 1.0d0
 
-  center_slice_number = n_slices / 2
-
-  hs_gfn = 1.0d0
-
-  do i = 1, n_particles
-    if(i .ne. particle_number) then
-      do j = slice_start+1, center_slice_number
-        r = sqrt( xij2(j-1,particle_number,i) )
-        rp = sqrt( xij2(j,particle_number,i) )
-        d = (r-hard_sphere_radius)
-        dp = (rp-hard_sphere_radius)
-        hs_gfn = hs_gfn*(1.0d0 - exp(-d*dp/dt))
-      end do
-      do j = center_slice_number+2,slice_end
-        r = sqrt( xij2(j-1,particle_number,i) )
-        rp = sqrt( xij2(j,particle_number,i) )
-        d = (r-hard_sphere_radius)
-        dp = (rp-hard_sphere_radius)
-        hs_gfn = hs_gfn*(1.0d0 - exp(-d*dp/dt))
-      end do
-    end if
+  do i = 1, particle_number-1
+    gfn = gfn * compute_contribution_from_particle(i)
   end do
 
-  ln_gfn = log(hs_gfn)
+  do i = particle_number+1, n_particles
+    gfn = gfn * compute_contribution_from_particle(i)
+  end do
+
+  ln_gfn = log(gfn)
+
+contains
+
+  pure function compute_contribution_from_particle(i) result (gfn)
+    integer, intent(in) :: i
+    double precision :: gfn
+
+    double precision, dimension(n_slices) :: distances
+
+    distances(slice_start:slice_end) = sqrt(xij2(slice_start:slice_end,particle_number,i)) - hard_sphere_radius
+
+    gfn = compute_green_fn_from_distances( &
+            distances, &
+            dt, &
+            slice_start, slice_end, &
+            n_slices &
+          )
+  end function
 
 end function
 !@-node:gcross.20090828095451.1455:strategy 1 (image approximation)
