@@ -356,7 +356,7 @@ end subroutine
 !@nonl
 !@-node:gcross.20090915142144.1644:accum_angle_drv_into_gradient
 !@+node:gcross.20090903090230.2072:accumulate_rotating_frame_potential
-subroutine accumulate_rotating_frame_potential (&
+pure subroutine accumulate_rotating_frame_potential (&
     x, gradient_phase, &
     frame_angular_velocity, lambda, &
     rotation_plane_axis_1, rotation_plane_axis_2, &
@@ -386,7 +386,7 @@ subroutine accumulate_rotating_frame_potential (&
 end subroutine
 !@-node:gcross.20090903090230.2072:accumulate_rotating_frame_potential
 !@+node:gcross.20090919132620.2307:accumulate_effective_potential
-subroutine accumulate_effective_potential (&
+pure subroutine accumulate_effective_potential (&
     gradient_phase, &
     lambda, &
     n_slices, n_particles, n_dimensions, &
@@ -410,7 +410,7 @@ subroutine accumulate_effective_potential (&
 end subroutine
 !@-node:gcross.20090919132620.2307:accumulate_effective_potential
 !@+node:gcross.20090908085435.1633:accumulate_gradient_feynman
-subroutine accumulate_gradient_feynman (&
+pure subroutine accumulate_gradient_feynman (&
     x, &
     rotation_rate, &
     rotation_plane_axis_1, rotation_plane_axis_2, &
