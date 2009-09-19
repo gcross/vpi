@@ -559,6 +559,36 @@ pure function compute_greens_function( &
 
 end function
 !@-node:gcross.20090916153857.1666:compute_greens_function
+!@+node:gcross.20090919132620.2310:accumulate_magnetic_field_phase
+pure subroutine accumulate_magnetic_field_phase (&
+    x, &
+    magnetic_field_strength, &
+    rotation_plane_axis_1, rotation_plane_axis_2, &
+    n_slices, n_particles, n_dimensions, &
+    gradient_phase &
+  )
+
+  ! Input variables
+  integer, intent(in) :: n_slices, n_particles, n_dimensions
+  double precision, dimension( n_slices, n_particles, n_dimensions ), intent(in) :: x
+  integer, intent(in) :: rotation_plane_axis_1, rotation_plane_axis_2
+  double precision, intent(in) :: magnetic_field_strength
+
+  ! Output variables
+  double precision, dimension ( n_slices, n_particles, n_dimensions ), intent(inout) :: gradient_phase
+
+  ! Local variables
+  integer :: s, i
+
+  forall (s=1:n_slices,i=1:n_particles)
+    gradient_phase(s,i,rotation_plane_axis_1) = gradient_phase(s,i,rotation_plane_axis_1) &
+      - magnetic_field_strength * x(s,i,rotation_plane_axis_2)
+    gradient_phase(s,i,rotation_plane_axis_2) = gradient_phase(s,i,rotation_plane_axis_2) &
+      + magnetic_field_strength * x(s,i,rotation_plane_axis_1)
+  end forall
+
+end subroutine
+!@-node:gcross.20090919132620.2310:accumulate_magnetic_field_phase
 !@-others
 
 end module angular_momentum
