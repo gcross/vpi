@@ -494,21 +494,23 @@ pure function compute_greens_function( &
     x, &
     lambda, dt, &
     slice_start, slice_end, &
-    n_rotating_particles, &
+    n_total_rotating_particles, &
     rotation_plane_axis_1, rotation_plane_axis_2, &
     n_slices, n_particles, n_dimensions &
   ) result ( ln_gfn )
   integer, intent(in) :: slice_start, slice_end
   integer, intent(in) :: rotation_plane_axis_1, rotation_plane_axis_2
-  integer, intent(in) :: n_slices, n_particles, n_dimensions, n_rotating_particles
+  integer, intent(in) :: n_slices, n_particles, n_dimensions, n_total_rotating_particles
   double precision, dimension( n_slices, n_particles, n_dimensions ), intent(in) :: x
   double precision, intent(in) :: lambda, dt
   double precision :: ln_gfn
 
-  integer :: s
+  integer :: s, n_rotating_particles
   double precision, dimension( n_slices ) :: distances
 
-  if ( mod(n_rotating_particles,n_particles) == 0 ) then
+  n_rotating_particles = mod(n_total_rotating_particles,n_particles)
+
+  if ( n_rotating_particles == 0 ) then
     ln_gfn = 0d0
     return
   end if
