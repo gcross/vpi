@@ -355,8 +355,8 @@ pure subroutine accum_angle_drv_into_gradient(&
 end subroutine
 !@nonl
 !@-node:gcross.20090915142144.1644:accum_angle_drv_into_gradient
-!@+node:gcross.20090903090230.2072:accumulate_effective_potential
-subroutine accumulate_effective_potential (&
+!@+node:gcross.20090903090230.2072:accumulate_rotating_frame_potential
+subroutine accumulate_rotating_frame_potential (&
     x, gradient_phase, &
     frame_angular_velocity, lambda, &
     rotation_plane_axis_1, rotation_plane_axis_2, &
@@ -384,7 +384,31 @@ subroutine accumulate_effective_potential (&
                       )
 
 end subroutine
-!@-node:gcross.20090903090230.2072:accumulate_effective_potential
+!@-node:gcross.20090903090230.2072:accumulate_rotating_frame_potential
+!@+node:gcross.20090919132620.2307:accumulate_effective_potential
+subroutine accumulate_effective_potential (&
+    gradient_phase, &
+    lambda, &
+    n_slices, n_particles, n_dimensions, &
+    U &
+  )
+
+  ! Input variables
+  integer, intent(in) :: n_slices, n_particles, n_dimensions
+  double precision, dimension ( n_slices, n_particles, n_dimensions ), intent(in) :: gradient_phase
+  double precision, intent(in) :: lambda
+
+  ! Output variables
+  double precision, dimension( n_slices, n_particles ), intent(inout) :: U
+
+  ! Local variables
+  integer :: s, i
+
+  forall (s=1:n_slices, i=1:n_particles) &
+    U(s,i) = U(s,i) + lambda*sum(gradient_phase(s,i,:)**2)
+
+end subroutine
+!@-node:gcross.20090919132620.2307:accumulate_effective_potential
 !@+node:gcross.20090908085435.1633:accumulate_gradient_feynman
 subroutine accumulate_gradient_feynman (&
     x, &

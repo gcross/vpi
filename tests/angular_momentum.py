@@ -348,8 +348,8 @@ class estimate_distance_to_node(unittest.TestCase):
     #@-node:gcross.20090916153857.1679:Correctness
     #@-others
 #@-node:gcross.20090916153857.1676:estimate_distance_to_node
-#@+node:gcross.20090813184545.1726:compute_rotational_potential
-class compute_rotational_potential(unittest.TestCase):
+#@+node:gcross.20090813184545.1726:accumulate_rotating_frame_potential
+class accumulate_rotating_frame_potential(unittest.TestCase):
     #@    @+others
     #@+node:gcross.20090817102318.1733:test_finite
     @with_checker
@@ -373,7 +373,7 @@ class compute_rotational_potential(unittest.TestCase):
         )
         N_rotating_particles = randint(0,n_particles)
         U = zeros((n_slices,n_particles,),dtype=double,order='Fortran')
-        vpif.angular_momentum.accumulate_effective_potential (
+        vpif.angular_momentum.accumulate_rotating_frame_potential (
             x, gradient_phase,
             frame_angular_velocity, lambda_,
             rotation_plane_axis_1, rotation_plane_axis_2,
@@ -412,7 +412,7 @@ class compute_rotational_potential(unittest.TestCase):
                 gradient_phase
             )
             U = zeros((n_slices,n_particles,),dtype=double,order='Fortran')
-            vpif.angular_momentum.accumulate_effective_potential (
+            vpif.angular_momentum.accumulate_rotating_frame_potential (
                 x, gradient_phase,
                 frame_angular_velocity, 0.5,
                 rotation_plane_axis_1, rotation_plane_axis_2,
@@ -451,7 +451,7 @@ class compute_rotational_potential(unittest.TestCase):
             )
             N_rotating_particles = randint(0,n_particles)
             U = zeros((n_slices,n_particles,),dtype=double,order='Fortran')
-            vpif.angular_momentum.accumulate_effective_potential (
+            vpif.angular_momentum.accumulate_rotating_frame_potential (
                 x, gradient_phase,
                 frame_angular_velocity, lambda_,
                 rotation_plane_axis_1, rotation_plane_axis_2,
@@ -482,7 +482,7 @@ class compute_rotational_potential(unittest.TestCase):
                 gradient_phase
             )
             U = zeros((n_slices,n_particles,),dtype=double,order='Fortran')
-            vpif.angular_momentum.accumulate_effective_potential (
+            vpif.angular_momentum.accumulate_rotating_frame_potential (
                 x, gradient_phase,
                 frame_angular_velocity, lambda_,
                 rotation_plane_axis_1, rotation_plane_axis_2,
@@ -520,7 +520,7 @@ class compute_rotational_potential(unittest.TestCase):
                 gradient_phase
             )
             U = zeros((n_slices,n_particles,),dtype=double,order='Fortran')
-            vpif.angular_momentum.accumulate_effective_potential (
+            vpif.angular_momentum.accumulate_rotating_frame_potential (
                 x, gradient_phase,
                 frame_angular_velocity, lambda_,
                 rotation_plane_axis_1, rotation_plane_axis_2,
@@ -529,7 +529,7 @@ class compute_rotational_potential(unittest.TestCase):
             potentials.append(sum(U))
     #@-node:gcross.20090817102318.1753:test_angular_momentum_cancels_frame_rotation
     #@-others
-#@-node:gcross.20090813184545.1726:compute_rotational_potential
+#@-node:gcross.20090813184545.1726:accumulate_rotating_frame_potential
 #@-others
 
 tests = [
@@ -541,7 +541,7 @@ tests = [
     compute_amps_and_sum_syms,
     compute_partial_sum,
     estimate_distance_to_node,
-    compute_rotational_potential,
+    accumulate_rotating_frame_potential,
     ]
 
 if __name__ == "__main__":
