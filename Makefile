@@ -47,7 +47,7 @@ OBJS = \
   obj/wrappers/fortranobject.o
 
 src/wrappers/vpifmodule.c src/wrapers/vpif-f2pywrappers2.f90: ${SOURCES} Makefile
-	f2py ${SOURCES} -m vpif --build-dir src/wrappers
+	${F2PY} ${SOURCES} -m vpif --build-dir src/wrappers
 
 obj/%.o: src/%.c Makefile
 	${CC} ${FLAGS} ${CFLAGS} -c $< -o $@
