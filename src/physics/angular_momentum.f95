@@ -430,13 +430,16 @@ pure subroutine accumulate_gradient_feynman (&
   ! Local variables
   integer :: s, i
 
-  forall (s=1:n_slices, i=1:n_particles)
-    gradient_phase(s,i,rotation_plane_axis_1) = gradient_phase(s,i,rotation_plane_axis_1) &
-        + rotation_rate * x(s,i,rotation_plane_axis_2) / (x(s,i,rotation_plane_axis_1)**2 + x(s,i,rotation_plane_axis_2)**2)
-    gradient_phase(s,i,rotation_plane_axis_2) = gradient_phase(s,i,rotation_plane_axis_2) &
-        - rotation_rate * x(s,i,rotation_plane_axis_1) / (x(s,i,rotation_plane_axis_1)**2 + x(s,i,rotation_plane_axis_2)**2)
-  end forall
-
+  do s = 1, n_slices
+    do i = 1, n_particles
+      call accum_angle_drv_into_gradient( &
+        rotation_rate, x(s,i,:), &
+        rotation_plane_axis_1, rotation_plane_axis_2, &
+        n_dimensions, &
+        gradient_phase(s,i,:) &
+      )
+    end do
+  end do
 end subroutine
 !@-node:gcross.20090908085435.1633:accumulate_gradient_feynman
 !@+node:gcross.20090916153857.1667:estimate_distance_to_node
