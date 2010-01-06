@@ -10,7 +10,60 @@ module gfn
 contains 
 
 !@+others
-!@+node:gcross.20090812093015.1753:initialize weights
+!@+node:gcross.20100106123346.1699:2nd order
+!@+node:gcross.20100106123346.1698:initialize 2nd order weights
+subroutine initialize_2nd_order_weights(n_slices,U_weight)
+  integer, intent(in) :: n_slices
+  double precision, dimension(n_slices), intent(out) :: U_weight
+  integer :: cslice, ii
+
+  cslice = n_slices / 2
+
+  if (mod(CSLICE,2) .ne. 1) then
+    print *,"ERROR: CSLICE = N_SLICE/2 must be odd"
+    stop
+  end if
+
+  U_weight = 1.0
+
+  U_weight(1) = 0.5d0
+  U_weight(N_SLICES) = 0.5d0
+  U_weight(CSLICE) = 0.5d0
+  U_weight(CSLICE+1) = 0.5d0
+end subroutine
+!@-node:gcross.20100106123346.1698:initialize 2nd order weights
+!@+node:gcross.20090624144408.1799:2nd order
+pure function gfn2_sp( sl_start, sl_end, U, U_weight, nslice, np, dt ) result ( ln_gfn )
+  double precision, dimension( nslice, np ), intent(in) :: U
+  double precision, dimension( nslice ), intent(in) :: U_weight
+  integer, intent(in) :: sl_start, sl_end
+  integer, intent(in) :: nslice, np
+  double precision, intent(in) :: dt
+  double precision :: ln_gfn
+  integer :: ip, slice_length
+
+  interface
+    pure function ddot(n,x,incx,y,incy)
+      integer, intent(in) :: n, incx, incy
+      double precision, intent(in), dimension(n*incx) :: x
+      double precision, intent(in), dimension(n*incy) :: y
+      double precision :: ddot
+    end function ddot
+  end interface
+
+  slice_length = sl_end-sl_start+1
+
+  ln_gfn = 0
+  do ip = 1, np
+    ln_gfn = ln_gfn + ddot(slice_length,U(sl_start,ip),1,U_weight(sl_start),1)
+  end do
+  ln_gfn = -dt*ln_gfn
+
+end function gfn2_sp
+!@-node:gcross.20090624144408.1799:2nd order
+!@-node:gcross.20100106123346.1699:2nd order
+!@+node:gcross.20100106123346.1700:4th order
+!@+node:gcross.20090812093015.1753:initialize 4th order weights
 subroutine initialize_4th_order_weights(n_slices,U_weight,gU2_weight)
   integer, intent(in) :: n_slices
   double precision, dimension(n_slices), intent(out) :: U_weight, gU2_weight
@@ -57,31 +110,18 @@ subroutine initialize_4th_order_weights(n_slices,U_weight,gU2_weight)
   U_weight(CSLICE) = 0.5d0
   U_weight(CSLICE+1) = 0.5d0
 end subroutine
-!@-node:gcross.20090812093015.1753:initialize weights
-!@+node:gcross.20090624144408.1799:2nd order
-pure function gfn2_sp( sl_start, sl_end, ip, U, nslice, np, dt ) result ( ln_gfn )
-  double precision, dimension( nslice, np ), intent(in) :: U
-  integer, intent(in) :: sl_start, sl_end, ip
-  integer, intent(in) :: nslice, np
-  double precision, intent(in) :: dt
-  double precision :: ln_gfn
-
-  ln_gfn = -dt*sum( U(sl_start:sl_end,ip) )
-
-end function gfn2_sp
-!@-node:gcross.20090624144408.1799:2nd order
+!@-node:gcross.20090812093015.1753:initialize 4th order weights
 !@+node:gcross.20090812093015.1845:4th order
-pure function gfn4_sp( sl_start, sl_end, ip, U, gradU2, U_weight, gU2_weight, nslice, np, lambda, dt ) result ( ln_gfn )
+pure function gfn4_sp( sl_start, sl_end, U, gradU2, U_weight, gU2_weight, nslice, np, lambda, dt ) result ( ln_gfn )
   double precision, dimension( nslice, np ), intent(in) :: U
   double precision, dimension( nslice ), intent(in) :: gradU2
   double precision, dimension( nslice ), intent(in) :: U_weight
   double precision, dimension( nslice ), intent(in) :: gU2_weight
-  integer, intent(in) :: sl_start, sl_end, ip
+  integer, intent(in) :: sl_start, sl_end
   integer, intent(in) :: nslice, np
   double precision, intent(in) :: lambda, dt
   double precision :: ln_gfn
-
-  integer :: slice_length
+  integer :: ip, slice_length
 
   interface
     pure function ddot(n,x,incx,y,incy)
@@ -94,11 +134,17 @@ pure function gfn4_sp( sl_start, sl_end, ip, U, gradU2, U_weight, gU2_weight, ns
 
   slice_length = sl_end-sl_start+1
 
-  ln_gfn = -2.0d0*dt*ddot(slice_length,U(sl_start,ip),1,U_weight(sl_start),1)/3.0d0 &
-           -2.0d0*lambda*(dt**3)*ddot(slice_length,gradU2(sl_start),1,gU2_weight(sl_start),1)/9.0d0
+  ln_gfn = 0
+
+  do ip = 1, np
+    ln_gfn = ln_gfn &
+             -2.0d0*dt*ddot(slice_length,U(sl_start,ip),1,U_weight(sl_start),1)/3.0d0 &
+             -2.0d0*lambda*(dt**3)*ddot(slice_length,gradU2(sl_start),1,gU2_weight(sl_start),1)/9.0d0
+  end do
 
 end function gfn4_sp
 !@-node:gcross.20090812093015.1845:4th order
+!@-node:gcross.20100106123346.1700:4th order
 !@+node:gcross.20090828095451.1453:hard wall
 pure function gfn_hard_wall_contribution( &
     q, &

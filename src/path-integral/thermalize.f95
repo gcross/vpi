@@ -95,7 +95,6 @@ interface
       x, xij2, U, gradU2, &
       lambda, dt, &
       slice_start, slice_end, &
-      particle_number, &
       n_slices, n_particles, n_dimensions &
     ) result ( log_probability )
     integer, intent(in) :: n_slices, n_particles, n_dimensions
@@ -104,7 +103,7 @@ interface
     double precision, dimension( n_slices, n_particles ), intent(in) :: U
     double precision, dimension( n_slices ), intent(in) :: gradU2
     double precision, intent(in) :: lambda, dt
-    integer, intent(in) :: slice_start, slice_end, particle_number
+    integer, intent(in) :: slice_start, slice_end
     double precision  :: log_probability
   end function
   !@-node:gcross.20090828095451.1676:<< Green's function callback interface >>
@@ -356,7 +355,6 @@ end interface
                 x, xij2, U, gradU2, &
                 lambda, dtau, &
                 slice_start, slice_end, &
-                particle_number, &
                 n_slices, n_particles, n_dimensions &
               )
     else

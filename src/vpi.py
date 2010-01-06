@@ -915,11 +915,12 @@ class HarmonicOscillator(Physics):
               raise ValueError("System needs to define 'harmonic_oscillator_coefficients' to use harmonic oscillator physics!")       
   #@-node:gcross.20090902085220.2359:__init__
   #@+node:gcross.20090902085220.2360:accumulate_potential
-  def accumulate_potential(self,x,xij2,U,gradU):
+  def accumulate_potential(self,x,xij2,U,gradU2):
       vpif.harmonic_oscillator.accumulate_potential(
           x,
           self.potential_coefficients,
-          U
+          U,
+          gradU2
       )
   #@-node:gcross.20090902085220.2360:accumulate_potential
   #@+node:gcross.20090902085220.2361:compute_trial_weight
@@ -1011,21 +1012,47 @@ class HardSphereInteraction(Physics):
 #@+node:gcross.20090902085220.2373:class SecondOrderGreensFunction
 class SecondOrderGreensFunction(Physics):
   #@  @+others
+  #@+node:gcross.20100106123346.1702:__init__
+  def __init__(self,system):
+      Physics.__init__(self,system)
+      self.weights = vpif.gfn.initialize_2nd_order_weights(system.number_of_slices)
+  #@-node:gcross.20100106123346.1702:__init__
   #@+node:gcross.20090902085220.2381:hooks
   hooks = ["greens_functions"]
   #@-node:gcross.20090902085220.2381:hooks
   #@+node:gcross.20090902085220.2382:compute_greens_function
-  @staticmethod
   def compute_greens_function(
+          self,
           x,xij2,
           U,gradU2,
           lam,dt,
-          slice_start,slice_end,
-          particle_number
-      ):  return vpif.gfn.gfn2_sp(slice_start,slice_end,particle_number,U,dt)
+          slice_start,slice_end
+      ):  return vpif.gfn.gfn2_sp(slice_start,slice_end,U,self.weights,dt)
   #@-node:gcross.20090902085220.2382:compute_greens_function
   #@-others
 #@-node:gcross.20090902085220.2373:class SecondOrderGreensFunction
+#@+node:gcross.20091220132355.1699:class FourthOrderGreensFunction
+class FourthOrderGreensFunction(Physics):
+  #@  @+others
+  #@+node:gcross.20091220132355.1703:__init__
+  def __init__(self,system):
+      Physics.__init__(self,system)
+      self.weights = vpif.gfn.initialize_4th_order_weights(system.number_of_slices)
+  #@-node:gcross.20091220132355.1703:__init__
+  #@+node:gcross.20091220132355.1700:hooks
+  hooks = ["greens_functions"]
+  #@-node:gcross.20091220132355.1700:hooks
+  #@+node:gcross.20091220132355.1701:compute_greens_function
+  def compute_greens_function(
+          self,
+          x,xij2,
+          U,gradU2,
+          lambda_,dt,
+          slice_start,slice_end
+      ):  return vpif.gfn.gfn4_sp(slice_start,slice_end,U,gradU2,self.weights[0],self.weights[1],lambda_,dt)
+  #@-node:gcross.20091220132355.1701:compute_greens_function
+  #@-others
+#@-node:gcross.20091220132355.1699:class FourthOrderGreensFunction
 #@-node:gcross.20090902085220.2355:Physics classes
 #@+node:gcross.20090902085220.2288:class System
 class System(object):
@@ -1104,15 +1131,12 @@ class System(object):
     #@+node:gcross.20090902085220.2335:compute_potential
     def compute_potential(self,x,xij2):
         U = zeros(x.shape[:2],dtype=double,order='Fortran')
-        gradU = zeros(x.shape,dtype=double,order='Fortran')
         gradU2 = zeros(x.shape[:1],dtype=double,order='Fortran')
         try:
             for potential in itertools.chain(
                     self.physical_potentials,
                     self.effective_potentials
-                ): potential.accumulate_potential(x,xij2,U,gradU)
-            #gradU **= 2
-            #gradU2 = sum(gradU.reshape(gradU.shape[0],prod(gradU.shape[1:])),axis=-1)
+                ): potential.accumulate_potential(x,xij2,U,gradU2)
             return U, gradU2, False
         except MoveRejected:
             return U, gradU2, True
@@ -1129,9 +1153,9 @@ class System(object):
         x = self.x[slice_number:slice_number+1]
         xij2 = self.xij2[slice_number:slice_number+1]
         U = zeros((1,x.shape[1]),dtype=double,order='Fortran')
-        gradU = zeros((1,) + x.shape[1:],dtype=double,order='Fortran')
+        gradU2 = zeros((1,),dtype=double,order='Fortran')
         for potential in self.physical_potentials:
-            potential.accumulate_potential(x,xij2,U,gradU)
+            potential.accumulate_potential(x,xij2,U,gradU2)
         return sum(U)
     #@-node:gcross.20090902085220.2341:compute_physical_potential
     #@+node:gcross.20090902085220.2339:compute_total_potential
@@ -1164,15 +1188,13 @@ class System(object):
         x,xij2,
         U,gradU2,
         lam,dt,
-        slice_start,slice_end,
-        particle_number
+        slice_start,slice_end
         ): return __builtin__.sum(
             greens_function.compute_greens_function(
                 x,xij2,
                 U,gradU2,
                 lam,dt,
-                slice_start,slice_end,
-                particle_number
+                slice_start,slice_end
             ) for greens_function in self.greens_functions
         )
     #@-node:gcross.20090902085220.2351:compute_greens_function

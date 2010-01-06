@@ -54,17 +54,26 @@ subroutine accumulate_potential( &
     x, &
     potential_coefficients, &
     n_slices, n_particles, n_dimensions, &
-    U &
+    U, &
+    gradU2 &
   )
   integer, intent(in) :: n_slices, n_particles, n_dimensions
   double precision, dimension( n_slices, n_particles, n_dimensions ), intent(in) :: x
   double precision, dimension( n_dimensions ), intent(in) :: potential_coefficients
-  double precision, dimension( n_slices, n_particles ), intent(inout)  :: U
+  double precision, intent(inout) :: &
+    U(n_slices,n_particles), &
+    gradU2(n_slices)
 
   integer :: i,j
 
   forall (i=1:n_slices,j=1:n_particles) &
     U(i,j) = U(i,j) + dot_product(potential_coefficients,x(i,j,:)**2)/2d0
+
+  do i = 1, n_slices
+    do j = 1, n_particles
+      gradU2(i) = gradU2(i) + dot_product(potential_coefficients,x(i,j,:))**2
+    end do
+  end do
 
 end subroutine
 !@-node:gcross.20090901084550.2626:accumulate_potential
