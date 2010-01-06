@@ -93,6 +93,11 @@ pure function sum_over_symmetrizations(amplitudes,N_particles,N_rotating_particl
     return
   end if
 
+  if(n_rotating_particles == N_particles) then
+    sum_over_symmetrizations = product(amplitudes)
+    return
+  end if
+
   vector = amplitudes(1:N_particles-N_rotating_particles+1)
   do i = 2, N_rotating_particles
     call perform_special_matmul(vector,amplitudes(i:i+N_particles-N_rotating_particles),N_particles-N_rotating_particles+1)
@@ -273,6 +278,155 @@ elemental function compute_amplitude(x,y) result (amplitude)
   amplitude = cmplx(x,y,kind(x))/sqrt(x**2+y**2)
 end function
 !@-node:gcross.20090915142144.1669:compute_amplitude
+!@+node:gcross.20091210143551.1691:compute_gradient_betterphase
+subroutine compute_gradient_betterphase (&
+    x, &
+    n_total_rotating_particles, &
+    n_slices, n_particles, n_dimensions, &
+    gradient_phase &
+  )
+
+  ! Input variables
+  integer, intent(in) :: n_slices, n_particles, n_dimensions
+  double precision, dimension(n_slices,n_particles,n_dimensions), intent(in) :: x
+  integer, intent(in) :: n_total_rotating_particles
+
+  ! Output variables
+  double precision, intent(out) :: gradient_phase(n_slices,n_particles,n_dimensions)
+
+  ! Local variables
+  integer :: i, j
+  double complex :: full_sum, partial_sum, amplitudes(n_particles)
+
+  gradient_phase = 0
+
+  if (n_total_rotating_particles == 0) then
+    return
+  end if
+
+  if (n_total_rotating_particles == n_particles) then
+    forall (i=1:n_slices,j=1:n_particles)
+      gradient_phase(i,j,1) = -x(i,j,2)/(x(i,j,1)**2+x(i,j,2)**2)
+      gradient_phase(i,j,2) =  x(i,j,1)/(x(i,j,1)**2+x(i,j,2)**2)
+    end forall
+    return
+  end if
+
+  do i = 1, n_slices
+    amplitudes = x(i,:,2)*(1,0)-x(i,:,1)*(0,1)
+    if (n_total_rotating_particles == n_particles) then
+      full_sum = product(amplitudes)
+    else
+      full_sum = sum_over_symmetrizations(amplitudes,n_particles,n_total_rotating_particles)
+    end if
+    do j = 1, n_particles
+      if (n_total_rotating_particles == 1) then
+        partial_sum = 1
+      else
+        partial_sum = &
+          compute_partial_sum( &
+            amplitudes, &
+            j, &
+            n_particles, n_total_rotating_particles &
+          )
+      end if
+      gradient_phase(i,j,1) = -real(partial_sum/full_sum)
+      gradient_phase(i,j,2) =  imag(partial_sum/full_sum)
+    end do
+  end do
+
+end subroutine
+!@-node:gcross.20091210143551.1691:compute_gradient_betterphase
+!@+node:gcross.20091220132355.1691:compute_gradient_betterphase1
+subroutine compute_gradient_betterphase1 (&
+    x, &
+    n_slices, n_particles, n_dimensions, &
+    gradient_phase &
+  )
+
+  ! Input variables
+  integer, intent(in) :: n_slices, n_particles, n_dimensions
+  double precision, dimension(n_slices,n_particles,n_dimensions), intent(in) :: x
+
+  ! Output variables
+  double precision, intent(out) :: gradient_phase(n_slices,n_particles,n_dimensions)
+
+  ! Local variables
+  integer :: i, j
+  double complex :: full_sum, partial_sum, amplitudes(n_particles)
+
+  gradient_phase = 0
+
+  do i = 1, n_slices
+    full_sum = sum(x(i,:,2)*(1,0)-x(i,:,1)*(0,1))
+    do j = 1, n_particles
+      gradient_phase(i,j,1) = -real((1d0,0d0)/full_sum)
+      gradient_phase(i,j,2) =  imag((1d0,0d0)/full_sum)
+    end do
+  end do
+
+end subroutine
+!@-node:gcross.20091220132355.1691:compute_gradient_betterphase1
+!@+node:gcross.20091220132355.1695:accumulate_betterU
+subroutine accumulate_betterU (&
+    x, &
+    n_slices, n_particles, n_dimensions, &
+    lambda, &
+    U, gradU2 &
+  )
+
+  ! Input variables
+  integer, intent(in) :: n_slices, n_particles, n_dimensions
+  double precision, intent(in) :: x(n_slices,n_particles,n_dimensions), lambda
+
+  ! Output variables
+  double precision, intent(inout) :: &
+    U(n_slices,n_particles), &
+    gradU2(n_slices)
+
+  ! Local variables
+  integer :: i
+  double complex :: full_sum, recip_full_sum, recip_full_sum_abs_sq
+
+  do i = 1, n_slices
+    full_sum = sum(x(i,:,2)*(1,0)-x(i,:,1)*(0,1))
+    recip_full_sum = (1d0,0d0)/full_sum
+    recip_full_sum_abs_sq = recip_full_sum*conjg(recip_full_sum)
+    U(i,:) = U(i,:) + lambda * recip_full_sum_abs_sq
+    gradU2(i) = gradU2(i) + 4 * lambda**2 * recip_full_sum_abs_sq**3 * n_particles
+  end do
+
+end subroutine
+!@-node:gcross.20091220132355.1695:accumulate_betterU
+!@+node:gcross.20100105150924.1699:accumulate_betterU2
+subroutine accumulate_betterU2 (&
+    x, &
+    n_slices, n_particles, n_dimensions, &
+    lambda, &
+    U, gradU2 &
+  )
+
+  ! Input variables
+  integer, intent(in) :: n_slices, n_particles, n_dimensions
+  double precision, intent(in) :: x(n_slices,n_particles,n_dimensions), lambda
+
+  ! Output variables
+  double precision, intent(inout) :: &
+    U(n_slices,n_particles), &
+    gradU2(n_slices)
+
+  ! Local variables
+  integer :: i
+  double complex :: recip_R_sq
+
+  do i = 1, n_slices
+    recip_R_sq = 1d0 / (sum(x(i,:,1))**2 + sum(x(i,:,2))**2)
+    U(i,:) = U(i,:) + lambda * recip_R_sq
+    !gradU2(i) = gradU2(i) + 4 * lambda**2 * recip_full_sum_abs_sq**3 * n_particles
+  end do
+
+end subroutine
+!@-node:gcross.20100105150924.1699:accumulate_betterU2
 !@+node:gcross.20090915142144.1671:compute_amps_and_sum_syms
 pure function compute_amps_and_sum_syms( &
     x, &
