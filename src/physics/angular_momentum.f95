@@ -283,8 +283,8 @@ elemental function compute_amplitude(x,y) result (amplitude)
   amplitude = cmplx(x,y,kind(x))/sqrt(x**2+y**2)
 end function
 !@-node:gcross.20090915142144.1669:compute_amplitude
-!@+node:gcross.20091210143551.1691:compute_gradient_betterphase
-subroutine compute_gradient_betterphase (&
+!@+node:gcross.20091210143551.1691:compute_gradient_ho_phase
+subroutine compute_gradient_ho_phase (&
     x, &
     n_total_rotating_particles, &
     n_slices, n_particles, n_dimensions, &
@@ -301,7 +301,7 @@ subroutine compute_gradient_betterphase (&
 
   ! Local variables
   integer :: i, j
-  double complex :: full_sum, partial_sum, amplitudes(n_particles), x_sum, y_sum, r_sq_sum
+  double complex :: full_sum, full_sum_abs_sq, partial_sum, amplitudes(n_particles), x_sum, y_sum, r_sq_sum
 
   gradient_phase = 0
 
@@ -314,16 +314,16 @@ subroutine compute_gradient_betterphase (&
       x_sum = sum(x(i,:,1))
       y_sum = sum(x(i,:,2))
       r_sq_sum = x_sum**2 + y_sum**2
-      gradient_phase(i,:,1) = -y_sum / r_sq_sum
-      gradient_phase(i,:,2) =  x_sum / r_sq_sum
+      gradient_phase(i,:,1) =  y_sum / r_sq_sum
+      gradient_phase(i,:,2) = -x_sum / r_sq_sum
     end do
     return
   end if
 
   if (n_total_rotating_particles == n_particles) then
     forall (i=1:n_slices,j=1:n_particles)
-      gradient_phase(i,j,1) = -x(i,j,2)/(x(i,j,1)**2+x(i,j,2)**2)
-      gradient_phase(i,j,2) =  x(i,j,1)/(x(i,j,1)**2+x(i,j,2)**2)
+      gradient_phase(i,j,1) =  x(i,j,2)/(x(i,j,1)**2+x(i,j,2)**2)
+      gradient_phase(i,j,2) = -x(i,j,1)/(x(i,j,1)**2+x(i,j,2)**2)
     end forall
     return
   end if
@@ -331,54 +331,21 @@ subroutine compute_gradient_betterphase (&
   do i = 1, n_slices
     amplitudes = x(i,:,2)*(1,0)-x(i,:,1)*(0,1)
     full_sum = sum_over_symmetrizations(amplitudes,n_particles,n_total_rotating_particles)
+    full_sum_abs_sq = real(full_sum * conjg(full_sum))
     do j = 1, n_particles
-      if (n_total_rotating_particles == 1) then
-        partial_sum = 1
-      else
-        partial_sum = &
-          compute_partial_sum( &
-            amplitudes, &
-            j, &
-            n_particles, n_total_rotating_particles &
-          )
-      end if
-      gradient_phase(i,j,1) = -real(partial_sum/full_sum)
-      gradient_phase(i,j,2) =  imag(partial_sum/full_sum)
+      partial_sum = &
+        compute_partial_sum( &
+          amplitudes, &
+          j, &
+          n_particles, n_total_rotating_particles &
+        )
+      gradient_phase(i,j,1) = (+ imag(full_sum)*imag(partial_sum) + real(full_sum)*real(partial_sum))/full_sum_abs_sq
+      gradient_phase(i,j,2) = (+ imag(full_sum)*real(partial_sum) - real(full_sum)*imag(partial_sum))/full_sum_abs_sq
     end do
   end do
 
 end subroutine
-!@-node:gcross.20091210143551.1691:compute_gradient_betterphase
-!@+node:gcross.20091220132355.1691:compute_gradient_betterphase1
-subroutine compute_gradient_betterphase1 (&
-    x, &
-    n_slices, n_particles, n_dimensions, &
-    gradient_phase &
-  )
-
-  ! Input variables
-  integer, intent(in) :: n_slices, n_particles, n_dimensions
-  double precision, dimension(n_slices,n_particles,n_dimensions), intent(in) :: x
-
-  ! Output variables
-  double precision, intent(out) :: gradient_phase(n_slices,n_particles,n_dimensions)
-
-  ! Local variables
-  integer :: i, j
-  double complex :: full_sum, partial_sum, amplitudes(n_particles)
-
-  gradient_phase = 0
-
-  do i = 1, n_slices
-    full_sum = sum(x(i,:,2)*(1,0)-x(i,:,1)*(0,1))
-    do j = 1, n_particles
-      gradient_phase(i,j,1) = -real((1d0,0d0)/full_sum)
-      gradient_phase(i,j,2) =  imag((1d0,0d0)/full_sum)
-    end do
-  end do
-
-end subroutine
-!@-node:gcross.20091220132355.1691:compute_gradient_betterphase1
+!@-node:gcross.20091210143551.1691:compute_gradient_ho_phase
 !@+node:gcross.20090915142144.1671:compute_amps_and_sum_syms
 pure function compute_amps_and_sum_syms( &
     x, &
@@ -432,7 +399,7 @@ pure function compute_partial_sum( &
   partial_sum = sum_over_symmetrizations( &
     included_amplitudes, &
     n_particles-1,n_rotating_particles-1 &
-  ) * amplitudes(excluded_index)
+  )
 
 end function
 !@-node:gcross.20090916114839.1813:compute_partial_sum
