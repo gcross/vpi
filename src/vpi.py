@@ -1026,7 +1026,8 @@ class SecondOrderGreensFunction(Physics):
           x,xij2,
           U,gradU2,
           lam,dt,
-          slice_start,slice_end
+          slice_start,slice_end,
+          particle_number
       ):  return vpif.gfn.gfn2_sp(slice_start,slice_end,U,self.weights,dt)
   #@-node:gcross.20090902085220.2382:compute_greens_function
   #@-others
@@ -1188,13 +1189,15 @@ class System(object):
         x,xij2,
         U,gradU2,
         lam,dt,
-        slice_start,slice_end
+        slice_start,slice_end,
+        particle_number
         ): return __builtin__.sum(
             greens_function.compute_greens_function(
                 x,xij2,
                 U,gradU2,
                 lam,dt,
-                slice_start,slice_end
+                slice_start,slice_end,
+                particle_number
             ) for greens_function in self.greens_functions
         )
     #@-node:gcross.20090902085220.2351:compute_greens_function
