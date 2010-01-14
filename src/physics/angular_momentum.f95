@@ -283,7 +283,7 @@ elemental function compute_amplitude(x,y) result (amplitude)
   amplitude = cmplx(x,y,kind(x))/sqrt(x**2+y**2)
 end function
 !@-node:gcross.20090915142144.1669:compute_amplitude
-!@+node:gcross.20091210143551.1691:compute_gradient_ho_phase
+!@+node:gcross.20100113111641.1972:compute_gradient_ho_phase
 subroutine compute_gradient_ho_phase (&
     x, &
     n_total_rotating_particles, &
@@ -309,43 +309,85 @@ subroutine compute_gradient_ho_phase (&
     return
   end if
 
-  if (n_total_rotating_particles == 1) then
+  do i = 1, n_slices
+    x_sum = sum(x(i,:,1))
+    y_sum = sum(x(i,:,2))
+    r_sq_sum = x_sum**2 + y_sum**2
+    gradient_phase(i,:,1) = n_total_rotating_particles * (-y_sum / r_sq_sum)
+    gradient_phase(i,:,2) = n_total_rotating_particles * ( x_sum / r_sq_sum)
+  end do
+
+end subroutine
+!@-node:gcross.20100113111641.1972:compute_gradient_ho_phase
+!@+node:gcross.20091210143551.1691:compute_gradient_ho_phase_old
+subroutine compute_gradient_ho_phase_old (&
+    x, &
+    n_total_rotating_particles, &
+    n_slices, n_particles, n_dimensions, &
+    gradient_phase &
+  )
+
+  ! Input variables
+  integer, intent(in) :: n_slices, n_particles, n_dimensions
+  double precision, dimension(n_slices,n_particles,n_dimensions), intent(in) :: x
+  integer, intent(in) :: n_total_rotating_particles
+
+  ! Output variables
+  double precision, intent(out) :: gradient_phase(n_slices,n_particles,n_dimensions)
+
+  ! Local variables
+  integer :: i, j, n_excess_rotating_particles, feynman_factor
+  double complex :: full_sum, full_sum_abs_sq, partial_sum, amplitudes(n_particles), x_sum, y_sum, r_sq_sum
+
+
+  if (n_total_rotating_particles >= n_particles) then
+    feynman_factor = n_total_rotating_particles / n_particles
+    forall (i=1:n_slices,j=1:n_particles)
+      gradient_phase(i,j,1) = feynman_factor * (-x(i,j,2)/(x(i,j,1)**2+x(i,j,2)**2))
+      gradient_phase(i,j,2) = feynman_factor * ( x(i,j,1)/(x(i,j,1)**2+x(i,j,2)**2))
+    end forall
+    gradient_phase(:,:,3:) = 0
+  else
+    gradient_phase = 0
+  end if
+
+  n_excess_rotating_particles = mod(n_total_rotating_particles,n_particles)
+
+  if (n_excess_rotating_particles == 0) then
+    return
+  end if
+
+  if (n_excess_rotating_particles == 1) then
     do i = 1, n_slices
       x_sum = sum(x(i,:,1))
       y_sum = sum(x(i,:,2))
       r_sq_sum = x_sum**2 + y_sum**2
-      gradient_phase(i,:,1) =  y_sum / r_sq_sum
-      gradient_phase(i,:,2) = -x_sum / r_sq_sum
+      gradient_phase(i,:,1) = gradient_phase(i,:,1) - y_sum / r_sq_sum
+      gradient_phase(i,:,2) = gradient_phase(i,:,2) + x_sum / r_sq_sum
     end do
-    return
-  end if
-
-  if (n_total_rotating_particles == n_particles) then
-    forall (i=1:n_slices,j=1:n_particles)
-      gradient_phase(i,j,1) =  x(i,j,2)/(x(i,j,1)**2+x(i,j,2)**2)
-      gradient_phase(i,j,2) = -x(i,j,1)/(x(i,j,1)**2+x(i,j,2)**2)
-    end forall
     return
   end if
 
   do i = 1, n_slices
     amplitudes = x(i,:,2)*(1,0)-x(i,:,1)*(0,1)
-    full_sum = sum_over_symmetrizations(amplitudes,n_particles,n_total_rotating_particles)
+    full_sum = sum_over_symmetrizations(amplitudes,n_particles,n_excess_rotating_particles)
     full_sum_abs_sq = real(full_sum * conjg(full_sum))
     do j = 1, n_particles
       partial_sum = &
         compute_partial_sum( &
           amplitudes, &
           j, &
-          n_particles, n_total_rotating_particles &
+          n_particles, n_excess_rotating_particles &
         )
-      gradient_phase(i,j,1) = (+ imag(full_sum)*imag(partial_sum) + real(full_sum)*real(partial_sum))/full_sum_abs_sq
-      gradient_phase(i,j,2) = (+ imag(full_sum)*real(partial_sum) - real(full_sum)*imag(partial_sum))/full_sum_abs_sq
+      gradient_phase(i,j,1) = gradient_phase(i,j,1) - &
+        (imag(full_sum)*imag(partial_sum) + real(full_sum)*real(partial_sum))/full_sum_abs_sq
+      gradient_phase(i,j,2) = gradient_phase(i,j,2) - &
+        (imag(full_sum)*real(partial_sum) - real(full_sum)*imag(partial_sum))/full_sum_abs_sq
     end do
   end do
 
 end subroutine
-!@-node:gcross.20091210143551.1691:compute_gradient_ho_phase
+!@-node:gcross.20091210143551.1691:compute_gradient_ho_phase_old
 !@+node:gcross.20090915142144.1671:compute_amps_and_sum_syms
 pure function compute_amps_and_sum_syms( &
     x, &
