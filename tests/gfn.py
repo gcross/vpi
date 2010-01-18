@@ -14,16 +14,20 @@ import vpif
 #@+others
 #@+node:gcross.20090812093015.1743:gfn2_sp
 class gfn2_sp(unittest.TestCase):
-
+    #@    @+others
+    #@+node:gcross.20100117204224.1702:test_correctness
     @with_checker
     def test_correctness(self, n_slices = irange(1,10), n_particles = irange(1,5), dt = float):
         sl_start = randint(1,n_slices)
         sl_end = randint(sl_start,n_slices)
         ip = randint(1,n_particles)
         U = rand(n_slices,n_particles)
-        ln_gfn = vpif.gfn.gfn2_sp(sl_start,sl_end,ip,U,dt)
-        self.assertAlmostEqual(ln_gfn,-dt*sum(U[sl_start-1:sl_end,ip-1]))
-#@nonl
+        U_weights = rand(n_slices)
+        ln_gfn = vpif.gfn.gfn2_sp(sl_start,sl_end,U,U_weights,dt)
+        U_summed = sum(U,axis=1)
+        self.assertAlmostEqual(ln_gfn,-dt*dot(U_summed[sl_start-1:sl_end],U_weights[sl_start-1:sl_end]))
+    #@-node:gcross.20100117204224.1702:test_correctness
+    #@-others
 #@-node:gcross.20090812093015.1743:gfn2_sp
 #@+node:gcross.20090812093015.1747:gfn4_sp
 class gfn4_sp(unittest.TestCase):
@@ -65,11 +69,12 @@ class gfn4_sp(unittest.TestCase):
         ip = randint(1,n_particles)
         U = rand(n_slices,n_particles)
         gradU2 = rand(n_slices)
-        ln_gfn = vpif.gfn.gfn4_sp(sl_start,sl_end,ip,U,gradU2,U_weight,gU2_weight,lam,dt)
+        ln_gfn = vpif.gfn.gfn4_sp(sl_start,sl_end,U,gradU2,U_weight,gU2_weight,lam,dt)
+        U = sum(U,axis=1)
 
         self.assertAlmostEqual(ln_gfn,
             -2.0*dt*dot(
-                U[sl_start-1:sl_end,ip-1],
+                U[sl_start-1:sl_end],
                 U_weight[sl_start-1:sl_end]
             )/3.0
             -2.0*lam*(dt**3)*dot(

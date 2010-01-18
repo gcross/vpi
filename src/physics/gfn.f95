@@ -137,10 +137,9 @@ pure function gfn4_sp( sl_start, sl_end, U, gradU2, U_weight, gU2_weight, nslice
   ln_gfn = 0
 
   do ip = 1, np
-    ln_gfn = ln_gfn &
-             -2.0d0*dt*ddot(slice_length,U(sl_start,ip),1,U_weight(sl_start),1)/3.0d0 &
-             -2.0d0*lambda*(dt**3)*ddot(slice_length,gradU2(sl_start),1,gU2_weight(sl_start),1)/9.0d0
+    ln_gfn = ln_gfn -2.0d0*dt*ddot(slice_length,U(sl_start,ip),1,U_weight(sl_start),1)/3.0d0
   end do
+  ln_gfn = ln_gfn - 2.0d0*lambda*(dt**3)*ddot(slice_length,gradU2(sl_start),1,gU2_weight(sl_start),1)/9.0d0
 
 end function gfn4_sp
 !@-node:gcross.20090812093015.1845:4th order

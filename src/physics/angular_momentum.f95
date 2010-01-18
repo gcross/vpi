@@ -44,6 +44,27 @@ module angular_momentum
  contains
 
 !@+others
+!@+node:gcross.20100117204224.1699:compute_sum_and_its_derivatives
+subroutine compute_sum_and_its_derivatives( &
+  number_of_amplitudes, amplitudes, &
+  number_of_amplitudes_to_include, &
+  sum_over_symmetrizations, gradient_of_sum &
+  )
+  integer, intent(in) :: number_of_amplitudes, number_of_amplitudes_to_include
+  double complex, intent(in) :: amplitudes(number_of_amplitudes)
+  double complex, intent(out) :: sum_over_symmetrizations, gradient_of_sum(number_of_amplitudes)
+
+  integer :: m
+
+  gradient_of_sum = (0d0,0d0)
+  sum_over_symmetrizations = (1d0,0d0)
+
+  do m = 1, number_of_amplitudes_to_include
+    gradient_of_sum(:) = sum_over_symmetrizations - amplitudes(:)*gradient_of_sum(:)
+    sum_over_symmetrizations = sum(amplitudes(:)*gradient_of_sum(:))/m
+  end do
+end subroutine
+!@-node:gcross.20100117204224.1699:compute_sum_and_its_derivatives
 !@+node:gcross.20090721121051.1757:get_rotation_plane_axes
 pure subroutine get_rotation_plane_axes(rotation_axis,plane_axis_1,plane_axis_2)
   integer, intent(in) :: rotation_axis

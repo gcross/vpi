@@ -80,9 +80,10 @@ class AverageValuesEstimate(Observable):
     #@-node:gcross.20090902085220.2167:__init__
     #@+node:gcross.20090902085220.2168:write_out_totals
     def write_out_totals(self,totals_and_errors):
-        totals, totals_squared = totals_and_errors
-        errors = sqrt((totals_squared-totals**2)/(self.total_number_of_observations * number_of_processors))
-        self.write_out(totals,errors)
+        means, means_of_squares = totals_and_errors
+        variance = means_of_squares - means*means
+        uncertainty_in_means = sqrt(variance / (self.total_number_of_observations * number_of_processors))
+        self.write_out(means,uncertainty_in_means)
     #@-node:gcross.20090902085220.2168:write_out_totals
     #@+node:gcross.20090902085220.2169:compute_total
     def compute_total(self):
