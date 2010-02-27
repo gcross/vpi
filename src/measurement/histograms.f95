@@ -71,6 +71,28 @@ pure subroutine accumulate_1d_densities(x,left_x,right_x,n_particles,n_dimension
 
 end subroutine accumulate_1d_densities
 !@-node:gcross.20090819083142.1364:accumulate_1d_densities
+!@+node:gcross.20100226131523.1656:accumulate_2d_density
+subroutine accumulate_2d_density(positions,left_x,left_y,right_x,right_y,n_particles,n_bins,histogram)
+  double precision, dimension(n_particles,2), intent(in) :: positions
+  double precision, intent(in) :: left_x, left_y, right_x, right_y
+  integer, intent(in) :: n_particles, n_bins
+  integer, dimension(n_bins,n_bins), intent(inout) :: histogram
+
+  integer :: i, bin_x, bin_y
+  double precision :: offset, dndx, dndy
+  dndx = n_bins/(right_x-left_x)
+  dndy = n_bins/(right_y-left_y)
+
+  do i = 1, n_particles
+    bin_x = floor((positions(i,1)-left_x)*dndx)+1
+    bin_y = floor((positions(i,2)-left_y)*dndy)+1
+    if ( within_bins(bin_x,n_bins) .and. within_bins(bin_y,n_bins) ) then
+      histogram(bin_x,bin_y) = histogram(bin_x,bin_y) + 1
+    end if
+  end do
+
+end subroutine accumulate_2d_density
+!@-node:gcross.20100226131523.1656:accumulate_2d_density
 !@+node:gcross.20090819083142.1370:accumulate_radial_densities
 pure subroutine accumulate_radial_densities(x,maximum_radius,n_particles,n_dimensions,n_bins,histogram)
   double precision, dimension(n_particles,n_dimensions), intent(in) :: x

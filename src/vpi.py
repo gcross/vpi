@@ -571,6 +571,45 @@ class ParticleSeparationHistogram(Histogram):
     #@-node:gcross.20090902085220.2230:update
     #@-others
 #@-node:gcross.20090902085220.2227:class ParticleSeparationHistogram
+#@+node:gcross.20100226131523.1663:class PositionDensity2DHistogram
+class PositionDensity2DHistogram(Histogram):
+    #@    @+others
+    #@+node:gcross.20100226131523.1664:__init__
+    def __init__(self,slice_number,left_x,left_y,right_x,right_y,number_of_bins,filename):
+        self.left_x = left_x
+        self.left_y = left_y
+        self.right_x = right_x
+        self.right_y = right_y
+        self.number_of_bins = number_of_bins
+        self.slice_number = slice_number
+        self.histogram = zeros((number_of_bins,number_of_bins),dtype='i',order='Fortran')
+        self.filename = filename
+    #@-node:gcross.20100226131523.1664:__init__
+    #@+node:gcross.20100226131523.1665:update
+    def update(self):
+        vpif.histograms.accumulate_2d_density(
+            self.system.x[self.slice_number],
+            self.left_x,self.left_y,
+            self.right_x,self.right_y,
+            self.histogram
+        )
+    #@-node:gcross.20100226131523.1665:update
+    #@+node:gcross.20100226131523.1674:write_out_totals
+    def write_out_totals(self,histogram):
+        ensure_path_to_file_exists(self.filename)
+        total_counts = float(sum(histogram.ravel()))
+        bin_width_x = float(self.right_x-self.left_x)/self.number_of_bins
+        start_x = float(self.left_x)+bin_width_x/2
+        bin_width_y = float(self.right_y-self.left_y)/self.number_of_bins
+        start_y = float(self.left_y)+bin_width_y/2
+        with open(self.filename,"w") as f:
+            for i in xrange(self.number_of_bins):
+                for j in xrange(self.number_of_bins):
+                    print >> f, "{0} {1} {2}".format(start_x+i*bin_width_x,start_y+j*bin_width_y,histogram[i,j]/total_counts)
+                print >> f
+    #@-node:gcross.20100226131523.1674:write_out_totals
+    #@-others
+#@-node:gcross.20100226131523.1663:class PositionDensity2DHistogram
 #@-node:gcross.20090902085220.2180:Histograms
 #@+node:gcross.20090902085220.2231:Energy estimates
 #@+node:gcross.20090902085220.2232:class TotalEnergyEstimate
