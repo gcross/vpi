@@ -1097,7 +1097,7 @@ class SecondOrderGreensFunction(Physics):
           self,
           x,xij2,
           U,gradU2,
-          lam,dt,
+          lambda_,dt,
           slice_start,slice_end,
           particle_number
       ):  return vpif.gfn.gfn2_sp(slice_start,slice_end,U,self.weights,dt)
