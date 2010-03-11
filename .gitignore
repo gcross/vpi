@@ -17,3 +17,5 @@ vpifmodule.c
 *.pyc
 paths.mk
 options.mk
+data
+results
