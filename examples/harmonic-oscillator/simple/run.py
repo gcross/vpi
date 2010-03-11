@@ -88,7 +88,7 @@ for physics in [
 #@nl
 #@<< Initialize observables >>
 #@+node:gcross.20100311125034.2372:<< Initialize observables >>
-for slice_name, slice_number in [("left",0),("center",system.center_slice_number),("right",system.number_of_slices-1)]:
+for slice_name, slice_number in [("leftmost-path-slice",0),("center-path-slice",system.center_slice_number),("rightmost-slice",system.number_of_slices-1)]:
     density_slice_subdirectory = "{output_root_directory}/{slice_name}".format(**vars())
     for observable in [
             PositionDensity1DHistogram(

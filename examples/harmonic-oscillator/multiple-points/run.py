@@ -75,9 +75,8 @@ particle_separation_histogram_bin_count = 51
 #@<< System properties message >>
 #@+node:gcross.20100311125034.2337:<< System properties message >>
 system_properties_message = """\
-Examining system with
+Now simulating a system with
     *) {number_of_dimensions} dimension(s);
-    *) 10 particles;
     *) and inside a harmonic oscillator trap with frequency {harmonic_oscillator_trap_frequency} in all dimensions"""
 #@-node:gcross.20100311125034.2337:<< System properties message >>
 #@nl
@@ -93,7 +92,7 @@ for number_of_dimensions in [1,2,3]:
         #@-node:gcross.20100311125034.2343:<< Add current parameters to the configuration >>
         #@nl
 
-        my_directory = "{output_root_directory}/{number_of_dimensions}D/{harmonic_oscillator_trap_frequency}".format(**vars()) 
+        my_directory = "{output_root_directory}/{number_of_dimensions}D/trap-frequency={harmonic_oscillator_trap_frequency}".format(**vars()) 
         if (my_rank == 0):
             print
             print system_properties_message.format(**vars())
@@ -109,7 +108,7 @@ for number_of_dimensions in [1,2,3]:
         #@nl
         #@<< Initialize observables >>
         #@+node:gcross.20100311125034.2340:<< Initialize observables >>
-        for slice_name, slice_number in [("left",0),("center",system.center_slice_number),("right",system.number_of_slices-1)]:
+        for slice_name, slice_number in [("leftmost-path-slice",0),("center-path-slice",system.center_slice_number),("rightmost-slice",system.number_of_slices-1)]:
             density_slice_subdirectory = "{my_directory}/{slice_name}".format(**vars())
             for observable in [
                     PositionDensity1DHistogram(
@@ -134,7 +133,7 @@ for number_of_dimensions in [1,2,3]:
                 ]: system.add_observable(observable)
 
         center_slice = system.number_of_slices // 2
-        averages_directory = "{my_directory}/../averages-at-center-slice".format(**vars())
+        averages_directory = "{my_directory}/../average-values-at-center-slice".format(**vars())
         for observable in [
             AverageRadiusEstimate(
                 center_slice,
