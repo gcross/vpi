@@ -1121,7 +1121,8 @@ class FourthOrderGreensFunction(Physics):
           x,xij2,
           U,gradU2,
           lambda_,dt,
-          slice_start,slice_end
+          slice_start,slice_end,
+          particle_number
       ):  return vpif.gfn.gfn4_sp(slice_start,slice_end,U,gradU2,self.weights[0],self.weights[1],lambda_,dt)
   #@-node:gcross.20091220132355.1701:compute_greens_function
   #@-others
