@@ -610,6 +610,38 @@ class PositionDensity2DHistogram(Histogram):
     #@-node:gcross.20100226131523.1674:write_out_totals
     #@-others
 #@-node:gcross.20100226131523.1663:class PositionDensity2DHistogram
+#@+node:gcross.20100226131523.1670:class PositionDensityMatrix2DHistogram
+class PositionDensityMatrix2DHistogram(Histogram):
+    #@    @+others
+    #@+node:gcross.20100226131523.1671:__init__
+    def __init__(self,number_of_slices,left_x,left_y,right_x,right_y,number_of_bins,filename):
+        self.left_x = left_x
+        self.left_y = left_y
+        self.right_x = right_x
+        self.right_y = right_y
+        self.number_of_bins = number_of_bins
+        self.center_slice_number = number_of_slices // 2
+        self.histogram = zeros((number_of_bins,number_of_bins),dtype='i',order='Fortran')
+        self.filename = filename
+    #@-node:gcross.20100226131523.1671:__init__
+    #@+node:gcross.20100226131523.1672:update
+    def update(self):
+        vpif.histograms.accumulate_2d_density_matrix(
+            self.system.x[self.center_slice_number],
+            self.system.x[self.center_slice_number+1],
+            self.left_x,self.left_y,
+            self.right_x,self.right_y,
+            self.histogram
+        )
+    #@-node:gcross.20100226131523.1672:update
+    #@+node:gcross.20100226131523.1676:write_out_totals
+    def write_out_totals(self,histogram):
+        ensure_path_to_file_exists(self.filename)
+        with open(self.filename,"wb") as f:
+            histogram.dump(f)
+    #@-node:gcross.20100226131523.1676:write_out_totals
+    #@-others
+#@-node:gcross.20100226131523.1670:class PositionDensityMatrix2DHistogram
 #@-node:gcross.20090902085220.2180:Histograms
 #@+node:gcross.20090902085220.2231:Energy estimates
 #@+node:gcross.20090902085220.2232:class TotalEnergyEstimate

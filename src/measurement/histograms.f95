@@ -93,6 +93,32 @@ subroutine accumulate_2d_density(positions,left_x,left_y,right_x,right_y,n_parti
 
 end subroutine accumulate_2d_density
 !@-node:gcross.20100226131523.1656:accumulate_2d_density
+!@+node:gcross.20100226131523.1658:accumulate_2d_density_matrix
+pure subroutine accumulate_2d_density_matrix(positions_1,positions_2,left_x,left_y,right_x,right_y,n_particles,n_bins,histogram)
+  double precision, dimension(n_particles,2), intent(in) :: positions_1, positions_2
+  double precision, intent(in) :: left_x, left_y, right_x, right_y
+  integer, intent(in) :: n_particles, n_bins
+  integer, dimension(n_bins,n_bins,n_bins,n_bins), intent(inout) :: histogram
+
+  integer :: i, bin_1_x, bin_1_y, bin_2_x, bin_2_y
+  double precision :: offset, dndx, dndy
+  dndx = n_bins/(right_x-left_x)
+  dndy = n_bins/(right_y-left_y)
+
+  do i = 1, n_particles
+    bin_1_x = floor((positions_1(i,1)-left_x)*dndx)+1
+    bin_1_y = floor((positions_1(i,2)-left_y)*dndy)+1
+    bin_2_x = floor((positions_2(i,1)-left_x)*dndx)+1
+    bin_2_y = floor((positions_2(i,2)-left_y)*dndy)+1
+    if ( within_bins(bin_1_x,n_bins) .and. within_bins(bin_1_y,n_bins) .and. &
+         within_bins(bin_2_x,n_bins) .and. within_bins(bin_2_y,n_bins) &
+       ) then
+      histogram(bin_1_x,bin_1_y,bin_2_x,bin_2_y) = histogram(bin_1_x,bin_1_y,bin_2_x,bin_2_y) + 1
+    end if
+  end do
+
+end subroutine accumulate_2d_density_matrix
+!@-node:gcross.20100226131523.1658:accumulate_2d_density_matrix
 !@+node:gcross.20090819083142.1370:accumulate_radial_densities
 pure subroutine accumulate_radial_densities(x,maximum_radius,n_particles,n_dimensions,n_bins,histogram)
   double precision, dimension(n_particles,n_dimensions), intent(in) :: x
