@@ -59,6 +59,9 @@
 </v>
 <v t="gcross.20100311125034.2341"><vh>@path examples</vh>
 <v t="gcross.20100311125034.2322"><vh>@path harmonic-oscillator</vh>
+<v t="gcross.20100311125034.2362"><vh>@path simple</vh>
+<v t="gcross.20100311125034.2363"><vh>@thin run.py</vh></v>
+</v>
 <v t="gcross.20100311125034.2350"><vh>@path multiple-points</vh>
 <v t="gcross.20100311125034.2323"><vh>@thin run.py</vh></v>
 </v>
@@ -79,5 +82,6 @@
 <t tx="gcross.20100311125034.2322"></t>
 <t tx="gcross.20100311125034.2341"></t>
 <t tx="gcross.20100311125034.2350"></t>
+<t tx="gcross.20100311125034.2362"></t>
 </tnodes>
 </leo_file>
