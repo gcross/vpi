@@ -981,8 +981,8 @@ class HarmonicOscillator(Physics):
   def __init__(self,system):
       Physics.__init__(self,system)
       try:
-          self.potential_coefficients = system.harmonic_oscillator_frequencies**2
-          self.trial_coefficients = system.harmonic_oscillator_frequencies
+          self.potential_coefficients = array(system.harmonic_oscillator_frequencies)**2
+          self.trial_coefficients = array(system.harmonic_oscillator_frequencies)
       except AttributeError:
               raise ValueError("System needs to define 'harmonic_oscillator_frequencies' to use harmonic oscillator physics!")       
   #@-node:gcross.20090902085220.2359:__init__
