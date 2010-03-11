@@ -9,7 +9,7 @@
 <preferences/>
 <find_panel_settings/>
 <vnodes>
-<v t="gcross.20090807144330.1670" str_leo_pos="5"><vh>@chapters</vh></v>
+<v t="gcross.20090807144330.1670" str_leo_pos="4"><vh>@chapters</vh></v>
 <v t="gcross.20090806151612.1842"><vh>@thin Makefile</vh></v>
 <v t="gcross.20090807144330.1675"><vh>@thin test.py</vh></v>
 <v t="gcross.20090623152316.2"><vh>@path src</vh>
@@ -57,19 +57,12 @@
 <v t="gcross.20090911091023.2483"><vh>@thin hard_sphere_interaction.py</vh></v>
 <v t="gcross.20090914154930.2027"><vh>@thin erf.py</vh></v>
 </v>
-<v t="gcross.20090818081913.1339"><vh>Examples</vh>
-<v t="gcross.20090818081913.1340"><vh>@path examples/harmonic-oscillator-trap</vh>
-<v t="gcross.20090818081913.1341"><vh>@thin run.py</vh></v>
-</v>
-</v>
 </vnodes>
 <tnodes>
 <t tx="gcross.20090623152316.2">@tabwidth -2
 </t>
-<t tx="gcross.20090807144330.1670"></t>
+<t tx="gcross.20090807144330.1670" str_leo_pos="4"></t>
 <t tx="gcross.20090807144330.1673"></t>
-<t tx="gcross.20090818081913.1339"></t>
-<t tx="gcross.20090818081913.1340"></t>
 <t tx="gcross.20090901084550.2623"></t>
 <t tx="gcross.20090914154930.1633"></t>
 <t tx="gcross.20090914154930.1635"></t>
