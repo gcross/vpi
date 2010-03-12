@@ -65,6 +65,9 @@
 <v t="gcross.20100311125034.2350"><vh>@path multiple-points</vh>
 <v t="gcross.20100311125034.2323"><vh>@thin run.py</vh></v>
 </v>
+<v t="gcross.20100311125034.2373"><vh>@path with-hard-sphere-interaction</vh>
+<v t="gcross.20100311125034.2384"><vh>@thin run.py</vh></v>
+</v>
 </v>
 </v>
 </vnodes>
@@ -83,5 +86,6 @@
 <t tx="gcross.20100311125034.2341"></t>
 <t tx="gcross.20100311125034.2350"></t>
 <t tx="gcross.20100311125034.2362"></t>
+<t tx="gcross.20100311125034.2373"></t>
 </tnodes>
 </leo_file>
