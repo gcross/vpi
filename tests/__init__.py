@@ -6,7 +6,7 @@ from numpy import array, zeros, all, double
 from numpy.linalg import norm
 from numpy.random import rand
 import random
-import vpif
+import vpi.fortran as vpif
 
 #@+others
 #@+node:gcross.20090807144330.2153:ArrayGenerator

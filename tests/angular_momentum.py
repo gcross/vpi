@@ -16,7 +16,7 @@ from itertools import imap, combinations
 from functools import partial
 from math import atan
 import __builtin__
-import vpif
+import vpi.fortran as vpif
 
 #@+others
 #@+node:gcross.20090916114839.1816:compute_sum_and_its_derivatives

@@ -5,7 +5,7 @@ from paycheck import *
 from numpy import *
 from numpy.random import rand
 import __builtin__
-import vpif
+import vpi.fortran as vpif
 
 #@+others
 #@+node:gcross.20090828201103.2129:has_collision

@@ -9,8 +9,8 @@
 <preferences/>
 <find_panel_settings/>
 <vnodes>
-<v t="gcross.20090807144330.1670" str_leo_pos="4"><vh>@chapters</vh></v>
-<v t="gcross.20090806151612.1842"><vh>@thin Makefile</vh></v>
+<v t="gcross.20090807144330.1670"><vh>@chapters</vh></v>
+<v t="gcross.20100914200151.1700"><vh>@thin setup.py</vh></v>
 <v t="gcross.20090807144330.1675"><vh>@thin test.py</vh></v>
 <v t="gcross.20090623152316.2"><vh>@path src</vh>
 <v t="gcross.20090914154930.1633"><vh>Fortran</vh>
@@ -41,7 +41,7 @@
 </v>
 </v>
 <v t="gcross.20090914154930.1635"><vh>Python</vh>
-<v t="gcross.20090902085220.2158"><vh>@thin vpi.py</vh></v>
+<v t="gcross.20090902085220.2158"><vh>@thin vpi/__init__.py</vh></v>
 </v>
 </v>
 <v t="gcross.20090807144330.1673"><vh>@path tests</vh>
@@ -74,7 +74,7 @@
 <tnodes>
 <t tx="gcross.20090623152316.2">@tabwidth -2
 </t>
-<t tx="gcross.20090807144330.1670" str_leo_pos="4"></t>
+<t tx="gcross.20090807144330.1670"></t>
 <t tx="gcross.20090807144330.1673"></t>
 <t tx="gcross.20090901084550.2623"></t>
 <t tx="gcross.20090914154930.1633"></t>

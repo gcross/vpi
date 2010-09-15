@@ -8,7 +8,7 @@ from paycheck import with_checker, positive_float, non_negative_float, irange
 from numpy import zeros, double, array
 from numpy.random import rand
 from numpy.linalg import norm
-import vpif
+import vpi.fortran as vpif
 
 #@+others
 #@+node:gcross.20090807144330.1678:wrap_around

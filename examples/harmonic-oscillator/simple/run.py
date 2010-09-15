@@ -10,7 +10,7 @@ import sys
 sys.path.append("lib")
 
 from vpi import *
-import vpif
+import vpi.fortran as vpif
 
 import itertools
 
@@ -19,6 +19,7 @@ from numpy import log
 from scipy.misc import derivative
 import __builtin__
 from itertools import imap, combinations
+#@nonl
 #@-node:gcross.20100311125034.2364:<< Imports >>
 #@nl
 #@<< Parse command line >>

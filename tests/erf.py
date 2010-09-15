@@ -6,7 +6,7 @@
 import unittest
 from paycheck import *
 import scipy.special
-import vpif
+import vpi.fortran as vpif
 
 #@+others
 #@+node:gcross.20090914154930.2028:erf

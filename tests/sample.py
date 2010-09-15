@@ -9,7 +9,7 @@ from numpy import array, zeros, double, float64, isfinite, isfortran
 from numpy.linalg import norm
 from numpy.random import rand
 from random import randint, random
-import vpif
+import vpi.fortran as vpif
 
 #@+others
 #@+node:gcross.20090813095726.2344:sample_scheme1

@@ -6,7 +6,7 @@ from paycheck import *
 from numpy import *
 from numpy.random import rand
 import __builtin__
-import vpif
+import vpi.fortran as vpif
 
 #@+others
 #@+node:gcross.20090818081913.1357:class compute_local_energy_estimate

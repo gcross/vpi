@@ -9,7 +9,7 @@ from numpy import *
 from numpy.linalg import norm
 from numpy.random import rand
 from random import randint
-import vpif
+import vpi.fortran as vpif
 
 #@+others
 #@+node:gcross.20090812093015.1743:gfn2_sp

@@ -5,7 +5,7 @@
 
 #@<< Imports >>
 #@+node:gcross.20090902085220.2159:<< Imports >>
-import vpif
+import vpi.fortran as vpif
 
 from numpy import *
 from numpy.random import rand
