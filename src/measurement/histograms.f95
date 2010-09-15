@@ -94,7 +94,13 @@ subroutine accumulate_2d_density(positions,left_x,left_y,right_x,right_y,n_parti
 end subroutine accumulate_2d_density
 !@-node:gcross.20100226131523.1656:accumulate_2d_density
 !@+node:gcross.20100226131523.1658:accumulate_2d_density_matrix
-pure subroutine accumulate_2d_density_matrix(positions_1,positions_2,left_x,left_y,right_x,right_y,n_particles,n_bins,histogram)
+pure subroutine accumulate_2d_density_matrix( &
+    positions_1,positions_2, &
+    left_x,left_y, &
+    right_x,right_y, &
+    n_particles,n_bins, &
+    histogram &
+  )
   double precision, dimension(n_particles,2), intent(in) :: positions_1, positions_2
   double precision, intent(in) :: left_x, left_y, right_x, right_y
   integer, intent(in) :: n_particles, n_bins

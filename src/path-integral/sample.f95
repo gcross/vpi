@@ -35,108 +35,132 @@ subroutine sample_scheme1( &
     move_start, move_end, &
     move_type_probabilities, move_type_differentials, &
     dM, lambda, &
-    low_swap_dim, high_swap_dim, &
-    part_num, mtype, &
-    N_SLICE, N_PARTICLE, N_DIM, &
-    od_pnum, PROB_OD_PNUM, &
-    n_od_particle, &
-    od_dim_low, od_dim_high &
+    swap_dimension_low, swap_dimension_high, &
+    particle_number, move_type, &
+    n_slices, n_particles, n_dimensions, &
+    off_diagonal_particle_number, prb_off_diagonal_particle_number, &
+    n_off_diagonal_particles, &
+    off_diagonal_dimension_low, off_diagonal_dimension_high &
   )
-  integer, intent(in) :: N_SLICE, N_PARTICLE, N_DIM
+  integer, intent(in) :: n_slices, n_particles, n_dimensions
   integer, parameter :: N_MOVE_TYPES = 3
   double precision, dimension ( N_MOVE_TYPES ), intent(in) :: move_type_probabilities, move_type_differentials
-  double precision, dimension ( N_SLICE , N_PARTICLE, N_DIM ), intent(in) :: q0
-  double precision, dimension ( N_SLICE , N_PARTICLE, N_DIM ), intent(inout) :: q1
-  integer, intent(in) :: low_swap_dim, high_swap_dim
-  integer, intent(out) :: move_start,move_end,part_num,mtype
-  double precision, intent(in), optional :: PROB_OD_PNUM
-  integer, intent(in), optional :: od_pnum, n_od_particle, od_dim_low, od_dim_high
+  double precision, dimension ( n_slices , n_particles, n_dimensions ), intent(in) :: q0
+  double precision, dimension ( n_slices , n_particles, n_dimensions ), intent(inout) :: q1
+  integer, intent(in) :: swap_dimension_low, swap_dimension_high
+  integer, intent(out) :: move_start,move_end,particle_number,move_type
+  double precision, intent(in), optional :: prb_off_diagonal_particle_number
+  integer, intent(in), optional :: &
+    off_diagonal_particle_number, &
+    n_off_diagonal_particles, &
+    off_diagonal_dimension_low, off_diagonal_dimension_high
   double precision, intent(in) :: dM, lambda
 
   double precision :: rnd
-  integer :: i0,i1,cslice
-  integer :: swap_dim
-  cslice = n_slice/2
+  integer :: i0,i1,center_slice
+  integer :: swap_dimension
+  center_slice = n_slices/2
 
   call random_number( rnd )
-  if (present(od_pnum) .and. ( rnd .lt. PROB_od_pnum ) ) then
-    part_num = od_pnum
+  if (present(off_diagonal_particle_number) .and. ( rnd .lt. prb_off_diagonal_particle_number ) ) then
+    particle_number = off_diagonal_particle_number
   else
-    part_num = ceiling(rnd*N_PARTICLE)
+    particle_number = ceiling(rnd*n_particles)
   end if
 
   call random_number( rnd )
   if (rnd < move_type_probabilities(MT_BBRIDGE)) then
-    mtype = MT_BBRIDGE
+    move_type = MT_BBRIDGE
     call random_number( rnd )
-    i0 = floor(rnd*((N_SLICE-1)-(2-dM))) - dM + 2
+    i0 = floor(rnd*((n_slices-1)-(2-dM))) - dM + 2
     i1 = i0 + dM
 ! print *, "i0, i1 ",i0,i1
-    if( ((i0 .ge. 1) .and. (i1 .le. N_SLICE)) ) then
-      call bbridge(q0, q1, part_num, 1, N_DIM, S_BRIDGE, i0, i1, lambda, &
-            move_type_differentials(MT_BBRIDGE), N_SLICE, N_PARTICLE, N_DIM)
+    if( ((i0 .ge. 1) .and. (i1 .le. n_slices)) ) then
+      call bbridge(q0, q1, particle_number, 1, n_dimensions, S_BRIDGE, i0, i1, lambda, &
+            move_type_differentials(MT_BBRIDGE), n_slices, n_particles, n_dimensions)
       move_start = i0+1
       move_end = i1-1
     else
       if(i0 .lt. 1) then
         i0 = 1
-        call bbridge(q0, q1, part_num, 1, N_DIM, LEFT_BRIDGE, i0, i1, lambda, &
-            move_type_differentials(MT_BBRIDGE), N_SLICE, N_PARTICLE, N_DIM)
+        call bbridge(q0, q1, particle_number, 1, n_dimensions, LEFT_BRIDGE, i0, i1, lambda, &
+            move_type_differentials(MT_BBRIDGE), n_slices, n_particles, n_dimensions)
         move_start = 1
         move_end = i1-1
       else
-        if(i1 .gt. N_SLICE) then
-          i1 = N_SLICE
-          call bbridge(q0, q1, part_num, 1, N_DIM, RIGHT_BRIDGE, i0, i1, lambda, &
-            move_type_differentials(MT_BBRIDGE), N_SLICE, N_PARTICLE, N_DIM, &
-            od_pnum, n_od_particle, &
-            od_dim_low, od_dim_high &
+        if(i1 .gt. n_slices) then
+          i1 = n_slices
+          call bbridge(q0, q1, particle_number, 1, n_dimensions, RIGHT_BRIDGE, i0, i1, lambda, &
+            move_type_differentials(MT_BBRIDGE), n_slices, n_particles, n_dimensions, &
+            off_diagonal_particle_number, n_off_diagonal_particles, &
+            off_diagonal_dimension_low, off_diagonal_dimension_high &
             )
           move_start = i0+1
-          move_end = N_SLICE
+          move_end = n_slices
         end if
       end if
     end if
   else 
 ! move all time steps of a single particle at once
     if (rnd < move_type_probabilities(MT_BBRIDGE) + move_type_probabilities(MT_RIGID)) then
-      mtype = MT_RIGID
-      call rigid_move(q0, q1, part_num, 1, N_DIM, 1, N_SLICE, &
-              move_type_differentials(MT_RIGID), N_SLICE, N_PARTICLE, N_DIM)
-      if( (present(od_pnum) .and. (part_num .eq. od_pnum)) .or. (present(n_od_particle) .and. (part_num .le. N_OD_PARTICLE)) ) then
-        call rigid_move(q0, q1, part_num, OD_DIM_LOW, OD_DIM_HIGH, 1, CSLICE, &
-                move_type_differentials(MT_RIGID), N_SLICE, N_PARTICLE, N_DIM)
-        call rigid_move(q0, q1, part_num, OD_DIM_LOW, OD_DIM_HIGH, CSLICE+1, N_SLICE, &
-                move_type_differentials(MT_RIGID), N_SLICE, N_PARTICLE, N_DIM)
+      move_type = MT_RIGID
+      call rigid_move(q0, q1, particle_number, 1, n_dimensions, 1, n_slices, &
+              move_type_differentials(MT_RIGID), n_slices, n_particles, n_dimensions)
+      if( (present(off_diagonal_particle_number) .and. &
+              (particle_number .eq. off_diagonal_particle_number)) .or. &
+          (present(n_off_diagonal_particles) .and. &
+              (particle_number .le. n_off_diagonal_particles)) &
+      ) then
+        call rigid_move( &
+                q0, q1, &
+                particle_number, &
+                off_diagonal_dimension_low, off_diagonal_dimension_high, &
+                1, center_slice, &
+                move_type_differentials(MT_RIGID), &
+                n_slices, n_particles, n_dimensions &
+              )
+        call rigid_move( &
+                q0, q1, &
+                particle_number, &
+                off_diagonal_dimension_low, off_diagonal_dimension_high, &
+                center_slice+1, n_slices, &
+                move_type_differentials(MT_RIGID), &
+                n_slices, n_particles, n_dimensions &
+              )
       end if
       move_start = 1
-      move_end = N_SLICE
+      move_end = n_slices
     else 
 ! attempt a rotation around a symmetry axis.  right now only does moves like q1 = -q0
     if (rnd < move_type_probabilities(MT_BBRIDGE) + move_type_probabilities(MT_RIGID) + move_type_probabilities(MT_SWAP) ) then
-        mtype = MT_SWAP
+        move_type = MT_SWAP
         call random_number( rnd )
-        swap_dim = int(floor( rnd * (high_swap_dim-low_swap_dim+1) ))+low_swap_dim
-        if( (present(od_pnum) .and. (part_num == OD_PNUM)) .or. (present(N_OD_PARTICLE) .and. (part_num <= N_OD_PARTICLE)) ) then
+        swap_dimension = int(floor( rnd * (swap_dimension_high-swap_dimension_low+1) ))+swap_dimension_low
+        if( (present(off_diagonal_particle_number) .and. &
+                (particle_number == off_diagonal_particle_number)) .or. &
+            (present(n_off_diagonal_particles) .and. &
+                (particle_number <= n_off_diagonal_particles)) &
+        ) then
           call random_number( rnd )
           if(rnd .ge. 0.5) then
-            call swap_move(q0, q1, part_num, swap_dim, swap_dim, 1, CSLICE, &
-                    move_type_differentials(MT_SWAP), N_SLICE, N_PARTICLE, N_DIM)
+            call swap_move(q0, q1, particle_number, swap_dimension, swap_dimension, 1, center_slice, &
+                    move_type_differentials(MT_SWAP), n_slices, n_particles, n_dimensions)
           else
-            call swap_move(q0, q1, part_num, swap_dim, swap_dim, CSLICE+1, N_SLICE, &
-                    move_type_differentials(MT_SWAP), N_SLICE, N_PARTICLE, N_DIM)
+            call swap_move(q0, q1, particle_number, swap_dimension, swap_dimension, center_slice+1, n_slices, &
+                    move_type_differentials(MT_SWAP), n_slices, n_particles, n_dimensions)
           end if
         else
-          call cascading_swap_move(q0, q1, part_num, swap_dim, N_SLICE, N_PARTICLE, N_DIM)
+          call cascading_swap_move(q0, q1, particle_number, swap_dimension, n_slices, n_particles, n_dimensions)
         end if
         move_start = 1
-        move_end = N_SLICE
+        move_end = n_slices
       end if
     end if
   end if
 
-!  print *, "move_start, move_end ",move_start, move_end,part_num
+!  print *, "move_start, move_end ",move_start, move_end,particle_number
 end subroutine sample_scheme1
+!@nonl
 !@-node:gcross.20090623152316.77:scheme 1
 !@-node:gcross.20090623152316.76:Sampling subroutines
 !@+node:gcross.20090623152316.84:Utility subroutines
@@ -167,19 +191,20 @@ end subroutine ipop!}}}
 !@-node:gcross.20090623152316.85:ipush / ipop
 !@+node:gcross.20090623152316.88:get_collisions
 !@+at
-! subroutine get_collisions(q,ip,clist,n_coll,N_SLICE,N_PARTICLE,N_DIM)
-!   integer, intent(in) :: N_SLICE, N_PARTICLE, N_DIM
-!   double precision, dimension ( N_SLICE , N_PARTICLE, N_DIM ) :: q
-!   integer, dimension ( N_PARTICLE ) :: clist
+! subroutine 
+! get_collisions(q,ip,clist,n_coll,n_slices,n_particles,n_dimensions)
+!   integer, intent(in) :: n_slices, n_particles, n_dimensions
+!   double precision, dimension ( n_slices , n_particles, n_dimensions ) :: q
+!   integer, dimension ( n_particles ) :: clist
 !   integer :: ip,n_coll
 !   integer :: i,j,cflag
 !   double precision :: xij
 ! 
 !   n_coll = 0
-!   do j = 1, n_particle
+!   do j = 1, n_particles
 !     if(j .ne. ip) then
 !       cflag = 0
-!       do i = 1, n_slice
+!       do i = 1, n_slices
 !         xij = sum((q(i,j,:) - q(i,ip,:))**2)
 !         if(xij < hard_sphere_radius_squared) then
 !           cflag = 1
@@ -193,56 +218,58 @@ end subroutine ipop!}}}
 ! end subroutine get_collisions!}}}
 !@-at
 !@@c
-
+!@nonl
 !@-node:gcross.20090623152316.88:get_collisions
 !@-node:gcross.20090623152316.84:Utility subroutines
 !@+node:gcross.20090623152316.80:Move subroutines
 !@+node:gcross.20090623152316.81:rigid
-subroutine rigid_move(qin, qout, part_num, low_dim, high_dim, i0, i1, dnu, N_SLICE, N_PARTICLE, N_DIM)
-  integer, intent(in) :: N_SLICE, N_PARTICLE, N_DIM
-  double precision, dimension ( N_SLICE , N_PARTICLE, N_DIM ) :: qin
-  double precision, dimension ( N_SLICE , N_PARTICLE, N_DIM ) :: qout
-  integer :: part_num, low_dim, high_dim, i0, i1
+subroutine rigid_move(qin, qout, particle_number, low_dim, high_dim, i0, i1, dnu, n_slices, n_particles, n_dimensions)
+  integer, intent(in) :: n_slices, n_particles, n_dimensions
+  double precision, dimension ( n_slices , n_particles, n_dimensions ) :: qin
+  double precision, dimension ( n_slices , n_particles, n_dimensions ) :: qout
+  integer :: particle_number, low_dim, high_dim, i0, i1
   double precision :: dnu
 
-  real, dimension( N_DIM )  :: nu
+  real, dimension( n_dimensions )  :: nu
   integer :: j
 
   call random_number( nu )
   nu = ( nu - 0.5 ) * dnu
 
   do j = low_dim, high_dim
-    qout(i0:i1,part_num,j) = qin(i0:i1,part_num,j) + nu(j)
+    qout(i0:i1,particle_number,j) = qin(i0:i1,particle_number,j) + nu(j)
   end do
 end subroutine rigid_move!}}}
+!@nonl
 !@-node:gcross.20090623152316.81:rigid
 !@+node:gcross.20090623152316.82:swap
-subroutine swap_move(qin, qout, part_num, low_dim, high_dim, i0, i1, dnu, N_SLICE, N_PARTICLE, N_DIM)
-  integer, intent(in) :: N_SLICE, N_PARTICLE, N_DIM
-  double precision, dimension ( N_SLICE , N_PARTICLE, N_DIM ) :: qin
-  double precision, dimension ( N_SLICE , N_PARTICLE, N_DIM ) :: qout
-  integer :: part_num, low_dim, high_dim, i0, i1
+subroutine swap_move(qin, qout, particle_number, low_dim, high_dim, i0, i1, dnu, n_slices, n_particles, n_dimensions)
+  integer, intent(in) :: n_slices, n_particles, n_dimensions
+  double precision, dimension ( n_slices , n_particles, n_dimensions ) :: qin
+  double precision, dimension ( n_slices , n_particles, n_dimensions ) :: qout
+  integer :: particle_number, low_dim, high_dim, i0, i1
   double precision :: dnu
 
-  double precision, dimension( N_DIM )  :: nu
+  double precision, dimension( n_dimensions )  :: nu
   integer :: j
 
   call random_number( nu )
   nu = ( nu - 0.5 ) * dnu
 
   do j = low_dim, high_dim
-    qout(i0:i1,part_num,j) = -qin(i0:i1,part_num,j) + nu(j)
+    qout(i0:i1,particle_number,j) = -qin(i0:i1,particle_number,j) + nu(j)
   end do
 end subroutine swap_move!}}}
+!@nonl
 !@-node:gcross.20090623152316.82:swap
 !@+node:gcross.20090623152316.83:cascading swap
-subroutine cascading_swap_move(qin, qout, part_num, swap_dim, N_SLICE, N_PARTICLE, N_DIM, pbc_period_length)
-  integer, intent(in) :: N_SLICE, N_PARTICLE, N_DIM
-  double precision, dimension ( N_SLICE , N_PARTICLE, N_DIM ) :: qin
-  double precision, dimension ( N_SLICE , N_PARTICLE, N_DIM ) :: qout
-  integer :: part_num, swap_dim
+subroutine cascading_swap_move(qin, qout, particle_number, swap_dimension, n_slices, n_particles, n_dimensions, pbc_period_length)
+  integer, intent(in) :: n_slices, n_particles, n_dimensions
+  double precision, dimension ( n_slices , n_particles, n_dimensions ) :: qin
+  double precision, dimension ( n_slices , n_particles, n_dimensions ) :: qout
+  integer :: particle_number, swap_dimension
   double precision, intent(in), optional :: pbc_period_length
-  integer, dimension(N_PARTICLE) :: plist,alist
+  integer, dimension(n_particles) :: plist,alist
   integer :: pcnt,acnt
   integer :: j
   integer :: ip_swap
@@ -251,18 +278,18 @@ subroutine cascading_swap_move(qin, qout, part_num, swap_dim, N_SLICE, N_PARTICL
   call random_number( rnd )
   pcnt = 0
   acnt = 0
-  call ipush(plist,part_num,pcnt)
-  do j = 1, n_particle
-    if(j .ne. part_num) then
+  call ipush(plist,particle_number,pcnt)
+  do j = 1, n_particles
+    if(j .ne. particle_number) then
       call ipush(alist,j,acnt)
     end if
   end do
-  ip_swap = part_num
+  ip_swap = particle_number
   do while(pcnt > 0)
     if( present(pbc_period_length) ) then
-      qout(:,ip_swap,swap_dim) = -qin(:,ip_swap,swap_dim)+ rnd*pbc_period_length
+      qout(:,ip_swap,swap_dimension) = -qin(:,ip_swap,swap_dimension)+ rnd*pbc_period_length
     else
-      qout(:,ip_swap,swap_dim) = -qin(:,ip_swap,swap_dim)
+      qout(:,ip_swap,swap_dimension) = -qin(:,ip_swap,swap_dimension)
     end if
 !@+at
 !     ccnt = 0
@@ -289,6 +316,7 @@ subroutine cascading_swap_move(qin, qout, part_num, swap_dim, N_SLICE, N_PARTICL
     call ipop(plist,ip_swap,pcnt)
   end do
 end subroutine cascading_swap_move!}}}
+!@nonl
 !@-node:gcross.20090623152316.83:cascading swap
 !@+node:gcross.20090805153643.1851:brownian bridge
 ! given the free particle hamiltonian
@@ -303,33 +331,35 @@ end subroutine cascading_swap_move!}}}
 !/*
 ! * Form a Brownian Bridge from q(i0) to q(i1) with time step dtau
 ! */
-subroutine bbridge(q0, q1, pnum, low_dim, high_dim, btype, i0, i1, lambda, dtau, &
-    N_SLICE, N_PARTICLE, N_DIM, &
-    od_pnum, n_od_particle, &
-    od_dim_low, od_dim_high &
+subroutine bbridge(q0, q1, particle_number, low_dim, high_dim, btype, i0, i1, lambda, dtau, &
+    n_slices, n_particles, n_dimensions, &
+    off_diagonal_particle_number, n_off_diagonal_particles, &
+    off_diagonal_dimension_low, off_diagonal_dimension_high &
   )
-  integer, intent(in) :: N_SLICE, N_PARTICLE, N_DIM
-  double precision, dimension( :, :, : ), intent(in):: q0
-  double precision, dimension( :, :, : ), intent(inout):: q1
-  integer, intent(in):: pnum, low_dim, high_dim, btype
+  integer, intent(in) :: n_slices, n_particles, n_dimensions
+  double precision, dimension( n_slices, n_particles, n_dimensions ), intent(in) :: q0
+  double precision, dimension( n_slices, n_particles, n_dimensions ), intent(inout) :: q1
+  integer, intent(in):: particle_number, low_dim, high_dim, btype
   integer, intent(inout) :: i0
   integer, intent(inout) :: i1
   double precision, intent(in):: lambda
   double precision, intent(in):: dtau
-  integer, intent(in), optional :: od_pnum, n_od_particle, od_dim_low, od_dim_high
+  integer, intent(in), optional :: &
+    off_diagonal_particle_number, &
+    n_off_diagonal_particles, &
+    off_diagonal_dimension_low, off_diagonal_dimension_high
 
   double precision :: dt
 
   integer :: i
   integer :: j,cnt
-  integer :: ndim
   double precision :: t1,t2,mean,sigma,sigmasq
   double precision :: a,b
 
   double precision, dimension( 2*ceiling((i1-i0+2.)*(high_dim-low_dim+1.)/2.) )::  nu
 
-  integer :: cslice
-  cslice = n_slice/2
+  integer :: center_slice
+  center_slice = n_slices/2
 
   dt = lambda*dtau*2.0D0
 
@@ -337,85 +367,87 @@ subroutine bbridge(q0, q1, pnum, low_dim, high_dim, btype, i0, i1, lambda, dtau,
 
   !print *, 'i0= ',i0,'i1 = ',i1,' btype= ',btype 
   !write (111,*) 'i0= ',i0,'i1 = ',i1,' btype= ',btype 
-  q1(i0, pnum, low_dim:high_dim) = q0(i0, pnum, low_dim:high_dim)
-  q1(i1, pnum, low_dim:high_dim) = q0(i1, pnum, low_dim:high_dim)
+  q1(i0, particle_number, low_dim:high_dim) = q0(i0, particle_number, low_dim:high_dim)
+  q1(i1, particle_number, low_dim:high_dim) = q0(i1, particle_number, low_dim:high_dim)
 
   cnt = 1
 
   if(btype .eq. LEFT_BRIDGE) then
     sigma= sqrt(dt*(i1-1))
     do j=low_dim, high_dim
-      mean = q1(i1, pnum, j)
-      q1(i0, pnum, j) = nu(cnt)*sigma + mean
+      mean = q1(i1, particle_number, j)
+      q1(i0, particle_number, j) = nu(cnt)*sigma + mean
       cnt = cnt + 1
     end do
   else if(btype .eq. RIGHT_BRIDGE) then
-    sigma= sqrt(dt*(N_SLICE-i0))
+    sigma= sqrt(dt*(n_slices-i0))
     do j=low_dim, high_dim
-      mean = q1(i0, pnum, j)
-      q1(i1, pnum, j) = nu(cnt)*sigma + mean
+      mean = q1(i0, particle_number, j)
+      q1(i1, particle_number, j) = nu(cnt)*sigma + mean
       cnt = cnt + 1
     end do
   end if
 
-  if( (i0 <= CSLICE) .and. (i1 >= CSLICE) ) then
+  if( (i0 <= center_slice) .and. (i1 >= center_slice) ) then
     i1 = i1 + 1
-    if(i1 .gt. N_SLICE) then
-      i1 = N_SLICE
+    if(i1 .gt. n_slices) then
+      i1 = n_slices
     end if
 
-    if( (present(od_pnum) .and. (pnum == OD_PNUM)) .or. (present(N_OD_PARTICLE) .and. (pnum <= N_OD_PARTICLE)) ) then
-      sigma= sqrt(dt*(CSLICE-i0))
-      do j = OD_DIM_LOW,OD_DIM_HIGH
-        mean = q1(i0, pnum, j)
-        q1(CSLICE, pnum, j) = nu(cnt)*sigma + mean
+    if( (present(off_diagonal_particle_number) .and. (particle_number == off_diagonal_particle_number)) .or. &
+        (present(n_off_diagonal_particles) .and. (particle_number <= n_off_diagonal_particles)) &
+    ) then
+      sigma= sqrt(dt*(center_slice-i0))
+      do j = off_diagonal_dimension_low,off_diagonal_dimension_high
+        mean = q1(i0, particle_number, j)
+        q1(center_slice, particle_number, j) = nu(cnt)*sigma + mean
         cnt = cnt + 1
       end do
-      sigma= sqrt(dt*(i1-(CSLICE+1)))
-      do j = OD_DIM_LOW,OD_DIM_HIGH
-        mean = q1(i1, pnum, j)
-        q1(CSLICE+1, pnum, j) = nu(cnt)*sigma + mean
+      sigma= sqrt(dt*(i1-(center_slice+1)))
+      do j = off_diagonal_dimension_low,off_diagonal_dimension_high
+        mean = q1(i1, particle_number, j)
+        q1(center_slice+1, particle_number, j) = nu(cnt)*sigma + mean
         cnt = cnt + 1
       end do
     else
-      t1 = dt*(CSLICE-i0)
-      t2 = dt*(i1-(CSLICE+1))
+      t1 = dt*(center_slice-i0)
+      t2 = dt*(i1-(center_slice+1))
       sigmasq=1./( 1./t1 + 1./t2)
       sigma= sqrt(sigmasq)
       do j = low_dim, high_dim
-        a = q1(i0, pnum, j)
-        b = q1(i1, pnum, j)
+        a = q1(i0, particle_number, j)
+        b = q1(i1, particle_number, j)
         mean=(t2*a  + t1*b)/(t1 + t2)
-        q1(CSLICE, pnum, j) = nu(cnt)*sigma + mean
-        q1(CSLICE+1, pnum, j) = q1(CSLICE, pnum, j)
+        q1(center_slice, particle_number, j) = nu(cnt)*sigma + mean
+        q1(center_slice+1, particle_number, j) = q1(center_slice, particle_number, j)
         cnt = cnt + 1
       end do
     end if
 
-    do i=i0+1, CSLICE-1
+    do i=i0+1, center_slice-1
       t1 = dt
-      t2 = dt*(CSLICE-i)
+      t2 = dt*(center_slice-i)
       sigmasq=1./( 1./t1 + 1./t2)
       sigma= sqrt(sigmasq)
       do j=low_dim, high_dim
-        a = q1(i-1, pnum, j)
-        b = q1(CSLICE, pnum, j)
+        a = q1(i-1, particle_number, j)
+        b = q1(center_slice, particle_number, j)
         mean=(t2*a  + t1*b)/(t1 + t2)
-        q1(i, pnum, j) = nu(cnt)*sigma + mean
+        q1(i, particle_number, j) = nu(cnt)*sigma + mean
         cnt = cnt + 1
       end do
     end do
 
-    do i=CSLICE+2, i1-1
+    do i=center_slice+2, i1-1
       t1 = dt
       t2 = dt*(i1-i)
       sigmasq=1./( 1./t1 + 1./t2)
       sigma= sqrt(sigmasq)
       do j=low_dim, high_dim
-        a = q1(i-1, pnum, j)
-        b = q1(i1, pnum, j)
+        a = q1(i-1, particle_number, j)
+        b = q1(i1, particle_number, j)
         mean=(t2*a  + t1*b)/(t1 + t2)
-        q1(i, pnum, j) = nu(cnt)*sigma + mean
+        q1(i, particle_number, j) = nu(cnt)*sigma + mean
         cnt = cnt + 1
       end do
     end do
@@ -426,15 +458,16 @@ subroutine bbridge(q0, q1, pnum, low_dim, high_dim, btype, i0, i1, lambda, dtau,
       sigmasq=1./( 1./t1 + 1./t2)
       sigma= sqrt(sigmasq)
       do j=low_dim, high_dim
-        a = q1(i-1, pnum, j)
-        b = q1(i1, pnum, j)
+        a = q1(i-1, particle_number, j)
+        b = q1(i1, particle_number, j)
         mean=(t2*a  + t1*b)/(t1 + t2)
-        q1(i, pnum, j) = nu(cnt)*sigma + mean
+        q1(i, particle_number, j) = nu(cnt)*sigma + mean
         cnt = cnt + 1
       end do
     end do
   end if
 end subroutine bbridge
+!@nonl
 !@-node:gcross.20090805153643.1851:brownian bridge
 !@-node:gcross.20090623152316.80:Move subroutines
 !@-others

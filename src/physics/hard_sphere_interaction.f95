@@ -143,6 +143,7 @@ pure subroutine compute_gradient_backflow( &
     end do
   end do
 end subroutine
+!@nonl
 !@-node:gcross.20090908085435.1631:compute_gradient_backflow
 !@+node:gcross.20090828201103.2127:has_collision
 pure function has_collision(xij2,hard_sphere_radius_squared,n_slices,n_particles)
@@ -163,6 +164,7 @@ pure function has_collision(xij2,hard_sphere_radius_squared,n_slices,n_particles
     end do
   end do
 end function
+!@nonl
 !@-node:gcross.20090828201103.2127:has_collision
 !@+node:gcross.20090902085220.2790:Green's functions
 !@+node:gcross.20090828095451.1455:strategy 1 (image approximation)
@@ -213,6 +215,7 @@ contains
   end function
 
 end function
+!@nonl
 !@-node:gcross.20090828095451.1455:strategy 1 (image approximation)
 !@+node:gcross.20090828095451.1456:strategy 2
 ! A new quantum propagator for hard sphere and cavity systems
@@ -282,6 +285,7 @@ pure function compute_greens_function2( &
   ln_gfn = log(hs_gfn)
 
 end function
+!@nonl
 !@-node:gcross.20090828095451.1456:strategy 2
 !@-node:gcross.20090902085220.2790:Green's functions
 !@-others

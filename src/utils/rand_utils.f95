@@ -36,14 +36,14 @@ subroutine ru_gasdev( nu )
 
   double precision, dimension( 2 ) :: v
   double precision :: fac,rsq
-  integer:: np
+  integer:: n_particles
   integer:: i
 
   double precision, dimension( size(nu)+1 ):: tnu
 
-  np = size(nu)
+  n_particles = size(nu)
 
-  do i = 1, np , 2
+  do i = 1, n_particles , 2
     rsq = 0.0
     do while ( (rsq .ge. 1) .or. (rsq .eq. 0.0) )
       call random_number( v )
@@ -58,6 +58,7 @@ subroutine ru_gasdev( nu )
   nu(:) = tnu(1:size(nu))
 
 end subroutine ru_gasdev
+!@nonl
 !@-node:gcross.20090819093822.1392:ru_gasdev
 !@+node:gcross.20090819093822.1391:simple_lcg
 pure function simple_lcg(yin) result(yout)

@@ -32,12 +32,12 @@ class thermalize_path(unittest.TestCase):
             p1 = non_negative_float, p2 = non_negative_float, p3 = non_negative_float,
             d1 = float, d2 = float, d3 = float,
             n_trials = irange(1,10),
-            c_slice = irange(3,11,2),
+            center_slice = irange(3,11,2),
             n_particles = irange(1,10),
             lam = float,
         ):
         N_rotating_particles = randint(1,n_particles)
-        n_slices = c_slice * 2
+        n_slices = center_slice * 2
         n_dimensions = 3
         x = zeros((n_slices,n_particles,n_dimensions),dtype=double,order='Fortran')
         xij2 = zeros((n_slices,n_particles,n_particles),dtype=double,order='Fortran')
@@ -47,8 +47,8 @@ class thermalize_path(unittest.TestCase):
         move_type_probabilities = array([p1,p2,p3])/(p1+p2+p3)
         move_type_differentials = array([d1,d2,d3])
         dM = randint(1,n_slices)
-        low_swap_dim = randint(1,n_dimensions)
-        high_swap_dim = randint(low_swap_dim,n_dimensions)
+        swap_dimension_low = randint(1,n_dimensions)
+        swap_dimension_high = randint(swap_dimension_low,n_dimensions)
         def null_func(*args):
             return double(0.0)
         def compute_potential(x,xij2,n_slices,n_particles,n_dimensions):
@@ -65,7 +65,7 @@ class thermalize_path(unittest.TestCase):
             U,gradU2,
             n_trials,
             move_type_probabilities,move_type_differentials,
-            dM,lam,low_swap_dim,high_swap_dim,
+            dM,lam,swap_dimension_low,swap_dimension_high,
             slice_move_attempted_counts,move_type_attempted_counts,slice_move_accepted_counts,move_type_accepted_counts,
             compute_potential, null_func,greens_function,
         )

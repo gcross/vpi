@@ -1,5 +1,5 @@
 #@+leo-ver=4-thin
-#@+node:gcross.20090902085220.2158:@thin vpi.py
+#@+node:gcross.20090902085220.2158:@thin vpi/__init__.py
 #@@language python
 #@@tabwidth -4
 
@@ -1309,6 +1309,7 @@ class System(object):
         compute_trial_weight = self.compute_trial_weight
         compute_greens_function = self.compute_greens_function
         observables = self.observables
+        #@nonl
         #@-node:gcross.20090902085220.2305:<< Stash properties into local variables >>
         #@nl
         #@    << Prethermalize the system >>
@@ -1353,6 +1354,7 @@ class System(object):
                     float(move_type_accepted_counts[0])/move_type_attempted_counts[0],
                     float(move_type_accepted_counts[1])/move_type_attempted_counts[1],
                 )
+        #@nonl
         #@-node:gcross.20090902085220.2307:<< Main iteration >>
         #@nl
     #@-node:gcross.20090902085220.2304:run
@@ -1360,5 +1362,5 @@ class System(object):
 #@-node:gcross.20090902085220.2288:class System
 #@-node:gcross.20090902085220.2385:Classes
 #@-others
-#@-node:gcross.20090902085220.2158:@thin vpi.py
+#@-node:gcross.20090902085220.2158:@thin vpi/__init__.py
 #@-leo

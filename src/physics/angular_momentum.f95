@@ -83,7 +83,10 @@ subroutine compute_gradient_ho_phase_power (&
 
   ! Local variables
   integer :: i, j
-  double complex :: full_sum, full_sum_abs_sq, partial_sum, amplitudes(n_particles), x_sum, y_sum, r_sq_sum
+  double complex :: &
+    full_sum, full_sum_abs_sq, partial_sum, &
+    amplitudes(n_particles), &
+    x_sum, y_sum, r_sq_sum
 
   gradient_phase = 0
 
@@ -100,6 +103,7 @@ subroutine compute_gradient_ho_phase_power (&
   end do
 
 end subroutine
+!@nonl
 !@-node:gcross.20100113111641.1972:compute_gradient_ho_phase_power
 !@+node:gcross.20091210143551.1691:compute_gradient_ho_phase_choice
 subroutine compute_gradient_ho_phase_choice (&
@@ -119,7 +123,10 @@ subroutine compute_gradient_ho_phase_choice (&
 
   ! Local variables
   integer :: i, j, n_excess_rotating_particles, feynman_factor
-  double complex :: full_sum, full_sum_abs_sq, partial_sums(n_particles), amplitudes(n_particles), x_sum, y_sum, r_sq_sum
+  double complex :: &
+    full_sum, full_sum_abs_sq, &
+    partial_sums(n_particles), amplitudes(n_particles), &
+    x_sum, y_sum, r_sq_sum
 
 
   if (n_total_rotating_particles >= n_particles) then
@@ -165,6 +172,7 @@ subroutine compute_gradient_ho_phase_choice (&
   end do
 
 end subroutine
+!@nonl
 !@-node:gcross.20091210143551.1691:compute_gradient_ho_phase_choice
 !@+node:gcross.20090903090230.2072:accumulate_rotating_frame_potential
 pure subroutine accumulate_rotating_frame_potential (&
@@ -195,6 +203,7 @@ pure subroutine accumulate_rotating_frame_potential (&
                       )
 
 end subroutine
+!@nonl
 !@-node:gcross.20090903090230.2072:accumulate_rotating_frame_potential
 !@+node:gcross.20090919132620.2307:accumulate_effective_potential
 pure subroutine accumulate_effective_potential (&
@@ -219,6 +228,7 @@ pure subroutine accumulate_effective_potential (&
     U(s,i) = U(s,i) + lambda*sum(gradient_phase(s,i,:)**2)
 
 end subroutine
+!@nonl
 !@-node:gcross.20090919132620.2307:accumulate_effective_potential
 !@+node:gcross.20090919132620.2310:accumulate_magnetic_field_phase
 pure subroutine accumulate_magnetic_field_phase (&
@@ -249,6 +259,7 @@ pure subroutine accumulate_magnetic_field_phase (&
   end forall
 
 end subroutine
+!@nonl
 !@-node:gcross.20090919132620.2310:accumulate_magnetic_field_phase
 !@-others
 

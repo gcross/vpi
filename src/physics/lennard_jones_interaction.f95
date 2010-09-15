@@ -36,6 +36,7 @@ contains
   end function
 
 end subroutine
+!@nonl
 !@-node:gcross.20090901084550.2628:accumulate_potential
 !@-others
 

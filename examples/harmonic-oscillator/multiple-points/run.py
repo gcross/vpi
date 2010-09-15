@@ -55,6 +55,7 @@ configuration = {
     "low_swap_dimension": 1,
     "high_swap_dimension": 3,
 }
+#@nonl
 #@-node:gcross.20100311125034.2335:<< System Configuration >>
 #@nl
 #@<< Histogram Configuration >>

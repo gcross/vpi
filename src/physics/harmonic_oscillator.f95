@@ -76,6 +76,7 @@ subroutine accumulate_potential( &
   end do
 
 end subroutine
+!@nonl
 !@-node:gcross.20090901084550.2626:accumulate_potential
 !@-others
 

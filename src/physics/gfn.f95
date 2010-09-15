@@ -15,29 +15,30 @@ contains
 subroutine initialize_2nd_order_weights(n_slices,U_weight)
   integer, intent(in) :: n_slices
   double precision, dimension(n_slices), intent(out) :: U_weight
-  integer :: cslice, ii
+  integer :: center_slice, ii
 
-  cslice = n_slices / 2
+  center_slice = n_slices / 2
 
-  if (mod(CSLICE,2) .ne. 1) then
-    print *,"ERROR: CSLICE = N_SLICE/2 must be odd"
+  if (mod(center_slice,2) .ne. 1) then
+    print *,"ERROR: center_slice = n_slices/2 must be odd"
     stop
   end if
 
   U_weight = 1.0
 
   U_weight(1) = 0.5d0
-  U_weight(N_SLICES) = 0.5d0
-  U_weight(CSLICE) = 0.5d0
-  U_weight(CSLICE+1) = 0.5d0
+  U_weight(n_slices) = 0.5d0
+  U_weight(center_slice) = 0.5d0
+  U_weight(center_slice+1) = 0.5d0
 end subroutine
+!@nonl
 !@-node:gcross.20100106123346.1698:initialize 2nd order weights
 !@+node:gcross.20090624144408.1799:2nd order
-pure function gfn2_sp( sl_start, sl_end, U, U_weight, nslice, np, dt ) result ( ln_gfn )
-  double precision, dimension( nslice, np ), intent(in) :: U
-  double precision, dimension( nslice ), intent(in) :: U_weight
+pure function gfn2_sp( sl_start, sl_end, U, U_weight, n_slices, n_particles, dt ) result ( ln_gfn )
+  double precision, dimension( n_slices, n_particles ), intent(in) :: U
+  double precision, dimension( n_slices ), intent(in) :: U_weight
   integer, intent(in) :: sl_start, sl_end
-  integer, intent(in) :: nslice, np
+  integer, intent(in) :: n_slices, n_particles
   double precision, intent(in) :: dt
   double precision :: ln_gfn
   integer :: ip, slice_length
@@ -54,12 +55,13 @@ pure function gfn2_sp( sl_start, sl_end, U, U_weight, nslice, np, dt ) result ( 
   slice_length = sl_end-sl_start+1
 
   ln_gfn = 0
-  do ip = 1, np
+  do ip = 1, n_particles
     ln_gfn = ln_gfn + ddot(slice_length,U(sl_start,ip),1,U_weight(sl_start),1)
   end do
   ln_gfn = -dt*ln_gfn
 
 end function gfn2_sp
+!@nonl
 !@-node:gcross.20090624144408.1799:2nd order
 !@-node:gcross.20100106123346.1699:2nd order
 !@+node:gcross.20100106123346.1700:4th order
@@ -67,12 +69,12 @@ end function gfn2_sp
 subroutine initialize_4th_order_weights(n_slices,U_weight,gU2_weight)
   integer, intent(in) :: n_slices
   double precision, dimension(n_slices), intent(out) :: U_weight, gU2_weight
-  integer :: cslice, ii
+  integer :: center_slice, ii
 
-  cslice = n_slices / 2
+  center_slice = n_slices / 2
 
-  if (mod(CSLICE,2) .ne. 1) then
-    print *,"ERROR: CSLICE = N_SLICE/2 must be odd"
+  if (mod(center_slice,2) .ne. 1) then
+    print *,"ERROR: center_slice = n_slices/2 must be odd"
     stop
   end if
 
@@ -91,34 +93,41 @@ subroutine initialize_4th_order_weights(n_slices,U_weight,gU2_weight)
 !   0.5 1 0.5 , 0.5 1 0.5
 ! We concatentate the adjacent half weighted steps (unless we are at the end 
 ! of a path)
-! in order for paths to be broken properly at the center we need CSLICE to be 
-! odd.
+! in order for paths to be broken properly at the center we need center_slice 
+! to be odd.
 !@-at
 !@@c
-  do ii = 1, CSLICE
+  do ii = 1, center_slice
     U_weight(ii) = mod(ii+1,2) + 1 
     gU2_weight(ii) = mod(ii+1,2)
   end do
   ! the center slice is doubled to handle broken paths 
   ! (probably a less kludgy way to do this but... )
-  do ii = CSLICE+2,n_slices
+  do ii = center_slice+2,n_slices
     U_weight(ii) = mod(ii,2) + 1 
     gU2_weight(ii) = mod(ii,2)
   end do
   U_weight(1) = 0.5d0
-  U_weight(N_SLICES) = 0.5d0
-  U_weight(CSLICE) = 0.5d0
-  U_weight(CSLICE+1) = 0.5d0
+  U_weight(n_slices) = 0.5d0
+  U_weight(center_slice) = 0.5d0
+  U_weight(center_slice+1) = 0.5d0
 end subroutine
+!@nonl
 !@-node:gcross.20090812093015.1753:initialize 4th order weights
 !@+node:gcross.20090812093015.1845:4th order
-pure function gfn4_sp( sl_start, sl_end, U, gradU2, U_weight, gU2_weight, nslice, np, lambda, dt ) result ( ln_gfn )
-  double precision, dimension( nslice, np ), intent(in) :: U
-  double precision, dimension( nslice ), intent(in) :: gradU2
-  double precision, dimension( nslice ), intent(in) :: U_weight
-  double precision, dimension( nslice ), intent(in) :: gU2_weight
+pure function gfn4_sp( &
+  sl_start, sl_end, &
+  U, gradU2, &
+  U_weight, gU2_weight, &
+  n_slices, n_particles, &
+  lambda, dt &
+) result ( ln_gfn )
+  double precision, dimension( n_slices, n_particles ), intent(in) :: U
+  double precision, dimension( n_slices ), intent(in) :: gradU2
+  double precision, dimension( n_slices ), intent(in) :: U_weight
+  double precision, dimension( n_slices ), intent(in) :: gU2_weight
   integer, intent(in) :: sl_start, sl_end
-  integer, intent(in) :: nslice, np
+  integer, intent(in) :: n_slices, n_particles
   double precision, intent(in) :: lambda, dt
   double precision :: ln_gfn
   integer :: ip, slice_length
@@ -136,12 +145,13 @@ pure function gfn4_sp( sl_start, sl_end, U, gradU2, U_weight, gU2_weight, nslice
 
   ln_gfn = 0
 
-  do ip = 1, np
+  do ip = 1, n_particles
     ln_gfn = ln_gfn -2.0d0*dt*ddot(slice_length,U(sl_start,ip),1,U_weight(sl_start),1)/3.0d0
   end do
   ln_gfn = ln_gfn - 2.0d0*lambda*(dt**3)*ddot(slice_length,gradU2(sl_start),1,gU2_weight(sl_start),1)/9.0d0
 
 end function gfn4_sp
+!@nonl
 !@-node:gcross.20090812093015.1845:4th order
 !@-node:gcross.20100106123346.1700:4th order
 !@+node:gcross.20090828095451.1453:hard wall
@@ -184,6 +194,7 @@ pure function gfn_hard_wall_contribution( &
   end do
 
 end function
+!@nonl
 !@-node:gcross.20090828095451.1453:hard wall
 !@+node:gcross.20090916153857.1828:compute_green_fn_from_distances
 ! image approximation
@@ -229,6 +240,7 @@ contains
   end function
 
 end function
+!@nonl
 !@-node:gcross.20090916153857.1828:compute_green_fn_from_distances
 !@-others
 

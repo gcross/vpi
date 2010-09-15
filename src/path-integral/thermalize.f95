@@ -33,14 +33,14 @@ subroutine thermalize_path( &
   n_trials, &
   move_type_probabilities, move_type_differentials, &
   dM, lambda, &
-  low_swap_dim, high_swap_dim, &
+  swap_dimension_low, swap_dimension_high, &
   slice_move_attempted_counts, move_type_attempted_counts, &
   slice_move_accepted_counts, move_type_accepted_counts, &
   compute_potential, trial_function, greens_function, &
   pbc_period_length, &
-  od_pnum, PROB_OD_PNUM, &
-  n_od_particle, &
-  od_dim_low, od_dim_high &
+  off_diagonal_particle_number, prb_off_diagonal_particle_number, &
+  n_off_diagonal_particles, &
+  off_diagonal_dimension_low, off_diagonal_dimension_high &
   )
 
 !@+at
@@ -48,12 +48,16 @@ subroutine thermalize_path( &
 !@-at
 !@@c
   integer, intent(in) :: n_slices, n_particles, n_dimensions, n_trials
-  double precision, dimension( N_MOVE_TYPES ), intent(in) :: move_type_probabilities, move_type_differentials
+  double precision, dimension( N_MOVE_TYPES ), intent(in) :: &
+    move_type_probabilities, move_type_differentials
   double precision, intent(in) :: dM, lambda
-  integer, intent(in) :: low_swap_dim, high_swap_dim
+  integer, intent(in) :: swap_dimension_low, swap_dimension_high
   double precision, intent(in), optional :: pbc_period_length
-  double precision, intent(in), optional :: PROB_OD_PNUM
-  integer, intent(in), optional :: od_pnum, n_od_particle, od_dim_low, od_dim_high
+  double precision, intent(in), optional :: prb_off_diagonal_particle_number
+  integer, intent(in), optional :: &
+    off_diagonal_particle_number, &
+    n_off_diagonal_particles, &
+    off_diagonal_dimension_low, off_diagonal_dimension_high
 
 !@+at
 ! Potential and trial functions
@@ -72,6 +76,7 @@ interface
     double precision, dimension( n_slices ), intent(out) :: gradU2
     logical, intent(out) :: reject_flag
   end subroutine compute_potential
+  !@nonl
   !@-node:gcross.20090809223137.1724:<< Potential callback interface >>
   !@-middle:gcross.20090817102318.2271:Interface
   !@nl
@@ -108,6 +113,7 @@ interface
     integer, intent(in) :: particle_number
     double precision  :: log_probability
   end function
+  !@nonl
   !@-node:gcross.20090828095451.1676:<< Green's function callback interface >>
   !@-middle:gcross.20090817102318.2271:Interface
   !@nl
@@ -131,10 +137,10 @@ end interface
   integer :: i, move_type, move_start, move_end, particle_number
   double precision :: old_weight, new_weight, dtau
   logical :: reject_flag
-  double precision, dimension( N_SLICES, N_PARTICLES, N_DIMENSIONS ) :: q_trial
-  double precision, dimension( N_SLICES, N_PARTICLES, N_PARTICLES ) :: xij2_trial
-  double precision, dimension( N_SLICES, N_PARTICLES ) :: U_trial
-  double precision, dimension( N_SLICES ) :: gradU2_trial
+  double precision, dimension( n_slices, n_particles, n_dimensions ) :: q_trial
+  double precision, dimension( n_slices, n_particles, n_particles ) :: xij2_trial
+  double precision, dimension( n_slices, n_particles ) :: U_trial
+  double precision, dimension( n_slices ) :: gradU2_trial
 
   !@  << Initialize trial functions >>
   !@+node:gcross.20090805153643.1848:<< Initialize trial functions >>
@@ -152,22 +158,22 @@ end interface
   do i = 1, n_trials
     !@    << Randomly choose a move to make and apply it to the system >>
     !@+node:gcross.20090626112946.1688:<< Randomly choose a move to make and apply it to the system >>
-    if( present(od_pnum) ) then
+    if( present(off_diagonal_particle_number) ) then
       call sample_scheme1(q, q_trial, move_start, move_end, &
           move_type_probabilities, move_type_differentials, &
           dM, lambda, &
-          low_swap_dim, high_swap_dim, &
+          swap_dimension_low, swap_dimension_high, &
           particle_number, move_type, &
           n_slices, n_particles, n_dimensions, &
-          od_pnum, PROB_OD_PNUM, &
-          n_od_particle, &
-          od_dim_low, od_dim_high &
+          off_diagonal_particle_number, prb_off_diagonal_particle_number, &
+          n_off_diagonal_particles, &
+          off_diagonal_dimension_low, off_diagonal_dimension_high &
         )
     else
       call sample_scheme1(q, q_trial, move_start, move_end, &
           move_type_probabilities, move_type_differentials, &
           dM, lambda, &
-          low_swap_dim, high_swap_dim, &
+          swap_dimension_low, swap_dimension_high, &
           particle_number, move_type, &
           n_slices, n_particles, n_dimensions &
         )
@@ -197,13 +203,15 @@ end interface
     !@+node:gcross.20090626112946.1689:<< Update the displacement matrix >>
     if( present(pbc_period_length) ) then
       call update_xij_pbc( xij2_trial(move_start:move_end,:,:), q_trial(move_start:move_end,:,:), &
-        pbc_period_length, (move_end-move_start+1), N_PARTICLES, N_DIMENSIONS  )
+        pbc_period_length, (move_end-move_start+1), n_particles, n_dimensions  )
     else
       call update_xij( xij2_trial(move_start:move_end,:,:), q_trial(move_start:move_end,:,:), &
-        (move_end-move_start+1), N_PARTICLES, N_DIMENSIONS  )
+        (move_end-move_start+1), n_particles, n_dimensions  )
     end if
+    !@nonl
     !@-node:gcross.20090626112946.1689:<< Update the displacement matrix >>
     !@nl
+    !@nonl
     !@-node:gcross.20090626112946.1688:<< Randomly choose a move to make and apply it to the system >>
     !@nl
 
@@ -363,6 +371,7 @@ end interface
     else
       lngfn = 0
     end if
+    !@nonl
     !@-node:gcross.20090817102318.2266:<< Compute contribution from potentials >>
     !@nl
 
@@ -370,27 +379,37 @@ end interface
     !@+node:gcross.20090817102318.2270:<< Compute contribution from trial functions >>
     lntfn = 0d0
 
-    lntfn = lntfn + trial_function(x(1,:,:), xij2(1,:,:), n_particles, n_dimensions, reject_flag)
+    lntfn = lntfn + trial_function( &
+                      x(1,:,:), xij2(1,:,:), &
+                      n_particles, n_dimensions, &
+                      reject_flag &
+                    )
     if(reject_flag) then
       return
     end if
 
-    lntfn = lntfn + trial_function(x(n_slices,:,:), xij2(n_slices,:,:), n_particles, n_dimensions, reject_flag)
+    lntfn = lntfn + trial_function( &
+                      x(n_slices,:,:), xij2(n_slices,:,:), &
+                      n_particles, n_dimensions, &
+                      reject_flag &
+                    )
     if(reject_flag) then
       return
     end if
-
+    !@nonl
     !@-node:gcross.20090817102318.2270:<< Compute contribution from trial functions >>
     !@nl
 
     weight = lntfn + lngfn
 
   end function compute_log_acceptance_weight
+  !@nonl
   !@-node:gcross.20090817102318.2264:subroutine compute_log_acceptance_weight
   !@-node:gcross.20090817102318.2263:Subroutines
   !@-others
 
 end subroutine thermalize_path
+!@nonl
 !@-node:gcross.20090626112946.1694:thermalize_path
 !@-others
 

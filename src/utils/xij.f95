@@ -16,31 +16,33 @@ elemental function wrap_around(x,period_length)
 end function
 !@-node:gcross.20090805153643.1842:wrap_around
 !@+node:gcross.20090805093617.1833:update_xij
-pure subroutine update_xij( xij2, x, N_SLICES, N_PARTICLES, N_DIMENSIONS )
-  integer, intent(in) :: N_SLICES, N_PARTICLES, N_DIMENSIONS
-  double precision, dimension ( N_SLICES, N_PARTICLES , N_PARTICLES ), intent(inout) :: xij2
-  double precision, dimension ( N_SLICES, N_PARTICLES , N_DIMENSIONS ), intent(in) :: x
+pure subroutine update_xij( xij2, x, n_slices, n_particles, n_dimensions )
+  integer, intent(in) :: n_slices, n_particles, n_dimensions
+  double precision, dimension ( n_slices, n_particles , n_particles ), intent(inout) :: xij2
+  double precision, dimension ( n_slices, n_particles , n_dimensions ), intent(in) :: x
 
   integer :: s, i, j
 
-  forall (s=1:n_slices, i=1:N_PARTICLES, j=1:N_PARTICLES) &
+  forall (s=1:n_slices, i=1:n_particles, j=1:n_particles) &
     xij2(s,i,j) = sum( (x(s,i,:) - x(s,j,:))**2 )
 
 end subroutine update_xij
+!@nonl
 !@-node:gcross.20090805093617.1833:update_xij
 !@+node:gcross.20090805093617.1834:update_xij_pbc
-pure subroutine update_xij_pbc( xij2, x, period_length, N_SLICES, N_PARTICLES, N_DIMENSIONS )
-  integer, intent(in) :: N_SLICES, N_PARTICLES, N_DIMENSIONS
-  double precision, dimension ( N_SLICES, N_PARTICLES , N_PARTICLES ), intent(inout) :: xij2
-  double precision, dimension ( N_SLICES, N_PARTICLES , N_DIMENSIONS ), intent(in) :: x
+pure subroutine update_xij_pbc( xij2, x, period_length, n_slices, n_particles, n_dimensions )
+  integer, intent(in) :: n_slices, n_particles, n_dimensions
+  double precision, dimension ( n_slices, n_particles , n_particles ), intent(inout) :: xij2
+  double precision, dimension ( n_slices, n_particles , n_dimensions ), intent(in) :: x
   double precision, intent(in) :: period_length
 
   integer :: s, i, j
 
-  forall (s=1:n_slices, i=1:N_PARTICLES, j=1:N_PARTICLES) &
+  forall (s=1:n_slices, i=1:n_particles, j=1:n_particles) &
     xij2(s,i,j) = sum( wrap_around( (x(s,i,:) - x(s,j,:)), period_length )**2 )
 
 end subroutine update_xij_pbc
+!@nonl
 !@-node:gcross.20090805093617.1834:update_xij_pbc
 !@-others
 
