@@ -1174,7 +1174,7 @@ class System(object):
             self.number_of_slices,self.number_of_particles,self.number_of_dimensions
         )
         self.xij2 = zeros((self.number_of_slices,self.number_of_particles,self.number_of_particles),dtype=double,order='Fortran')
-        vpif.xij.update_xij(self.xij2,self.x)
+        self.xij2 = vpif.xij.compute_xij(self.x)
 
     reinitialize_lattice = initialize_lattice
     #@-node:gcross.20090902085220.2332:(re)initialize_lattice

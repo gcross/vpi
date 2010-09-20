@@ -202,11 +202,17 @@ end interface
     !@<< Update the displacement matrix >>
     !@+node:gcross.20090626112946.1689:<< Update the displacement matrix >>
     if( present(pbc_period_length) ) then
-      call update_xij_pbc( xij2_trial(move_start:move_end,:,:), q_trial(move_start:move_end,:,:), &
-        pbc_period_length, (move_end-move_start+1), n_particles, n_dimensions  )
+      call compute_xij_pbc( &
+        q_trial(move_start:move_end,:,:), &
+        pbc_period_length, (move_end-move_start+1), n_particles, n_dimensions, &
+        xij2_trial(move_start:move_end,:,:) &
+        )
     else
-      call update_xij( xij2_trial(move_start:move_end,:,:), q_trial(move_start:move_end,:,:), &
-        (move_end-move_start+1), n_particles, n_dimensions  )
+      call compute_xij( &
+        q_trial(move_start:move_end,:,:), &
+        (move_end-move_start+1), n_particles, n_dimensions, &
+        xij2_trial(move_start:move_end,:,:) &
+        )
     end if
     !@nonl
     !@-node:gcross.20090626112946.1689:<< Update the displacement matrix >>

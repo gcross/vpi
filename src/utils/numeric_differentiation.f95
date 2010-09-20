@@ -51,12 +51,12 @@ subroutine numerically_differentiate_jastrow( &
       tx(:,:) = x(:,:)
       tx(i,k) = x(i,k) + epsilon
       txij2(:,:) = xij2(:,:)
-      call update_xij( txij2, tx, 1, n_particles, n_dimensions )
+      call compute_xij( tx, 1, n_particles, n_dimensions, txij2 )
       fhi(k) = jfunc( tx, txij2, n_particles, n_dimensions )
 
       txij2(:,:) = xij2(:,:)
       tx(i,k) = x(i,k) - epsilon
-      call update_xij( txij2, tx, 1, n_particles, n_dimensions )
+      call compute_xij( tx, 1, n_particles, n_dimensions, txij2 )
       flo(k) = jfunc( tx, txij2, n_particles, n_dimensions )
     end do
     grad_lntfn(i,:) = fhi(:) - flo(:)
