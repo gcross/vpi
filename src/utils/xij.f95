@@ -18,31 +18,43 @@ end function
 !@+node:gcross.20090805093617.1833:compute_xij
 pure subroutine compute_xij( x, n_slices, n_particles, n_dimensions, xij2 )
   integer, intent(in) :: n_slices, n_particles, n_dimensions
-  double precision, dimension ( n_slices, n_particles , n_particles ), intent(out) :: xij2
-  double precision, dimension ( n_slices, n_particles , n_dimensions ), intent(in) :: x
+  double precision, dimension (n_dimensions,n_particles,n_slices), intent(in) :: x
+  double precision, dimension (n_particles,n_particles,n_slices), intent(out) :: xij2
 
-  integer :: s, i, j
+  integer :: slice, particle_1, particle_2
+  double precision :: p1x(n_dimensions)
 
-  forall (s=1:n_slices, i=1:n_particles, j=1:n_particles) &
-    xij2(s,i,j) = sum( (x(s,i,:) - x(s,j,:))**2 )
+  do slice = 1, n_slices
+    do particle_1 = 1, n_particles
+      p1x = x(:,particle_1,slice)
+      do particle_2 = 1, n_particles
+        xij2(particle_2,particle_1,slice) = sum( (p1x - x(:,particle_2,slice))**2 )
+      end do
+    end do
+  end do
 
 end subroutine compute_xij
-!@nonl
 !@-node:gcross.20090805093617.1833:compute_xij
 !@+node:gcross.20090805093617.1834:compute_xij_pbc
 pure subroutine compute_xij_pbc( x, period_length, n_slices, n_particles, n_dimensions, xij2 )
   integer, intent(in) :: n_slices, n_particles, n_dimensions
-  double precision, dimension ( n_slices, n_particles , n_particles ), intent(out) :: xij2
-  double precision, dimension ( n_slices, n_particles , n_dimensions ), intent(in) :: x
+  double precision, dimension (n_dimensions,n_particles,n_slices), intent(in) :: x
+  double precision, dimension (n_particles,n_particles,n_slices), intent(out) :: xij2
   double precision, intent(in) :: period_length
 
-  integer :: s, i, j
+  integer :: slice, particle_1, particle_2
+  double precision :: p1x(n_dimensions)
 
-  forall (s=1:n_slices, i=1:n_particles, j=1:n_particles) &
-    xij2(s,i,j) = sum( wrap_around( (x(s,i,:) - x(s,j,:)), period_length )**2 )
+  do slice = 1, n_slices
+    do particle_1 = 1, n_particles
+      p1x = x(:,particle_1,slice)
+      do particle_2 = 1, n_particles
+        xij2(particle_2,particle_1,slice) = sum( wrap_around( p1x - x(:,particle_2,slice), period_length )**2 )
+      end do
+    end do
+  end do
 
 end subroutine compute_xij_pbc
-!@nonl
 !@-node:gcross.20090805093617.1834:compute_xij_pbc
 !@-others
 

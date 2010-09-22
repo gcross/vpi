@@ -193,13 +193,13 @@ class PositionDensity1DHistogram(Histogram):
         self.right = array(right,dtype=double,order='Fortran')
         self.number_of_bins = number_of_bins
         self.slice_number = slice_number
-        self.histogram = zeros((len(left),number_of_bins),dtype='i',order='Fortran')
+        self.histogram = zeros((number_of_bins,len(left)),dtype='i',order='Fortran')
         self.filenames = filenames
     #@-node:gcross.20090902085220.2185:__init__
     #@+node:gcross.20090902085220.2186:update
     def update(self):
         vpif.histograms.accumulate_1d_densities(
-            self.system.x[self.slice_number],
+            self.system.x[...,self.slice_number],
             self.left,self.right,
             self.histogram
         )
@@ -207,7 +207,7 @@ class PositionDensity1DHistogram(Histogram):
     #@-node:gcross.20090902085220.2186:update
     #@+node:gcross.20090902085220.2187:write_out_totals
     def write_out_totals(self,histograms):
-        for filename, histogram, left, right in izip(self.filenames,histograms,self.left,self.right):
+        for filename, histogram, left, right in izip(self.filenames,histograms.transpose(),self.left,self.right):
             ensure_path_to_file_exists(filename)
             with open(filename,"w") as f:
                 total_counts = float(sum(histogram))
@@ -236,7 +236,7 @@ class RadialDensityHistogram(Histogram):
     #@+node:gcross.20090902085220.2191:update
     def update(self):
         vpif.histograms.accumulate_radial_densities(
-            self.system.x[self.slice_number],
+            self.system.x[...,self.slice_number],
             self.maximum_radius,
             self.histogram
         )
@@ -274,7 +274,7 @@ class PlaneRadialDensityHistogram(Histogram):
     #@+node:gcross.20090902085220.2195:update
     def update(self):
         vpif.histograms.accumulate_plane_radial_densities(
-            self.system.x[self.slice_number],
+            self.system.x[...,self.slice_number],
             self.maximum_radius,
             self.system.rotation_plane_axis_1,
             self.system.rotation_plane_axis_2,
@@ -315,7 +315,7 @@ class RecipricalRadiusSquaredDensityHistogram(Histogram):
     #@+node:gcross.20090902085220.2199:update
     def update(self):
         vpif.histograms.accumulate_reciprical_radius_squared_densities(
-            self.system.x[self.slice_number],
+            self.system.x[...,self.slice_number],
             self.maximum_value,
             self.histogram
         )
@@ -340,7 +340,7 @@ class RecipricalPlaneRadiusSquaredDensityHistogram(Histogram):
     #@+node:gcross.20090902085220.2203:update
     def update(self):
         vpif.histograms.accumulate_recip_plane_r_sq_densities(
-            self.system.x[self.slice_number],
+            self.system.x[...,self.slice_number],
             self.maximum_value,
             self.system.rotation_plane_axis_1,
             self.system.rotation_plane_axis_2,
@@ -378,8 +378,8 @@ class AngularSeparationDensityHistogram(Histogram):
     #@+node:gcross.20090902085220.2208:update
     def update(self):
         system = self.system
-        x = system.x[self.slice_number]
-        angles = arctan2(x[:,system.rotation_plane_axis_2],x[:,system.rotation_plane_axis_1])
+        x = system.x[...,self.slice_number]
+        angles = arctan2(x[system.rotation_plane_axis_2],x[system.rotation_plane_axis_1])
         vpif.histograms.accumulate_angular_separation_densities(
             angles,
             self.histogram
@@ -416,8 +416,8 @@ class NeighborAngularSeparationDensityHistogram(Histogram):
     #@+node:gcross.20090902085220.2213:update
     def update(self):
         system = self.system
-        x = system.x[self.slice_number]
-        angles = arctan2(x[:,system.rotation_plane_axis_2],x[:,system.rotation_plane_axis_1])
+        x = system.x[...,self.slice_number]
+        angles = arctan2(x[system.rotation_plane_axis_2],x[system.rotation_plane_axis_1])
         vpif.histograms.accumulate_neighbor_angular_separation_densities(
             angles,
             self.histogram
@@ -442,7 +442,7 @@ class AngularVelocityHistogram(Histogram):
     def update(self):
         system = self.system
         first_derivatives, _ = vpif.angular_momentum.compute_angular_derivatives(
-            system.x[self.slice_number],
+            system.x[...,self.slice_number],
             system.rotation_plane_axis_1, system.rotation_plane_axis_2,
             system.number_of_rotating_particles
         )
@@ -467,7 +467,7 @@ class AngularVelocitySquaredHistogram(Histogram):
     def update(self):
         system = self.system
         first_derivatives, _ = vpif.angular_momentum.compute_angular_derivatives(
-            system.x[self.slice_number],
+            system.x[...,self.slice_number],
             system.rotation_plane_axis_1, system.rotation_plane_axis_2,
             system.number_of_rotating_particles
         )
@@ -492,13 +492,13 @@ class RotationQuadraticTermHistogram(Histogram):
     #@+node:gcross.20090902085220.2222:update
     def update(self):
         system = self.system
-        x = system.x[self.slice_number]
+        x = system.x[...,self.slice_number]
         first_derivatives, _ = vpif.angular_momentum.compute_angular_derivatives(
             x,
             system.rotation_plane_axis_1, system.rotation_plane_axis_2,
             system.number_of_rotating_particles
         )
-        term = (first_derivatives ** 2) / (x[:,system.rotation_plane_axis_2-1]**2+x[:,system.rotation_plane_axis_1-1]**2)
+        term = (first_derivatives ** 2) / (x[system.rotation_plane_axis_2-1]**2+x[system.rotation_plane_axis_1-1]**2)
         vpif.histograms.accumulate(term,self.left,self.right,self.histogram)
     #@nonl
     #@-node:gcross.20090902085220.2222:update
@@ -565,7 +565,7 @@ class ParticleSeparationHistogram(Histogram):
     #@+node:gcross.20090902085220.2230:update
     def update(self):
         vpif.histograms.accumulate_particle_separation_densities(
-            self.system.xij2[self.slice_number],
+            self.system.xij2[...,self.slice_number],
             self.maximum_value,
             self.histogram
         )
@@ -590,7 +590,7 @@ class PositionDensity2DHistogram(Histogram):
     #@+node:gcross.20100226131523.1665:update
     def update(self):
         vpif.histograms.accumulate_2d_density(
-            self.system.x[self.slice_number],
+            self.system.x[...,self.slice_number],
             self.left_x,self.left_y,
             self.right_x,self.right_y,
             self.histogram
@@ -629,8 +629,8 @@ class PositionDensityMatrix2DHistogram(Histogram):
     #@+node:gcross.20100226131523.1672:update
     def update(self):
         vpif.histograms.accumulate_2d_density_matrix(
-            self.system.x[self.center_slice_number],
-            self.system.x[self.center_slice_number+1],
+            self.system.x[...,self.center_slice_number],
+            self.system.x[...,self.center_slice_number+1],
             self.left_x,self.left_y,
             self.right_x,self.right_y,
             self.histogram
@@ -653,10 +653,10 @@ class TotalEnergyEstimate(SingleAverageValueEstimateAppendedToFile):
     def update(self):
         system = self.system
         for slice_number in [0,-1]:
-            gradient_of_log_trial_fn, laplacian_of_log_trial_fn = system.compute_trial_derivatives(system.x[slice_number],system.xij2[slice_number])
+            gradient_of_log_trial_fn, laplacian_of_log_trial_fn = system.compute_trial_derivatives(system.x[...,slice_number],system.xij2[...,slice_number])
             self.add(
                 vpif.observables.compute_local_energy_estimate(
-                    system.U[slice_number],
+                    system.U[...,slice_number],
                     gradient_of_log_trial_fn, laplacian_of_log_trial_fn,
                     system.lambda_,
                 )
@@ -724,40 +724,12 @@ class PathEnergyEstimates(AverageValuesEstimate):
     #@-node:gcross.20090902085220.2247:write_out_totals
     #@-others
 #@-node:gcross.20090902085220.2244:class PathEnergyEstimates
-#@+node:gcross.20090902085220.2248:class EffectivePotentialPathEnergyEstimates
-class EffectivePotentialPathEnergyEstimates(PathEnergyEstimates):
-    #@    @+others
-    #@+node:gcross.20090902085220.2249:update
-    def update(self):
-        system = self.system
-        U = zeros((system.number_of_slices,system.number_of_particles),dtype=double,order='Fortran')
-        gradU = zeros((system.number_of_slices,system.number_of_particles,system.number_of_dimensions),dtype=double,order='Fortran')
-        vpif.angular_momentum.compute_effective_rotational_potential(
-            system.x,system.lambda_,
-            system.rotation_plane_axis_1,system.rotation_plane_axis_2,
-            system.frame_angular_velocity,system.number_of_rotating_particles,
-            U, gradU
-        )
-        self.estimates += sum(U,axis=-1)
-    #@nonl
-    #@-node:gcross.20090902085220.2249:update
-    #@-others
-#@-node:gcross.20090902085220.2248:class EffectivePotentialPathEnergyEstimates
-#@+node:gcross.20090902085220.2250:class PhysicalPotentialPathEnergyEstimates
-class PhysicalPotentialPathEnergyEstimates(PathEnergyEstimates):
-    #@    @+others
-    #@+node:gcross.20090902085220.2251:update
-    def update(self):
-        self.estimates += sum(dot(self.system.x**2,self.system.harmonic_oscillator_coefficients),axis=-1)/2.0
-    #@-node:gcross.20090902085220.2251:update
-    #@-others
-#@-node:gcross.20090902085220.2250:class PhysicalPotentialPathEnergyEstimates
 #@+node:gcross.20090902085220.2252:class TotalPotentialPathEnergyEstimates
 class TotalPotentialPathEnergyEstimates(PathEnergyEstimates):
     #@    @+others
     #@+node:gcross.20090902085220.2253:update
     def update(self):
-        self.estimates += sum(self.system.U,axis=-1)
+        self.estimates += sum(self.system.U,axis=0)
     #@-node:gcross.20090902085220.2253:update
     #@-others
 #@-node:gcross.20090902085220.2252:class TotalPotentialPathEnergyEstimates
@@ -792,7 +764,7 @@ class AverageAxialDistanceEstimate(AveragePositionEstimate):
     #@-node:gcross.20090902085220.2260:__init__
     #@+node:gcross.20090902085220.2261:update
     def update(self):
-        self.add(average(abs(self.system.x[self.slice_number,:,self.axis])))
+        self.add(average(abs(self.system.x[self.axis,:,self.slice_number])))
     #@-node:gcross.20090902085220.2261:update
     #@-others
 #@-node:gcross.20090902085220.2259:class AverageAxialDistanceEstimate
@@ -801,7 +773,7 @@ class AverageRadiusEstimate(AveragePositionEstimate):
     #@    @+others
     #@+node:gcross.20090902085220.2263:update
     def update(self):
-        self.add(vpif.observables.compute_radius_average(self.system.x[self.slice_number]))
+        self.add(vpif.observables.compute_radius_average(self.system.x[...,self.slice_number]))
     #@nonl
     #@-node:gcross.20090902085220.2263:update
     #@-others
@@ -820,8 +792,12 @@ class AveragePlaneRadiusEstimate(AveragePositionEstimate):
     #@-node:gcross.20090902085220.2265:__init__
     #@+node:gcross.20090902085220.2266:update
     def update(self):
-        self.add( vpif.observables.compute_plane_radius_average(self.system.x[self.slice_number],self.plane_axis_1,self.plane_axis_2))
-    #@nonl
+        self.add(
+            vpif.observables.compute_plane_radius_average(
+                self.system.x[...,self.slice_number],
+                self.plane_axis_1,self.plane_axis_2
+            )
+        )
     #@-node:gcross.20090902085220.2266:update
     #@-others
 #@-node:gcross.20090902085220.2264:class AveragePlaneRadiusEstimate
@@ -839,7 +815,12 @@ class AverageRecipricalPlaneRadiusSquaredEstimate(AveragePositionEstimate):
     #@-node:gcross.20090902085220.2268:__init__
     #@+node:gcross.20090902085220.2269:update
     def update(self):
-        self.add(vpif.observables.compute_recip_plane_r_sq_average(self.system.x,self.plane_axis_1,self.plane_axis_2))
+        self.add(
+            vpif.observables.compute_recip_plane_r_sq_average(
+                self.system.x,
+                self.plane_axis_1,self.plane_axis_2
+            )
+        )
     #@nonl
     #@-node:gcross.20090902085220.2269:update
     #@-others
@@ -853,7 +834,11 @@ class AverageParticleSeparationEstimate(AveragePositionEstimate):
     #@-node:gcross.20090902085220.2271:__init__
     #@+node:gcross.20090902085220.2272:update
     def update(self):
-        self.add(vpif.observables.compute_particle_separation_average(self.system.xij2[self.slice_number]))
+        self.add(
+            vpif.observables.compute_particle_separation_average(
+                self.system.xij2[...,self.slice_number]
+            )
+        )
     #@nonl
     #@-node:gcross.20090902085220.2272:update
     #@-others
@@ -867,7 +852,7 @@ class AverageAngularVelocityEstimate(SingleAverageValueAtSliceEstimateAppendedTo
     def update(self):
         system = self.system
         first_derivatives, _ = vpif.angular_momentum.compute_angular_derivatives(
-            system.x[self.slice_number],
+            system.x[...,self.slice_number],
             system.rotation_plane_axis_1, system.rotation_plane_axis_2,
             system.number_of_rotating_particles
         )
@@ -883,7 +868,7 @@ class AverageAngularVelocitySquaredEstimate(SingleAverageValueAtSliceEstimateApp
     def update(self):
         system = self.system
         first_derivatives, _ = vpif.angular_momentum.compute_angular_derivatives(
-            system.x[self.slice_number],
+            system.x[...,self.slice_number],
             system.rotation_plane_axis_1, system.rotation_plane_axis_2,
             system.number_of_rotating_particles
         )
@@ -900,7 +885,7 @@ class AverageAngularVelocitySquaredEstimate(SingleAverageValueAtSliceEstimateApp
     def update(self):
         system = self.system
         first_derivatives, _ = vpif.angular_momentum.compute_angular_derivatives(
-            system.x[self.slice_number],
+            system.x[...,self.slice_number],
             system.rotation_plane_axis_1, system.rotation_plane_axis_2,
             system.number_of_rotating_particles
         )
@@ -916,8 +901,8 @@ class AverageAngularSeparationEstimate(SingleAverageValueAtSliceEstimateAppended
     #@+node:gcross.20090902085220.2281:update
     def update(self):
         system = self.system
-        x = system.x[self.slice_number]
-        angles = arctan2(x[:,system.rotation_plane_axis_2],x[:,system.rotation_plane_axis_1])
+        x = system.x[...,self.slice_number]
+        angles = arctan2(x[system.rotation_plane_axis_2],x[system.rotation_plane_axis_1])
         self.add(vpif.observables.compute_average_angular_separation(angles))
     #@nonl
     #@-node:gcross.20090902085220.2281:update
@@ -929,8 +914,8 @@ class AverageNeighborAngularSeparationEstimate(SingleAverageValueAtSliceEstimate
     #@+node:gcross.20090902085220.2283:update
     def update(self):
         system = self.system
-        x = system.x[self.slice_number]
-        angles = arctan2(x[:,system.rotation_plane_axis_2],x[:,system.rotation_plane_axis_1])
+        x = system.x[...,self.slice_number]
+        angles = arctan2(x[system.rotation_plane_axis_2],x[system.rotation_plane_axis_1])
         self.add(vpif.observables.compute_avg_neighbor_angular_sep(angles))
     #@nonl
     #@-node:gcross.20090902085220.2283:update
@@ -942,13 +927,13 @@ class AverageRotationQuadraticTermEstimate(SingleAverageValueAtSliceEstimateAppe
     #@+node:gcross.20090902085220.2285:update
     def update(self):
         system = self.system
-        x = system.x[self.slice_number]
+        x = system.x[...,self.slice_number]
         first_derivatives, _ = vpif.angular_momentum.compute_angular_derivatives(
             x,
             system.rotation_plane_axis_1, system.rotation_plane_axis_2,
             system.number_of_rotating_particles
         )
-        term = (first_derivatives ** 2) / (x[:,system.rotation_plane_axis_2-1]**2+x[:,system.rotation_plane_axis_1-1]**2)
+        term = (first_derivatives ** 2) / (x[system.rotation_plane_axis_2-1]**2+x[system.rotation_plane_axis_1-1]**2)
         self.add(average(term))
     #@nonl
     #@-node:gcross.20090902085220.2285:update
@@ -1316,7 +1301,7 @@ class System(object):
 
         self.initialize_lattice()
 
-        self.U = zeros((number_of_slices,number_of_particles),dtype=double,order='Fortran')
+        self.U = zeros((number_of_particles,number_of_slices),dtype=double,order='Fortran')
         self.gradU2 = zeros((number_of_slices),dtype=double,order='Fortran')
 
         self.slice_move_attempted_counts = zeros((number_of_slices,),'i')
@@ -1345,7 +1330,6 @@ class System(object):
             self.initial_particle_distribution_size,
             self.number_of_slices,self.number_of_particles,self.number_of_dimensions
         )
-        self.xij2 = zeros((self.number_of_slices,self.number_of_particles,self.number_of_particles),dtype=double,order='Fortran')
         self.xij2 = vpif.xij.compute_xij(self.x)
 
     reinitialize_lattice = initialize_lattice
@@ -1372,8 +1356,8 @@ class System(object):
     #@+node:gcross.20090902085220.2342:Potential
     #@+node:gcross.20090902085220.2335:compute_potential
     def compute_potential(self,x,xij2):
-        U = zeros(x.shape[:2],dtype=double,order='Fortran')
-        gradU2 = zeros(x.shape[:1],dtype=double,order='Fortran')
+        U = zeros(x.shape[-2:],dtype=double,order='Fortran')
+        gradU2 = zeros(x.shape[-1:],dtype=double,order='Fortran')
         try:
             for potential in itertools.chain(
                     self.physical_potentials,
@@ -1432,7 +1416,8 @@ class System(object):
         lam,dt,
         slice_start,slice_end,
         particle_number
-        ): return __builtin__.sum(
+        ):
+        return __builtin__.sum(
             greens_function.compute_greens_function(
                 x,xij2,
                 U,gradU2,
@@ -1441,6 +1426,7 @@ class System(object):
                 particle_number
             ) for greens_function in self.greens_functions
         )
+
     #@-node:gcross.20090902085220.2351:compute_greens_function
     #@-node:gcross.20090902085220.2334:Physics
     #@+node:gcross.20090902085220.2304:run
@@ -1483,7 +1469,7 @@ class System(object):
         #@    << Ensure system is in valid state >>
         #@+node:gcross.20100920232137.1738:<< Ensure system is in valid state >>
         number_of_initialization_attempts = 1
-        while self.compute_potential(x,xij2)[-1] and number_of_initialization_attempts < 1000:
+        while compute_potential(x,xij2)[-1] and number_of_initialization_attempts < 1000:
             self.reinitialize_lattice()
             x = self.x
             xij2 = self.xij2
@@ -1503,9 +1489,8 @@ class System(object):
             low_swap_dimension,high_swap_dimension,
             slice_move_attempted_counts,move_type_attempted_counts,
             slice_move_accepted_counts,move_type_accepted_counts,
-            compute_potential,compute_trial_weight,compute_greens_function
+            compute_potential,compute_trial_weight,compute_greens_function,
         )
-        #@nonl
         #@-node:gcross.20090902085220.2306:<< Prethermalize the system >>
         #@nl
         #@    << Main iteration >>
@@ -1533,7 +1518,6 @@ class System(object):
                     float(move_type_accepted_counts[0])/move_type_attempted_counts[0],
                     float(move_type_accepted_counts[1])/move_type_attempted_counts[1],
                 )
-        #@nonl
         #@-node:gcross.20090902085220.2307:<< Main iteration >>
         #@nl
     #@-node:gcross.20090902085220.2304:run

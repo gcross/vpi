@@ -21,10 +21,10 @@ class gfn2_sp(unittest.TestCase):
         sl_start = randint(1,n_slices)
         sl_end = randint(sl_start,n_slices)
         ip = randint(1,n_particles)
-        U = rand(n_slices,n_particles)
+        U = rand(n_particles,n_slices)
         U_weights = rand(n_slices)
         ln_gfn = vpif.gfn.gfn2_sp(sl_start,sl_end,U,U_weights,dt)
-        U_summed = sum(U,axis=1)
+        U_summed = sum(U,axis=0)
         self.assertAlmostEqual(ln_gfn,-dt*dot(U_summed[sl_start-1:sl_end],U_weights[sl_start-1:sl_end]))
     #@nonl
     #@-node:gcross.20100117204224.1702:test_correctness
@@ -69,10 +69,10 @@ class gfn4_sp(unittest.TestCase):
         sl_start = randint(1,n_slices)
         sl_end = randint(sl_start,n_slices)
         ip = randint(1,n_particles)
-        U = rand(n_slices,n_particles)
+        U = rand(n_particles,n_slices)
         gradU2 = rand(n_slices)
         ln_gfn = vpif.gfn.gfn4_sp(sl_start,sl_end,U,gradU2,U_weight,gU2_weight,lam,dt)
-        U = sum(U,axis=1)
+        U = sum(U,axis=0)
 
         self.assertAlmostEqual(ln_gfn,
             -2.0*dt*dot(
@@ -196,7 +196,6 @@ class compute_green_fn_from_distances(unittest.TestCase):
 tests = [
     gfn2_sp,
     gfn4_sp,
-    gfn_hard_wall_contribution,
     compute_green_fn_from_distances,
     ]
 

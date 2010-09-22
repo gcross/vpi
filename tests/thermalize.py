@@ -39,9 +39,9 @@ class thermalize_path(unittest.TestCase):
         N_rotating_particles = randint(1,n_particles)
         n_slices = center_slice * 2
         n_dimensions = 3
-        x = zeros((n_slices,n_particles,n_dimensions),dtype=double,order='Fortran')
-        xij2 = zeros((n_slices,n_particles,n_particles),dtype=double,order='Fortran')
-        U = zeros((n_slices,n_particles),dtype=double,order='Fortran')
+        x = zeros((n_dimensions,n_particles,n_slices),dtype=double,order='Fortran')
+        xij2 = zeros((n_particles,n_particles,n_slices),dtype=double,order='Fortran')
+        U = zeros((n_particles,n_slices),dtype=double,order='Fortran')
         gradU2 = zeros((n_slices,),dtype=double,order='Fortran')
         particle_number = randint(1,n_particles)
         move_type_probabilities = array([p1,p2,p3])/(p1+p2+p3)
@@ -53,9 +53,9 @@ class thermalize_path(unittest.TestCase):
             return double(0.0)
         def compute_potential(x,xij2,n_slices,n_particles,n_dimensions):
             if((abs(x)==0).all()):
-                return zeros((n_slices,n_particles)), zeros((n_slices,)), False
+                return zeros((n_particles,n_slices)), zeros((n_slices,)), False
             else:
-                return zeros((n_slices,n_particles)), zeros((n_slices,)), True
+                return zeros((n_particles,n_slices)), zeros((n_slices,)), True
         def greens_function(*args):
             return double(0.0)
         slice_move_attempted_counts, slice_move_accepted_counts = [zeros((n_slices,),dtype='i',order='Fortran') for dummy in xrange(2)]

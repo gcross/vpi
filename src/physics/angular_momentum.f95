@@ -75,14 +75,14 @@ subroutine compute_gradient_ho_phase_power (&
 
   ! Input variables
   integer, intent(in) :: n_slices, n_particles, n_dimensions
-  double precision, dimension(n_slices,n_particles,n_dimensions), intent(in) :: x
+  double precision, dimension(n_dimensions,n_particles,n_slices), intent(in) :: x
   integer, intent(in) :: n_total_rotating_particles
 
   ! Output variables
-  double precision, intent(out) :: gradient_phase(n_slices,n_particles,n_dimensions)
+  double precision, intent(out) :: gradient_phase(n_dimensions,n_particles,n_slices)
 
   ! Local variables
-  integer :: i, j
+  integer :: slice
   double complex :: &
     full_sum, full_sum_abs_sq, partial_sum, &
     amplitudes(n_particles), &
@@ -94,12 +94,12 @@ subroutine compute_gradient_ho_phase_power (&
     return
   end if
 
-  do i = 1, n_slices
-    x_sum = sum(x(i,:,1))
-    y_sum = sum(x(i,:,2))
+  do slice = 1, n_slices
+    x_sum = sum(x(1,:,slice))
+    y_sum = sum(x(2,:,slice))
     r_sq_sum = x_sum**2 + y_sum**2
-    gradient_phase(i,:,1) = n_total_rotating_particles * (-y_sum / r_sq_sum)
-    gradient_phase(i,:,2) = n_total_rotating_particles * ( x_sum / r_sq_sum)
+    gradient_phase(1,:,slice) = n_total_rotating_particles * (-y_sum / r_sq_sum)
+    gradient_phase(2,:,slice) = n_total_rotating_particles * ( x_sum / r_sq_sum)
   end do
 
 end subroutine
@@ -122,20 +122,25 @@ subroutine compute_gradient_ho_phase_choice (&
   double precision, intent(out) :: gradient_phase(n_slices,n_particles,n_dimensions)
 
   ! Local variables
-  integer :: i, j, n_excess_rotating_particles, feynman_factor
+  integer :: particle, slice, n_excess_rotating_particles, feynman_factor
   double complex :: &
     full_sum, full_sum_abs_sq, &
-    partial_sums(n_particles), amplitudes(n_particles), &
-    x_sum, y_sum, r_sq_sum
+    partial_sums(n_particles), amplitudes(n_particles)
+  double precision :: &
+    x_sum, y_sum, r_sq_sum, &
+    factor
 
 
   if (n_total_rotating_particles >= n_particles) then
     feynman_factor = n_total_rotating_particles / n_particles
-    forall (i=1:n_slices,j=1:n_particles)
-      gradient_phase(i,j,1) = feynman_factor * (-x(i,j,2)/(x(i,j,1)**2+x(i,j,2)**2))
-      gradient_phase(i,j,2) = feynman_factor * ( x(i,j,1)/(x(i,j,1)**2+x(i,j,2)**2))
-    end forall
-    gradient_phase(:,:,3:) = 0
+    do slice = 1, n_slices
+      do particle = 1, n_particles
+        factor = feynman_factor / (x(1,particle,slice)**2+x(2,particle,slice)**2)
+        gradient_phase(1,particle,slice) = -x(2,particle,slice) * factor
+        gradient_phase(2,particle,slice) =  x(1,particle,slice) * factor
+      end do
+    end do
+    gradient_phase(3:,:,:) = 0
   else
     gradient_phase = 0
   end if
@@ -147,27 +152,27 @@ subroutine compute_gradient_ho_phase_choice (&
   end if
 
   if (n_excess_rotating_particles == 1) then
-    do i = 1, n_slices
-      x_sum = sum(x(i,:,1))
-      y_sum = sum(x(i,:,2))
+    do slice = 1, n_slices
+      x_sum = sum(x(1,:,slice))
+      y_sum = sum(x(2,:,slice))
       r_sq_sum = x_sum**2 + y_sum**2
-      gradient_phase(i,:,1) = gradient_phase(i,:,1) - y_sum / r_sq_sum
-      gradient_phase(i,:,2) = gradient_phase(i,:,2) + x_sum / r_sq_sum
+      gradient_phase(1,:,slice) = gradient_phase(1,:,slice) - y_sum / r_sq_sum
+      gradient_phase(2,:,slice) = gradient_phase(2,:,slice) + x_sum / r_sq_sum
     end do
     return
   end if
 
-  do i = 1, n_slices
-    amplitudes = x(i,:,2)*(1,0)-x(i,:,1)*(0,1)
+  do slice = 1, n_slices
+    amplitudes = x(2,:,slice)*(1,0)-x(1,:,slice)*(0,1)
     call compute_sum_and_its_derivatives( &
       n_particles,amplitudes, &
       n_excess_rotating_particles, &
       full_sum, partial_sums &
     )
     full_sum_abs_sq = real(full_sum * conjg(full_sum))
-    gradient_phase(i,:,1) = gradient_phase(i,:,1) - &
+    gradient_phase(1,:,slice) = gradient_phase(1,:,slice) - &
       (imag(full_sum)*imag(partial_sums(:)) + real(full_sum)*real(partial_sums(:)))/full_sum_abs_sq
-    gradient_phase(i,:,2) = gradient_phase(i,:,2) - &
+    gradient_phase(2,:,slice) = gradient_phase(2,:,slice) - &
       (imag(full_sum)*real(partial_sums(:)) - real(full_sum)*imag(partial_sums(:)))/full_sum_abs_sq
   end do
 
@@ -186,21 +191,24 @@ pure subroutine accumulate_rotating_frame_potential (&
   ! Input variables
   integer, intent(in) :: n_slices, n_particles, n_dimensions
   integer, intent(in) :: rotation_plane_axis_1, rotation_plane_axis_2
-  double precision, dimension ( n_slices, n_particles, n_dimensions ), intent(in) :: x, gradient_phase
+  double precision, dimension (n_dimensions,n_particles,n_slices), intent(in) :: x, gradient_phase
   double precision, intent(in) :: frame_angular_velocity, lambda
 
   ! Output variables
-  double precision, dimension( n_slices, n_particles ), intent(inout) :: U
+  double precision, dimension(n_particles,n_slices), intent(inout) :: U
 
   ! Local variables
-  integer :: s, i
+  integer :: slice, particle
 
-  forall (s=1:n_slices, i=1:n_particles) &
-    U(s,i) = U(s,i) + lambda*sum(gradient_phase(s,i,:)**2) &
-                    - frame_angular_velocity*( &
-                        x(s,i,rotation_plane_axis_1)*gradient_phase(s,i,rotation_plane_axis_2) &
-                      - x(s,i,rotation_plane_axis_2)*gradient_phase(s,i,rotation_plane_axis_1) &
-                      )
+  do slice = 1, n_slices
+    do particle = 1, n_particles
+      U(particle,slice) = U(particle,slice) + lambda*sum(gradient_phase(:,particle,slice)**2) &
+                         - frame_angular_velocity*( &
+                             x(rotation_plane_axis_1,particle,slice)*gradient_phase(rotation_plane_axis_2,particle,slice) &
+                           - x(rotation_plane_axis_2,particle,slice)*gradient_phase(rotation_plane_axis_1,particle,slice) &
+                           )
+    end do
+  end do
 
 end subroutine
 !@nonl
@@ -215,17 +223,20 @@ pure subroutine accumulate_effective_potential (&
 
   ! Input variables
   integer, intent(in) :: n_slices, n_particles, n_dimensions
-  double precision, dimension ( n_slices, n_particles, n_dimensions ), intent(in) :: gradient_phase
+  double precision, dimension (n_dimensions,n_particles,n_slices), intent(in) :: gradient_phase
   double precision, intent(in) :: lambda
 
   ! Output variables
-  double precision, dimension( n_slices, n_particles ), intent(inout) :: U
+  double precision, dimension(n_particles,n_slices), intent(inout) :: U
 
   ! Local variables
-  integer :: s, i
+  integer :: slice, particle
 
-  forall (s=1:n_slices, i=1:n_particles) &
-    U(s,i) = U(s,i) + lambda*sum(gradient_phase(s,i,:)**2)
+  do slice = 1, n_slices
+    do particle = 1, n_particles
+      U(particle,slice) = U(particle,slice) + lambda*sum(gradient_phase(:,particle,slice)**2)
+    end do
+  end do
 
 end subroutine
 !@nonl
@@ -241,22 +252,24 @@ pure subroutine accumulate_magnetic_field_phase (&
 
   ! Input variables
   integer, intent(in) :: n_slices, n_particles, n_dimensions
-  double precision, dimension( n_slices, n_particles, n_dimensions ), intent(in) :: x
+  double precision, dimension(n_dimensions,n_particles,n_slices), intent(in) :: x
   integer, intent(in) :: rotation_plane_axis_1, rotation_plane_axis_2
   double precision, intent(in) :: magnetic_field_strength
 
   ! Output variables
-  double precision, dimension ( n_slices, n_particles, n_dimensions ), intent(inout) :: gradient_phase
+  double precision, dimension (n_dimensions,n_particles,n_slices), intent(inout) :: gradient_phase
 
   ! Local variables
-  integer :: s, i
+  integer :: slice, particle
 
-  forall (s=1:n_slices,i=1:n_particles)
-    gradient_phase(s,i,rotation_plane_axis_1) = gradient_phase(s,i,rotation_plane_axis_1) &
-      - magnetic_field_strength * x(s,i,rotation_plane_axis_2)
-    gradient_phase(s,i,rotation_plane_axis_2) = gradient_phase(s,i,rotation_plane_axis_2) &
-      + magnetic_field_strength * x(s,i,rotation_plane_axis_1)
-  end forall
+  do slice = 1, n_slices
+    do particle = 1, n_particles
+      gradient_phase(rotation_plane_axis_1,particle,slice) = gradient_phase(rotation_plane_axis_1,particle,slice) &
+        - magnetic_field_strength * x(rotation_plane_axis_2,particle,slice)
+      gradient_phase(rotation_plane_axis_2,particle,slice) = gradient_phase(rotation_plane_axis_2,particle,slice) &
+        + magnetic_field_strength * x(rotation_plane_axis_1,particle,slice)
+    end do
+  end do
 
 end subroutine
 !@nonl

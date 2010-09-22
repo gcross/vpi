@@ -45,8 +45,8 @@ subroutine sample_scheme1( &
   integer, intent(in) :: n_slices, n_particles, n_dimensions
   integer, parameter :: N_MOVE_TYPES = 3
   double precision, dimension ( N_MOVE_TYPES ), intent(in) :: move_type_probabilities, move_type_differentials
-  double precision, dimension ( n_slices , n_particles, n_dimensions ), intent(in) :: q0
-  double precision, dimension ( n_slices , n_particles, n_dimensions ), intent(inout) :: q1
+  double precision, dimension (n_dimensions,n_particles,n_slices), intent(in) :: q0
+  double precision, dimension (n_dimensions,n_particles,n_slices), intent(inout) :: q1
   integer, intent(in) :: swap_dimension_low, swap_dimension_high
   integer, intent(out) :: move_start,move_end,particle_number,move_type
   double precision, intent(in), optional :: prb_off_diagonal_particle_number
@@ -225,8 +225,8 @@ end subroutine ipop!}}}
 !@+node:gcross.20090623152316.81:rigid
 subroutine rigid_move(qin, qout, particle_number, low_dim, high_dim, i0, i1, dnu, n_slices, n_particles, n_dimensions)
   integer, intent(in) :: n_slices, n_particles, n_dimensions
-  double precision, dimension ( n_slices , n_particles, n_dimensions ) :: qin
-  double precision, dimension ( n_slices , n_particles, n_dimensions ) :: qout
+  double precision, dimension (n_dimensions,n_particles,n_slices) :: qin
+  double precision, dimension (n_dimensions,n_particles,n_slices) :: qout
   integer :: particle_number, low_dim, high_dim, i0, i1
   double precision :: dnu
 
@@ -237,7 +237,7 @@ subroutine rigid_move(qin, qout, particle_number, low_dim, high_dim, i0, i1, dnu
   nu = ( nu - 0.5 ) * dnu
 
   do j = low_dim, high_dim
-    qout(i0:i1,particle_number,j) = qin(i0:i1,particle_number,j) + nu(j)
+    qout(j,particle_number,i0:i1) = qin(j,particle_number,i0:i1) + nu(j)
   end do
 end subroutine rigid_move!}}}
 !@nonl
@@ -245,8 +245,8 @@ end subroutine rigid_move!}}}
 !@+node:gcross.20090623152316.82:swap
 subroutine swap_move(qin, qout, particle_number, low_dim, high_dim, i0, i1, dnu, n_slices, n_particles, n_dimensions)
   integer, intent(in) :: n_slices, n_particles, n_dimensions
-  double precision, dimension ( n_slices , n_particles, n_dimensions ) :: qin
-  double precision, dimension ( n_slices , n_particles, n_dimensions ) :: qout
+  double precision, dimension (n_dimensions,n_particles,n_slices) :: qin
+  double precision, dimension (n_dimensions,n_particles,n_slices) :: qout
   integer :: particle_number, low_dim, high_dim, i0, i1
   double precision :: dnu
 
@@ -257,7 +257,7 @@ subroutine swap_move(qin, qout, particle_number, low_dim, high_dim, i0, i1, dnu,
   nu = ( nu - 0.5 ) * dnu
 
   do j = low_dim, high_dim
-    qout(i0:i1,particle_number,j) = -qin(i0:i1,particle_number,j) + nu(j)
+    qout(j,particle_number,i0:i1) = -qin(j,particle_number,i0:i1) + nu(j)
   end do
 end subroutine swap_move!}}}
 !@nonl
@@ -265,8 +265,8 @@ end subroutine swap_move!}}}
 !@+node:gcross.20090623152316.83:cascading swap
 subroutine cascading_swap_move(qin, qout, particle_number, swap_dimension, n_slices, n_particles, n_dimensions, pbc_period_length)
   integer, intent(in) :: n_slices, n_particles, n_dimensions
-  double precision, dimension ( n_slices , n_particles, n_dimensions ) :: qin
-  double precision, dimension ( n_slices , n_particles, n_dimensions ) :: qout
+  double precision, dimension (n_dimensions,n_particles,n_slices) :: qin
+  double precision, dimension (n_dimensions,n_particles,n_slices) :: qout
   integer :: particle_number, swap_dimension
   double precision, intent(in), optional :: pbc_period_length
   integer, dimension(n_particles) :: plist,alist
@@ -287,9 +287,9 @@ subroutine cascading_swap_move(qin, qout, particle_number, swap_dimension, n_sli
   ip_swap = particle_number
   do while(pcnt > 0)
     if( present(pbc_period_length) ) then
-      qout(:,ip_swap,swap_dimension) = -qin(:,ip_swap,swap_dimension)+ rnd*pbc_period_length
+      qout(swap_dimension,ip_swap,:) = -qin(swap_dimension,ip_swap,:)+ rnd*pbc_period_length
     else
-      qout(:,ip_swap,swap_dimension) = -qin(:,ip_swap,swap_dimension)
+      qout(swap_dimension,ip_swap,:) = -qin(swap_dimension,ip_swap,:)
     end if
 !@+at
 !     ccnt = 0
@@ -337,8 +337,8 @@ subroutine bbridge(q0, q1, particle_number, low_dim, high_dim, btype, i0, i1, la
     off_diagonal_dimension_low, off_diagonal_dimension_high &
   )
   integer, intent(in) :: n_slices, n_particles, n_dimensions
-  double precision, dimension( n_slices, n_particles, n_dimensions ), intent(in) :: q0
-  double precision, dimension( n_slices, n_particles, n_dimensions ), intent(inout) :: q1
+  double precision, dimension(n_dimensions,n_particles,n_slices), intent(in) :: q0
+  double precision, dimension(n_dimensions,n_particles,n_slices), intent(inout) :: q1
   integer, intent(in):: particle_number, low_dim, high_dim, btype
   integer, intent(inout) :: i0
   integer, intent(inout) :: i1
@@ -367,23 +367,23 @@ subroutine bbridge(q0, q1, particle_number, low_dim, high_dim, btype, i0, i1, la
 
   !print *, 'i0= ',i0,'i1 = ',i1,' btype= ',btype 
   !write (111,*) 'i0= ',i0,'i1 = ',i1,' btype= ',btype 
-  q1(i0, particle_number, low_dim:high_dim) = q0(i0, particle_number, low_dim:high_dim)
-  q1(i1, particle_number, low_dim:high_dim) = q0(i1, particle_number, low_dim:high_dim)
+  q1(low_dim:high_dim, particle_number, i0) = q0(low_dim:high_dim, particle_number, i0)
+  q1(low_dim:high_dim, particle_number, i1) = q0(low_dim:high_dim, particle_number, i1)
 
   cnt = 1
 
   if(btype .eq. LEFT_BRIDGE) then
     sigma= sqrt(dt*(i1-1))
     do j=low_dim, high_dim
-      mean = q1(i1, particle_number, j)
-      q1(i0, particle_number, j) = nu(cnt)*sigma + mean
+      mean = q1(j, particle_number, i1)
+      q1(j, particle_number, i0) = nu(cnt)*sigma + mean
       cnt = cnt + 1
     end do
   else if(btype .eq. RIGHT_BRIDGE) then
     sigma= sqrt(dt*(n_slices-i0))
     do j=low_dim, high_dim
-      mean = q1(i0, particle_number, j)
-      q1(i1, particle_number, j) = nu(cnt)*sigma + mean
+      mean = q1(j, particle_number, i0)
+      q1(j, particle_number, i1) = nu(cnt)*sigma + mean
       cnt = cnt + 1
     end do
   end if
@@ -399,14 +399,14 @@ subroutine bbridge(q0, q1, particle_number, low_dim, high_dim, btype, i0, i1, la
     ) then
       sigma= sqrt(dt*(center_slice-i0))
       do j = off_diagonal_dimension_low,off_diagonal_dimension_high
-        mean = q1(i0, particle_number, j)
-        q1(center_slice, particle_number, j) = nu(cnt)*sigma + mean
+        mean = q1(j, particle_number, i0)
+        q1(j, particle_number, center_slice) = nu(cnt)*sigma + mean
         cnt = cnt + 1
       end do
       sigma= sqrt(dt*(i1-(center_slice+1)))
       do j = off_diagonal_dimension_low,off_diagonal_dimension_high
-        mean = q1(i1, particle_number, j)
-        q1(center_slice+1, particle_number, j) = nu(cnt)*sigma + mean
+        mean = q1(j, particle_number, i1)
+        q1(j, particle_number, center_slice+1) = nu(cnt)*sigma + mean
         cnt = cnt + 1
       end do
     else
@@ -415,11 +415,11 @@ subroutine bbridge(q0, q1, particle_number, low_dim, high_dim, btype, i0, i1, la
       sigmasq=1./( 1./t1 + 1./t2)
       sigma= sqrt(sigmasq)
       do j = low_dim, high_dim
-        a = q1(i0, particle_number, j)
-        b = q1(i1, particle_number, j)
+        a = q1(j, particle_number, i0)
+        b = q1(j, particle_number, i1)
         mean=(t2*a  + t1*b)/(t1 + t2)
-        q1(center_slice, particle_number, j) = nu(cnt)*sigma + mean
-        q1(center_slice+1, particle_number, j) = q1(center_slice, particle_number, j)
+        q1(j, particle_number, center_slice) = nu(cnt)*sigma + mean
+        q1(j, particle_number, center_slice+1) = q1(j, particle_number, center_slice)
         cnt = cnt + 1
       end do
     end if
@@ -430,10 +430,10 @@ subroutine bbridge(q0, q1, particle_number, low_dim, high_dim, btype, i0, i1, la
       sigmasq=1./( 1./t1 + 1./t2)
       sigma= sqrt(sigmasq)
       do j=low_dim, high_dim
-        a = q1(i-1, particle_number, j)
-        b = q1(center_slice, particle_number, j)
+        a = q1(j, particle_number, i-1)
+        b = q1(j, particle_number, center_slice)
         mean=(t2*a  + t1*b)/(t1 + t2)
-        q1(i, particle_number, j) = nu(cnt)*sigma + mean
+        q1(j, particle_number, i) = nu(cnt)*sigma + mean
         cnt = cnt + 1
       end do
     end do
@@ -444,10 +444,10 @@ subroutine bbridge(q0, q1, particle_number, low_dim, high_dim, btype, i0, i1, la
       sigmasq=1./( 1./t1 + 1./t2)
       sigma= sqrt(sigmasq)
       do j=low_dim, high_dim
-        a = q1(i-1, particle_number, j)
-        b = q1(i1, particle_number, j)
+        a = q1(j, particle_number, i-1)
+        b = q1(j, particle_number, i1)
         mean=(t2*a  + t1*b)/(t1 + t2)
-        q1(i, particle_number, j) = nu(cnt)*sigma + mean
+        q1(j, particle_number, i) = nu(cnt)*sigma + mean
         cnt = cnt + 1
       end do
     end do
@@ -458,10 +458,10 @@ subroutine bbridge(q0, q1, particle_number, low_dim, high_dim, btype, i0, i1, la
       sigmasq=1./( 1./t1 + 1./t2)
       sigma= sqrt(sigmasq)
       do j=low_dim, high_dim
-        a = q1(i-1, particle_number, j)
-        b = q1(i1, particle_number, j)
+        a = q1(j, particle_number, i-1)
+        b = q1(j, particle_number, i1)
         mean=(t2*a  + t1*b)/(t1 + t2)
-        q1(i, particle_number, j) = nu(cnt)*sigma + mean
+        q1(j, particle_number, i) = nu(cnt)*sigma + mean
         cnt = cnt + 1
       end do
     end do

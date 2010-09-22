@@ -35,28 +35,17 @@ end subroutine
 !@-node:gcross.20100106123346.1698:initialize 2nd order weights
 !@+node:gcross.20090624144408.1799:2nd order
 pure function gfn2_sp( sl_start, sl_end, U, U_weight, n_slices, n_particles, dt ) result ( ln_gfn )
-  double precision, dimension( n_slices, n_particles ), intent(in) :: U
-  double precision, dimension( n_slices ), intent(in) :: U_weight
+  double precision, dimension(n_particles,n_slices), intent(in) :: U
+  double precision, dimension(n_slices), intent(in) :: U_weight
   integer, intent(in) :: sl_start, sl_end
   integer, intent(in) :: n_slices, n_particles
   double precision, intent(in) :: dt
   double precision :: ln_gfn
-  integer :: ip, slice_length
-
-  interface
-    pure function ddot(n,x,incx,y,incy)
-      integer, intent(in) :: n, incx, incy
-      double precision, intent(in), dimension(n*incx) :: x
-      double precision, intent(in), dimension(n*incy) :: y
-      double precision :: ddot
-    end function ddot
-  end interface
-
-  slice_length = sl_end-sl_start+1
+  integer :: slice
 
   ln_gfn = 0
-  do ip = 1, n_particles
-    ln_gfn = ln_gfn + ddot(slice_length,U(sl_start,ip),1,U_weight(sl_start),1)
+  do slice = sl_start, sl_end
+    ln_gfn = ln_gfn + sum(U(:,slice)) * U_weight(slice)
   end do
   ln_gfn = -dt*ln_gfn
 
@@ -122,33 +111,22 @@ pure function gfn4_sp( &
   n_slices, n_particles, &
   lambda, dt &
 ) result ( ln_gfn )
-  double precision, dimension( n_slices, n_particles ), intent(in) :: U
-  double precision, dimension( n_slices ), intent(in) :: gradU2
-  double precision, dimension( n_slices ), intent(in) :: U_weight
-  double precision, dimension( n_slices ), intent(in) :: gU2_weight
+  double precision, dimension(n_particles,n_slices), intent(in) :: U
+  double precision, dimension(n_slices), intent(in) :: gradU2
+  double precision, dimension(n_slices), intent(in) :: U_weight
+  double precision, dimension(n_slices), intent(in) :: gU2_weight
   integer, intent(in) :: sl_start, sl_end
   integer, intent(in) :: n_slices, n_particles
   double precision, intent(in) :: lambda, dt
-  double precision :: ln_gfn
-  integer :: ip, slice_length
-
-  interface
-    pure function ddot(n,x,incx,y,incy)
-      integer, intent(in) :: n, incx, incy
-      double precision, intent(in), dimension(n*incx) :: x
-      double precision, intent(in), dimension(n*incy) :: y
-      double precision :: ddot
-    end function ddot
-  end interface
-
-  slice_length = sl_end-sl_start+1
+  double precision :: ln_gfn, factor
+  integer :: slice
 
   ln_gfn = 0
 
-  do ip = 1, n_particles
-    ln_gfn = ln_gfn -2.0d0*dt*ddot(slice_length,U(sl_start,ip),1,U_weight(sl_start),1)/3.0d0
+  do slice = sl_start, sl_end
+    ln_gfn = ln_gfn + sum(U(:,slice)) * U_weight(slice)
   end do
-  ln_gfn = ln_gfn - 2.0d0*lambda*(dt**3)*ddot(slice_length,gradU2(sl_start),1,gU2_weight(sl_start),1)/9.0d0
+  ln_gfn = -2.0d0*dt/3.0d0 * ln_gfn - 2.0d0*lambda*(dt**3)*dot_product(gradU2(sl_start:sl_end),gU2_weight(sl_start:sl_end))/9.0d0
 
 end function gfn4_sp
 !@nonl

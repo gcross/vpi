@@ -48,7 +48,7 @@ subroutine thermalize_path( &
 !@-at
 !@@c
   integer, intent(in) :: n_slices, n_particles, n_dimensions, n_trials
-  double precision, dimension( N_MOVE_TYPES ), intent(in) :: &
+  double precision, dimension(N_MOVE_TYPES), intent(in) :: &
     move_type_probabilities, move_type_differentials
   double precision, intent(in) :: dM, lambda
   integer, intent(in) :: swap_dimension_low, swap_dimension_high
@@ -69,10 +69,10 @@ interface
   !@+middle:gcross.20090817102318.2271:Interface
   !@+node:gcross.20090809223137.1724:<< Potential callback interface >>
   subroutine compute_potential( x, xij2, n_slices, n_particles, n_dimensions, U, gradU2, reject_flag )
-    double precision, dimension ( n_slices, n_particles, n_dimensions ), intent(in) :: x
-    double precision, dimension ( n_slices, n_particles, n_particles ), intent(in) :: xij2
+    double precision, dimension ( n_dimensions, n_particles, n_slices ), intent(in) :: x
+    double precision, dimension ( n_particles, n_particles, n_slices ), intent(in) :: xij2
     integer, intent(in) :: n_slices, n_particles, n_dimensions
-    double precision, dimension( n_slices, n_particles ), intent(out) :: U
+    double precision, dimension( n_particles, n_slices ), intent(out) :: U
     double precision, dimension( n_slices ), intent(out) :: gradU2
     logical, intent(out) :: reject_flag
   end subroutine compute_potential
@@ -85,7 +85,7 @@ interface
   !@+node:gcross.20090812093015.1848:<< Trial callback interface >>
   function trial_function( x, xij2, n_particles, n_dimensions, reject_flag ) result ( log_probability )
     integer, intent(in) :: n_particles, n_dimensions
-    double precision, dimension( n_particles, n_dimensions ), intent(in) :: x
+    double precision, dimension( n_dimensions, n_particles ), intent(in) :: x
     double precision, dimension( n_particles, n_particles ), intent(in) :: xij2
     logical, intent(out) :: reject_flag
     double precision  :: log_probability
@@ -104,9 +104,9 @@ interface
       n_slices, n_particles, n_dimensions &
     ) result ( log_probability )
     integer, intent(in) :: n_slices, n_particles, n_dimensions
-    double precision, dimension( n_slices, n_particles, n_dimensions ), intent(in) :: x
-    double precision, dimension( n_slices, n_particles, n_particles ), intent(in) :: xij2
-    double precision, dimension( n_slices, n_particles ), intent(in) :: U
+    double precision, dimension( n_dimensions, n_particles, n_slices ), intent(in) :: x
+    double precision, dimension( n_particles, n_particles, n_slices ), intent(in) :: xij2
+    double precision, dimension( n_particles, n_slices ), intent(in) :: U
     double precision, dimension( n_slices ), intent(in) :: gradU2
     double precision, intent(in) :: lambda, dt
     integer, intent(in) :: slice_start, slice_end
@@ -123,12 +123,12 @@ end interface
 ! Updated trial functions
 !@-at
 !@@c
-  double precision, dimension( n_slices, n_particles, n_dimensions ), intent(inout) :: q
-  double precision, dimension( n_slices, n_particles, n_particles ), intent(inout) :: xij2
-  double precision, dimension( n_slices, n_particles ), intent(inout) :: U
-  double precision, dimension( n_slices ), intent(inout) :: gradU2
-  integer, dimension( n_slices ), intent(inout) :: slice_move_attempted_counts, slice_move_accepted_counts
-  integer, dimension( N_MOVE_TYPES ), intent(inout) :: move_type_attempted_counts, move_type_accepted_counts
+  double precision, dimension(n_dimensions,n_particles,n_slices), intent(inout) :: q
+  double precision, dimension(n_particles,n_particles,n_slices), intent(inout) :: xij2
+  double precision, dimension(n_particles,n_slices), intent(inout) :: U
+  double precision, dimension(n_slices), intent(inout) :: gradU2
+  integer, dimension(n_slices), intent(inout) :: slice_move_attempted_counts, slice_move_accepted_counts
+  integer, dimension(N_MOVE_TYPES), intent(inout) :: move_type_attempted_counts, move_type_accepted_counts
 
 !@+at
 ! Local variables
@@ -137,10 +137,10 @@ end interface
   integer :: i, move_type, move_start, move_end, particle_number
   double precision :: old_weight, new_weight, dtau
   logical :: reject_flag
-  double precision, dimension( n_slices, n_particles, n_dimensions ) :: q_trial
-  double precision, dimension( n_slices, n_particles, n_particles ) :: xij2_trial
-  double precision, dimension( n_slices, n_particles ) :: U_trial
-  double precision, dimension( n_slices ) :: gradU2_trial
+  double precision, dimension(n_dimensions,n_particles,n_slices) :: q_trial
+  double precision, dimension(n_particles,n_particles,n_slices) :: xij2_trial
+  double precision, dimension(n_particles,n_slices) :: U_trial
+  double precision, dimension(n_slices) :: gradU2_trial
 
   !@  << Initialize trial functions >>
   !@+node:gcross.20090805153643.1848:<< Initialize trial functions >>
@@ -187,7 +187,7 @@ end interface
     !@<< Impose periodic boundary conditions >>
     !@+node:gcross.20090626112946.1691:<< Impose periodic boundary conditions >>
     if( present(pbc_period_length) ) then
-      q_trial(move_start:move_end,:,:) = wrap_around(x=q_trial(move_start:move_end,:,:),period_length=pbc_period_length)
+      q_trial(:,:,move_start:move_end) = wrap_around(x=q_trial(:,:,move_start:move_end),period_length=pbc_period_length)
     end if
     !@-node:gcross.20090626112946.1691:<< Impose periodic boundary conditions >>
     !@nl
@@ -203,15 +203,15 @@ end interface
     !@+node:gcross.20090626112946.1689:<< Update the displacement matrix >>
     if( present(pbc_period_length) ) then
       call compute_xij_pbc( &
-        q_trial(move_start:move_end,:,:), &
+        q_trial(:,:,move_start:move_end), &
         pbc_period_length, (move_end-move_start+1), n_particles, n_dimensions, &
-        xij2_trial(move_start:move_end,:,:) &
+        xij2_trial(:,:,move_start:move_end) &
         )
     else
       call compute_xij( &
-        q_trial(move_start:move_end,:,:), &
+        q_trial(:,:,move_start:move_end), &
         (move_end-move_start+1), n_particles, n_dimensions, &
-        xij2_trial(move_start:move_end,:,:) &
+        xij2_trial(:,:,move_start:move_end) &
         )
     end if
     !@nonl
@@ -259,13 +259,13 @@ end interface
     if ( accept_path( old_weight, new_weight ) ) then
       !@  << Update the degrees of freedom >>
       !@+node:gcross.20090626112946.1701:<< Update the degrees of freedom >>
-      q(move_start:move_end,:,:) = q_trial(move_start:move_end,:,:)
+      q(:,:,move_start:move_end) = q_trial(:,:,move_start:move_end)
       !@-node:gcross.20090626112946.1701:<< Update the degrees of freedom >>
       !@nl
       !@  << Update derived quantities >>
       !@+node:gcross.20090805093617.1831:<< Update derived quantities >>
-      xij2(move_start:move_end,:,:) = xij2_trial(move_start:move_end,:,:) 
-      U(move_start:move_end,:) = U_trial(move_start:move_end,:)
+      xij2(:,:,move_start:move_end) = xij2_trial(:,:,move_start:move_end) 
+      U(:,move_start:move_end) = U_trial(:,move_start:move_end)
       gradU2(move_start:move_end) = gradU2_trial(move_start:move_end)
       !@-node:gcross.20090805093617.1831:<< Update derived quantities >>
       !@nl
@@ -293,9 +293,9 @@ end interface
   !@+node:gcross.20090817102318.2263:Subroutines
   !@+node:gcross.20090805093617.1835:subroutine revert_move
   subroutine revert_move
-    q_trial(move_start:move_end,:,:) = q(move_start:move_end,:,:)
-    xij2_trial(move_start:move_end,:,:) = xij2(move_start:move_end,:,:)
-    U_trial(move_start:move_end,:) = U(move_start:move_end,:)
+    q_trial(:,:,move_start:move_end) = q(:,:,move_start:move_end)
+    xij2_trial(:,:,move_start:move_end) = xij2(:,:,move_start:move_end)
+    U_trial(:,move_start:move_end) = U(:,move_start:move_end)
     gradU2_trial(move_start:move_end) =  gradU2(move_start:move_end)
   end subroutine revert_move
   !@-node:gcross.20090805093617.1835:subroutine revert_move
@@ -318,15 +318,15 @@ end interface
   !@-at
   !@@c
 
-    double precision, dimension ( n_slices, n_particles , n_dimensions ), intent(in) :: x
-    double precision, dimension ( n_slices, n_particles , n_particles ), intent(in) :: xij2
+    double precision, dimension (n_dimensions,n_particles,n_slices), intent(in) :: x
+    double precision, dimension (n_particles,n_particles,n_slices), intent(in) :: xij2
 
   !@+at
   ! Function output
   !@-at
   !@@c
-    double precision, dimension( n_slices, n_particles ), intent(out) :: U
-    double precision, dimension( n_slices ), intent(out) :: gradU2
+    double precision, dimension(n_particles,n_slices), intent(out) :: U
+    double precision, dimension(n_slices), intent(out) :: gradU2
     logical, intent(out) :: reject_flag
     double precision :: weight
 
@@ -345,9 +345,9 @@ end interface
     !@  << Compute contribution from potentials >>
     !@+node:gcross.20090817102318.2266:<< Compute contribution from potentials >>
     call compute_potential (&
-      x(move_start:move_end,:,:), xij2(move_start:move_end,:,:), &
+      x(:,:,move_start:move_end), xij2(:,:,move_start:move_end), &
       (move_end-move_start+1), n_particles, n_dimensions, &
-      U(move_start:move_end,:), gradU2(move_start:move_end), &
+      U(:,move_start:move_end), gradU2(move_start:move_end), &
       reject_flag &
       )
 
@@ -386,7 +386,7 @@ end interface
     lntfn = 0d0
 
     lntfn = lntfn + trial_function( &
-                      x(1,:,:), xij2(1,:,:), &
+                      x(:,:,1), xij2(:,:,1), &
                       n_particles, n_dimensions, &
                       reject_flag &
                     )
@@ -395,7 +395,7 @@ end interface
     end if
 
     lntfn = lntfn + trial_function( &
-                      x(n_slices,:,:), xij2(n_slices,:,:), &
+                      x(:,:,n_slices), xij2(:,:,n_slices), &
                       n_particles, n_dimensions, &
                       reject_flag &
                     )

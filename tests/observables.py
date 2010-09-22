@@ -16,7 +16,7 @@ class compute_local_energy_estimate(unittest.TestCase):
     @with_checker
     def test_finite(self,n_particles=irange(1,10),n_dimensions=irange(1,5),lambda_=unit_interval_float):
         U = rand(n_particles)
-        gradient_of_log_trial_fn = array(rand(n_particles,n_dimensions),dtype=double,order='Fortran')
+        gradient_of_log_trial_fn = array(rand(n_dimensions,n_particles),dtype=double,order='Fortran')
         laplacian_of_log_trial_fn = rand(1)
         energy = vpif.observables.compute_local_energy_estimate(
             U,

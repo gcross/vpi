@@ -53,19 +53,20 @@ end subroutine
 !@-node:gcross.20090826112349.1420:accumulate
 !@+node:gcross.20090819083142.1364:accumulate_1d_densities
 pure subroutine accumulate_1d_densities(x,left_x,right_x,n_particles,n_dimensions,n_bins,histogram)
-  double precision, dimension(n_particles,n_dimensions), intent(in) :: x
+  double precision, dimension(n_dimensions,n_particles), intent(in) :: x
   double precision, dimension(n_dimensions), intent(in) :: left_x, right_x
   integer, intent(in) :: n_particles, n_dimensions, n_bins
-  integer, dimension(n_dimensions,n_bins), intent(inout) :: histogram
+  integer, dimension(n_bins,n_dimensions), intent(inout) :: histogram
 
-  integer :: i,j
-  double precision :: offset, dndx
+  integer :: particle, dimension_
+  double precision, dimension(n_dimensions) :: offset, dndx
 
-  do j = 1, n_dimensions
-    offset = -left_x(j)
-    dndx = n_bins/(right_x(j)-left_x(j))
-    do i = 1, n_particles
-      call place_in_bin(x(i,j),offset,dndx,n_bins,histogram(j,:))
+  offset = -left_x
+  dndx = n_bins/(right_x-left_x)
+
+  do particle = 1, n_particles
+    do dimension_ = 1, n_dimensions
+      call place_in_bin(x(dimension_,particle),offset(dimension_),dndx(dimension_),n_bins,histogram(:,dimension_))
     end do
   end do
 
@@ -73,19 +74,19 @@ end subroutine accumulate_1d_densities
 !@-node:gcross.20090819083142.1364:accumulate_1d_densities
 !@+node:gcross.20100226131523.1656:accumulate_2d_density
 subroutine accumulate_2d_density(positions,left_x,left_y,right_x,right_y,n_particles,n_bins,histogram)
-  double precision, dimension(n_particles,2), intent(in) :: positions
+  double precision, dimension(2,n_particles), intent(in) :: positions
   double precision, intent(in) :: left_x, left_y, right_x, right_y
   integer, intent(in) :: n_particles, n_bins
   integer, dimension(n_bins,n_bins), intent(inout) :: histogram
 
-  integer :: i, bin_x, bin_y
+  integer :: particle, bin_x, bin_y
   double precision :: offset, dndx, dndy
   dndx = n_bins/(right_x-left_x)
   dndy = n_bins/(right_y-left_y)
 
-  do i = 1, n_particles
-    bin_x = floor((positions(i,1)-left_x)*dndx)+1
-    bin_y = floor((positions(i,2)-left_y)*dndy)+1
+  do particle = 1, n_particles
+    bin_x = floor((positions(1,particle)-left_x)*dndx)+1
+    bin_y = floor((positions(2,particle)-left_y)*dndy)+1
     if ( within_bins(bin_x,n_bins) .and. within_bins(bin_y,n_bins) ) then
       histogram(bin_x,bin_y) = histogram(bin_x,bin_y) + 1
     end if
@@ -101,21 +102,21 @@ pure subroutine accumulate_2d_density_matrix( &
     n_particles,n_bins, &
     histogram &
   )
-  double precision, dimension(n_particles,2), intent(in) :: positions_1, positions_2
+  double precision, dimension(2,n_particles), intent(in) :: positions_1, positions_2
   double precision, intent(in) :: left_x, left_y, right_x, right_y
   integer, intent(in) :: n_particles, n_bins
   integer, dimension(n_bins,n_bins,n_bins,n_bins), intent(inout) :: histogram
 
-  integer :: i, bin_1_x, bin_1_y, bin_2_x, bin_2_y
+  integer :: particle, bin_1_x, bin_1_y, bin_2_x, bin_2_y
   double precision :: offset, dndx, dndy
   dndx = n_bins/(right_x-left_x)
   dndy = n_bins/(right_y-left_y)
 
-  do i = 1, n_particles
-    bin_1_x = floor((positions_1(i,1)-left_x)*dndx)+1
-    bin_1_y = floor((positions_1(i,2)-left_y)*dndy)+1
-    bin_2_x = floor((positions_2(i,1)-left_x)*dndx)+1
-    bin_2_y = floor((positions_2(i,2)-left_y)*dndy)+1
+  do particle = 1, n_particles
+    bin_1_x = floor((positions_1(1,particle)-left_x)*dndx)+1
+    bin_1_y = floor((positions_1(2,particle)-left_y)*dndy)+1
+    bin_2_x = floor((positions_2(1,particle)-left_x)*dndx)+1
+    bin_2_y = floor((positions_2(2,particle)-left_y)*dndy)+1
     if ( within_bins(bin_1_x,n_bins) .and. within_bins(bin_1_y,n_bins) .and. &
          within_bins(bin_2_x,n_bins) .and. within_bins(bin_2_y,n_bins) &
        ) then
@@ -127,34 +128,34 @@ end subroutine accumulate_2d_density_matrix
 !@-node:gcross.20100226131523.1658:accumulate_2d_density_matrix
 !@+node:gcross.20090819083142.1370:accumulate_radial_densities
 pure subroutine accumulate_radial_densities(x,maximum_radius,n_particles,n_dimensions,n_bins,histogram)
-  double precision, dimension(n_particles,n_dimensions), intent(in) :: x
+  double precision, dimension(n_dimensions,n_particles), intent(in) :: x
   double precision, intent(in) :: maximum_radius
   integer, intent(in) :: n_particles, n_dimensions, n_bins
   integer, dimension(n_bins), intent(inout) :: histogram
 
-  integer :: i
+  integer :: particle
   double precision :: dndx
 
   dndx = n_bins/maximum_radius
-  do i = 1, n_particles
-    call place_in_bin(sqrt(sum(x(i,:)**2)),0d0,dndx,n_bins,histogram)
+  do particle = 1, n_particles
+    call place_in_bin(sqrt(sum(x(:,particle)**2)),0d0,dndx,n_bins,histogram)
   end do
 
 end subroutine
 !@-node:gcross.20090819083142.1370:accumulate_radial_densities
 !@+node:gcross.20090825141639.1523:accumulate_recip_r_sq_densities
 pure subroutine accumulate_recip_r_sq_densities(x,maximum_value,n_particles,n_dimensions,n_bins,histogram)
-  double precision, dimension(n_particles,n_dimensions), intent(in) :: x
+  double precision, dimension(n_dimensions,n_particles), intent(in) :: x
   double precision, intent(in) :: maximum_value
   integer, intent(in) :: n_particles, n_dimensions, n_bins
   integer, dimension(n_bins), intent(inout) :: histogram
 
-  integer :: i
+  integer :: particle
   double precision :: dndx
 
   dndx = n_bins/maximum_value
-  do i = 1, n_particles
-    call place_in_bin(1.0/sum(x(i,:)**2),0d0,dndx,n_bins,histogram)
+  do particle = 1, n_particles
+    call place_in_bin(1.0/sum(x(:,particle)**2),0d0,dndx,n_bins,histogram)
   end do
 
 end subroutine
@@ -166,17 +167,17 @@ pure subroutine accumulate_plane_radial_densities( &
     n_particles,n_dimensions,n_bins, &
     histogram &
     )
-  double precision, dimension(n_particles,n_dimensions), intent(in) :: x
+  double precision, dimension(n_dimensions,n_particles), intent(in) :: x
   double precision, intent(in) :: maximum_radius
   integer, intent(in) :: plane_axis_1, plane_axis_2, n_particles, n_dimensions, n_bins
   integer, dimension(n_bins), intent(inout) :: histogram
 
-  integer :: i
+  integer :: particle
   double precision :: dndx
 
   dndx = n_bins/maximum_radius
-  do i = 1, n_particles
-    call place_in_bin(sqrt(x(i,plane_axis_1)**2+x(i,plane_axis_2)**2),0d0,dndx,n_bins,histogram)
+  do particle = 1, n_particles
+    call place_in_bin(sqrt(x(plane_axis_1,particle)**2+x(plane_axis_2,particle)**2),0d0,dndx,n_bins,histogram)
   end do
 
 end subroutine
@@ -191,13 +192,13 @@ pure subroutine accumulate_angular_separation_densities( &
   integer, intent(in) :: n_particles, n_bins
   integer, dimension(n_bins), intent(inout) :: histogram
 
-  integer :: i, j
+  integer :: particle_1, particle_2
   double precision :: dndtheta
 
   dndtheta = n_bins/m_2pi
-  do i = 1, n_particles
-    do j = i+1, n_particles
-      call place_in_bin(abs(angles(i)-angles(j)),0d0,dndtheta,n_bins,histogram)
+  do particle_1 = 1, n_particles
+    do particle_2 = particle_1+1, n_particles
+      call place_in_bin(abs(angles(particle_1)-angles(particle_2)),0d0,dndtheta,n_bins,histogram)
     end do
   end do
 
@@ -233,17 +234,17 @@ pure subroutine accumulate_recip_plane_r_sq_densities( &
     n_particles,n_dimensions,n_bins, &
     histogram &
     )
-  double precision, dimension(n_particles,n_dimensions), intent(in) :: x
+  double precision, dimension(n_dimensions,n_particles), intent(in) :: x
   double precision, intent(in) :: maximum_value
   integer, intent(in) :: plane_axis_1, plane_axis_2, n_particles, n_dimensions, n_bins
   integer, dimension(n_bins), intent(inout) :: histogram
 
-  integer :: i
+  integer :: particle
   double precision :: dndx
 
   dndx = n_bins/maximum_value
-  do i = 1, n_particles
-    call place_in_bin(1.0/(x(i,plane_axis_1)**2+x(i,plane_axis_2)**2),0d0,dndx,n_bins,histogram)
+  do particle = 1, n_particles
+    call place_in_bin(1.0/(x(plane_axis_1,particle)**2+x(plane_axis_2,particle)**2),0d0,dndx,n_bins,histogram)
   end do
 
 end subroutine
@@ -260,13 +261,13 @@ pure subroutine accumulate_particle_separation_densities( &
   integer, intent(in) :: n_particles, n_bins
   integer, dimension(n_bins), intent(inout) :: histogram
 
-  integer :: i, j
+  integer :: particle_1, particle_2
   double precision :: dndx
 
   dndx = n_bins/maximum_value
-  do i = 1, n_particles
-    do j = i+1, n_particles
-      call place_in_bin(sqrt(xij2(j,i)),0d0,dndx,n_bins,histogram)
+  do particle_1 = 1, n_particles
+    do particle_2 = particle_1+1, n_particles
+      call place_in_bin(sqrt(xij2(particle_2,particle_1)),0d0,dndx,n_bins,histogram)
     end do
   end do
 

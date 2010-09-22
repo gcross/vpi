@@ -23,8 +23,8 @@ class sample_scheme1(unittest.TestCase):
             n_slices = irange(2,5), n_particles = irange(2,5), n_dimensions = irange(2,5),
             lam = float,
         ):
-        q0 = array(rand(n_slices,n_particles,n_dimensions),order='Fortran')
-        q1 = array(rand(n_slices,n_particles,n_dimensions),order='Fortran')
+        q0 = array(rand(n_dimensions,n_particles,n_slices),order='Fortran')
+        q1 = array(rand(n_dimensions,n_particles,n_slices),order='Fortran')
         move_type_probabilities = array([p1,p2,p3])/(p1+p2+p3)
         move_type_differentials = array([d1,d2,d3])
         dM = randint(1,n_slices)
@@ -43,8 +43,8 @@ class sample_scheme1(unittest.TestCase):
             n_slices = irange(2,5), n_particles = irange(2,5), n_dimensions = irange(2,5),
             lam = float,
         ):
-        q0 = array(rand(n_slices,n_particles,n_dimensions),dtype='d',order='Fortran')
-        q1 = array(rand(n_slices,n_particles,n_dimensions),dtype='d',order='Fortran')
+        q0 = array(rand(n_dimensions,n_particles,n_slices),dtype='d',order='Fortran')
+        q1 = array(rand(n_dimensions,n_particles,n_slices),dtype='d',order='Fortran')
         move_type_probabilities = zeros((3),dtype=double)
         move_type_probabilities[desired_move_type-1] = 1
         move_type_differentials = array([d1,d2,d3])

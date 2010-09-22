@@ -17,7 +17,7 @@ pure function compute_local_energy_estimate( &
   ) result ( energy )
   integer, intent(in) :: n_particles, n_dimensions
   double precision, dimension(n_particles), intent(in) :: U
-  double precision, dimension(n_particles,n_dimensions), intent(in) :: gradient_of_log_trial_fn
+  double precision, dimension(n_dimensions,n_particles), intent(in) :: gradient_of_log_trial_fn
   double precision, intent(in) :: laplacian_of_log_trial_fn, lambda
   double precision :: energy
 
@@ -31,13 +31,17 @@ pure subroutine accumulate_1d_position_averages( &
   position_averages &
   )
   integer, intent(in) :: n_particles, n_dimensions
-  double precision, dimension(n_particles, n_dimensions), intent(in) :: x
+  double precision, dimension(n_dimensions,n_particles), intent(in) :: x
   double precision, dimension(n_dimensions), intent(inout) :: position_averages
 
-  integer :: axis
+  double precision :: current_average(n_dimensions)
+  integer :: particle
 
-  forall (axis = 1:n_dimensions) &
-    position_averages(axis) = position_averages(axis) + sum(x(:,axis))/n_particles
+  current_average = 0
+  do particle = 1, n_particles
+    current_average(:) = current_average(:) + x(:,particle)
+  end do
+  position_averages = current_average/n_particles
 
 end subroutine
 !@-node:gcross.20090825141639.1529:accumulate_1d_position_averages
@@ -47,14 +51,14 @@ pure function compute_radius_average( &
   n_particles, n_dimensions &
   ) result (radius_average)
   integer, intent(in) :: n_particles, n_dimensions
-  double precision, dimension(n_particles, n_dimensions), intent(in) :: x
+  double precision, dimension(n_dimensions,n_particles), intent(in) :: x
 
-  integer :: i
+  integer :: particle
   double precision :: radius_average
 
   radius_average = 0
-  do i = 1, n_particles
-    radius_average = radius_average + sqrt(sum(x(i,:)**2))
+  do particle = 1, n_particles
+    radius_average = radius_average + sqrt(sum(x(:,particle)**2))
   end do
   radius_average = radius_average/n_particles
 
@@ -68,14 +72,14 @@ pure function compute_plane_radius_average( &
   ) result (radius_average)
   integer, intent(in) :: plane_axis_1, plane_axis_2
   integer, intent(in) :: n_particles, n_dimensions
-  double precision, dimension(n_particles, n_dimensions), intent(in) :: x
+  double precision, dimension(n_dimensions,n_particles), intent(in) :: x
 
-  integer :: i
+  integer :: particle
   double precision :: radius_average
 
   radius_average = 0
-  do i = 1, n_particles
-    radius_average = radius_average + sqrt(x(i,plane_axis_1)**2+x(i,plane_axis_2)**2)
+  do particle = 1, n_particles
+    radius_average = radius_average + sqrt(x(plane_axis_1,particle)**2+x(plane_axis_2,particle)**2)
   end do
   radius_average = radius_average/n_particles
 
@@ -91,12 +95,12 @@ pure function compute_recip_plane_r_sq_average( &
   integer, intent(in) :: n_particles, n_dimensions
   double precision, dimension(n_particles, n_dimensions), intent(in) :: x
 
-  integer :: i
+  integer :: particle
   double precision :: radius_average
 
   radius_average = 0
-  do i = 1, n_particles
-    radius_average = radius_average + 1.0/(x(i,plane_axis_1)**2+x(i,plane_axis_2)**2)
+  do particle = 1, n_particles
+    radius_average = radius_average + 1.0/(x(plane_axis_1,particle)**2+x(plane_axis_2,particle)**2)
   end do
   radius_average = radius_average/n_particles
 
@@ -107,13 +111,13 @@ pure function compute_average_angular_separation(angles,n_particles) result (ave
   integer, intent(in) :: n_particles
   double precision, dimension(n_particles), intent(in) :: angles
 
-  integer :: i, j
+  integer :: particle_1, particle_2
   double precision :: average
 
   average = 0
-  do i = 1, n_particles
-    do j = i+1, n_particles
-      average = average + abs(angles(i)-angles(j))
+  do particle_1 = 1, n_particles
+    do particle_2 = particle_1+1, n_particles
+      average = average + abs(angles(particle_1)-angles(particle_2))
     end do
   end do
   average = average / dble(n_particles * (n_particles-1) / 2)
@@ -142,15 +146,15 @@ pure function compute_particle_separation_average( &
   n_particles &
   ) result (separation_average)
   integer, intent(in) :: n_particles
-  double precision, dimension(n_particles, n_particles), intent(in) :: xij2
+  double precision, dimension(n_particles,n_particles), intent(in) :: xij2
 
-  integer :: i, j
+  integer :: particle_1, particle_2
   double precision :: separation_average
 
   separation_average = 0
-  do i = 1, n_particles
-    do j = i+1, n_particles
-      separation_average = separation_average + sqrt(xij2(j,i))
+  do particle_1 = 1, n_particles
+    do particle_2 = particle_1+1, n_particles
+      separation_average = separation_average + sqrt(xij2(particle_2,particle_1))
     end do
   end do
   separation_average = separation_average/(n_particles*(n_particles-1))
