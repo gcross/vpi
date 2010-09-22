@@ -7,6 +7,8 @@
 #@+node:gcross.20090902085220.2159:<< Imports >>
 import vpi.fortran as vpif
 
+from abc import ABCMeta, abstractmethod
+
 from numpy import *
 from numpy.random import rand
 
@@ -956,142 +958,266 @@ class AverageRotationQuadraticTermEstimate(SingleAverageValueAtSliceEstimateAppe
 #@-others
 #@-node:gcross.20090902085220.2161:Observable classes
 #@+node:gcross.20090902085220.2355:Physics classes
-#@+node:gcross.20090902085220.2357:class Physics
+#@+node:gcross.20100920135525.1710:Base classes
+#@+node:gcross.20100920173658.1736:class MetaPhysics
+class MetaPhysics(ABCMeta):
+    #@    @+others
+    #@+node:gcross.20100920232137.1735:(fields)
+    known_physics_classes = {}
+    #@-node:gcross.20100920232137.1735:(fields)
+    #@+node:gcross.20100920232137.1736:__init__
+    def __init__(self,name,bases,dict):
+        ABCMeta.__init__(self,name,bases,dict)
+        if name != "Physics":
+            if Physics in bases:
+                self.known_physics_classes[self] = [
+                    method_name
+                    for (method_name,method) in dict.iteritems()
+                    if getattr(method,"__isabstractmethod__",False)
+                ]
+            for superclass, method_names in MetaPhysics.known_physics_classes.iteritems():
+                if self == superclass: continue
+                for method_name in method_names:
+                    if method_name in dict:
+                        if superclass in bases: continue
+                        found = False
+                        for base in bases:
+                            if issubclass(base,superclass):
+                                found = True
+                                break
+                        if found: continue
+                        print "WARNING:  Class " + name + " has method '" + method_name + "', but since it is not a subclass of " + superclass.__name__ + " this method will be ignored by the simulator.  This was probably not what you intended, unless you did this on purpose."
+                        break
+    #@-node:gcross.20100920232137.1736:__init__
+    #@-others
+#@-node:gcross.20100920173658.1736:class MetaPhysics
+#@+node:gcross.20100920135525.1716:class Physics
 class Physics(object):
-  #@  @+others
-  #@+node:gcross.20090902085220.2377:hooks
-  hooks = []
-  #@nonl
-  #@-node:gcross.20090902085220.2377:hooks
-  #@+node:gcross.20090902085220.2358:__init__
-  def __init__(self,system):
-      self.system = system
-      for hook in self.hooks:
-          getattr(system,hook).append(self)
-  #@-node:gcross.20090902085220.2358:__init__
-  #@-others
-#@-node:gcross.20090902085220.2357:class Physics
-#@+node:gcross.20090902085220.2356:class HarmonicOscillator
-class HarmonicOscillator(Physics):
-  #@  @+others
-  #@+node:gcross.20090902085220.2379:hooks
-  hooks = ["physical_potentials","trial_functions"]
-  #@-node:gcross.20090902085220.2379:hooks
-  #@+node:gcross.20090902085220.2359:__init__
-  def __init__(self,system):
-      Physics.__init__(self,system)
-      try:
-          self.potential_coefficients = array(system.harmonic_oscillator_frequencies)**2
-          self.trial_coefficients = array(system.harmonic_oscillator_frequencies)
-      except AttributeError:
-              raise ValueError("System needs to define 'harmonic_oscillator_frequencies' to use harmonic oscillator physics!")       
-  #@-node:gcross.20090902085220.2359:__init__
-  #@+node:gcross.20090902085220.2360:accumulate_potential
-  def accumulate_potential(self,x,xij2,U,gradU2):
-      vpif.harmonic_oscillator.accumulate_potential(
-          x,
-          self.potential_coefficients,
-          U,
-          gradU2
-      )
-  #@-node:gcross.20090902085220.2360:accumulate_potential
-  #@+node:gcross.20090902085220.2361:compute_trial_weight
-  def compute_trial_weight(self,x,xij2):
-      return vpif.harmonic_oscillator.compute_trial_weight(
-          x,
-          self.trial_coefficients
-      )
-  #@-node:gcross.20090902085220.2361:compute_trial_weight
-  #@+node:gcross.20090902085220.2362:accumulate_trial_derivatives
-  def accumulate_trial_derivatives(self,
-          x,xij2,
-          gradient_of_log_trial_fn,laplacian_of_log_trial_fn
-      ):
-      vpif.harmonic_oscillator.accumulate_trial_derivatives(
-          x,self.trial_coefficients,
-          gradient_of_log_trial_fn,laplacian_of_log_trial_fn
-      )
-  #@-node:gcross.20090902085220.2362:accumulate_trial_derivatives
-  #@-others
-#@-node:gcross.20090902085220.2356:class HarmonicOscillator
-#@+node:gcross.20090902085220.2368:class HardSphereInteraction
-class HardSphereInteraction(Physics):
-  #@  @+others
-  #@+node:gcross.20090902085220.2380:hooks
-  hooks = ["physical_potentials","trial_functions","greens_functions"]
-  #@-node:gcross.20090902085220.2380:hooks
-  #@+node:gcross.20090902085220.2369:__init__
-  def __init__(self,system):
-      Physics.__init__(self,system)
-      try:
-          self.hard_sphere_radius = system.hard_sphere_radius
-      except AttributeError:
-          raise ValueError("System needs to define 'hard_sphere_radius' to use hard core interaction physics!")
-      self.hard_sphere_radius_squared = self.hard_sphere_radius ** 2
+    __metaclass__ = MetaPhysics
+    #@    @+others
+    #@+node:gcross.20100920135525.1786:__init__
+    def __init__(self,system):
+        self.system = system
+    #@-node:gcross.20100920135525.1786:__init__
+    #@-others
+#@-node:gcross.20100920135525.1716:class Physics
+#@+node:gcross.20100920135525.1711:class PotentialFunction
+class PotentialFunction(Physics):
+    #@    @+others
+    #@+node:gcross.20100920135525.1776:(fields)
+    potential_function_registered = False
+    #@nonl
+    #@-node:gcross.20100920135525.1776:(fields)
+    #@+node:gcross.20100920135525.1777:__init__
+    def __init__(self,system,potentials_field_name):
+        if not self.potential_function_registered:
+            Physics.__init__(self,system)
+            if isinstance(self,PhysicalPotentialFunction) and isinstance(self,EffectivePotentialFunction):
+                raise TypeError("Error initiaizing " + self.__class__ + ": A potential function cannot be both an effective potential and a physical potential.  (FYI, these two superclasses are functionally the same, but they are distinguished so that the user can get an estimate of the physical portion of the potential.)")
+            getattr(system,potentials_field_name).append(self)
+            self.potential_function_registered = True
+    #@-node:gcross.20100920135525.1777:__init__
+    #@+node:gcross.20100920135525.1778:(abstract methods)
+    @abstractmethod
+    def accumulate_potential(self,x,xij2,U,gradU2): pass
+    #@-node:gcross.20100920135525.1778:(abstract methods)
+    #@-others
+#@-node:gcross.20100920135525.1711:class PotentialFunction
+#@+node:gcross.20100920135525.1738:class PhysicalPotentialFunction
+class PhysicalPotentialFunction(PotentialFunction):
+    def __init__(self,system):
+        PotentialFunction.__init__(self,system,"physical_potentials")
+#@-node:gcross.20100920135525.1738:class PhysicalPotentialFunction
+#@+node:gcross.20100920135525.1740:class EffectivePotentialFunction
+class EffectivePotentialFunction(PotentialFunction):
+    def __init__(self,system):
+        PotentialFunction.__init__(self,system,"effective_potentials")
+#@-node:gcross.20100920135525.1740:class EffectivePotentialFunction
+#@+node:gcross.20100920135525.1715:class TrialFunction
+class TrialFunction(Physics):
+    #@    @+others
+    #@+node:gcross.20100920135525.1779:(fields)
+    trial_function_registered = False
+    #@-node:gcross.20100920135525.1779:(fields)
+    #@+node:gcross.20100920135525.1780:__init__
+    def __init__(self,system):
+        if not self.trial_function_registered:
+            Physics.__init__(self,system)
+            system.trial_functions.append(self)
+            self.trial_function_registered = True
+    #@nonl
+    #@-node:gcross.20100920135525.1780:__init__
+    #@+node:gcross.20100920135525.1781:(abstract methods)
+    @abstractmethod
+    def compute_trial_weight(self,x,xij2): pass
 
-      number_of_attempts = 1
-      while(
-          vpif.hard_sphere_interaction.has_collision(
-              system.xij2[0:1],
-              self.hard_sphere_radius_squared
-          ) and number_of_attempts < 1000
-      ):
-          number_of_attempts += 1
-          system.reinitialize_lattice()
-
-      if(number_of_attempts == 1000):
-          raise FailureToContructValidSystemException("Failed in 1000 attempts to construct a system where no two particles violated the hard sphere condition.")
-  #@-node:gcross.20090902085220.2369:__init__
-  #@+node:gcross.20090902085220.2370:accumulate_potential
-  def accumulate_potential(self,x,xij2,U,gradU):
-      if vpif.hard_sphere_interaction.has_collision(
-          xij2, self.hard_sphere_radius_squared
-      ): raise MoveRejected
-  #@-node:gcross.20090902085220.2370:accumulate_potential
-  #@+node:gcross.20090902085220.2371:compute_trial_weight
-  def compute_trial_weight(self,x,xij2):
-      weight, reject_flag = \
-          vpif.hard_sphere_interaction.compute_trial_weight(
-              xij2,
-              self.hard_sphere_radius
-          )
-      if reject_flag: raise MoveRejected
-      return weight
-  #@-node:gcross.20090902085220.2371:compute_trial_weight
-  #@+node:gcross.20090902085220.2372:accumulate_trial_derivatives
-  def accumulate_trial_derivatives(self,x,xij2,gradient_of_log_trial_fn,laplacian_of_log_trial_fn):
-      vpif.hard_sphere_interaction.accumulate_trial_derivatives(
-          x,xij2,self.hard_sphere_radius,
-          gradient_of_log_trial_fn,laplacian_of_log_trial_fn
-      )
-  #@-node:gcross.20090902085220.2372:accumulate_trial_derivatives
-  #@+node:gcross.20090902085220.2384:compute_greens_function
-  def compute_greens_function(self,
-          x,xij2,
-          U,gradU2,
-          lam,dt,
-          slice_start,slice_end,
-          particle_number
-      ): return \
-          vpif.hard_sphere_interaction.compute_greens_function(
-              xij2,dt,
-              self.hard_sphere_radius,
-              slice_start,slice_end,particle_number
-          )
-  #@-node:gcross.20090902085220.2384:compute_greens_function
+    @abstractmethod
+    def accumulate_trial_derivatives(self,x,xij2,gradient_of_log_trial_fn,laplacian_of_log_trial_fn): pass
+    #@-node:gcross.20100920135525.1781:(abstract methods)
+    #@-others
+#@-node:gcross.20100920135525.1715:class TrialFunction
+#@+node:gcross.20100920135525.1717:class GreensFunction
+class GreensFunction(Physics):
+    #@    @+others
+    #@+node:gcross.20100920135525.1782:(fields)
+    greens_function_registered = False
+    #@-node:gcross.20100920135525.1782:(fields)
+    #@+node:gcross.20100920135525.1783:__init__
+    def __init__(self,system):
+        if not self.greens_function_registered:
+            Physics.__init__(self,system)
+            system.greens_functions.append(self)
+            self.greens_function_registered = True
+    #@nonl
+    #@-node:gcross.20100920135525.1783:__init__
+    #@+node:gcross.20100920135525.1784:(abstract methods)
+    @abstractmethod
+    def compute_greens_function(self,x,xij2,U,gradU2,lam,dt,slice_start,slice_end,particle_number): pass
+    #@-node:gcross.20100920135525.1784:(abstract methods)
+    #@-others
+#@-node:gcross.20100920135525.1717:class GreensFunction
+#@-node:gcross.20100920135525.1710:Base classes
+#@+node:gcross.20100920135525.1718:Harmonic Oscillator
+#@+node:gcross.20090902085220.2356:class HarmonicOscillatorPotentialFunction
+class HarmonicOscillatorPotentialFunction(PhysicalPotentialFunction):
+    #@    @+others
+    #@+node:gcross.20090902085220.2359:__init__
+    def __init__(self,system,harmonic_oscillator_frequencies):
+        assert len(harmonic_oscillator_frequencies) == system.number_of_dimensions
+        PhysicalPotentialFunction.__init__(self,system)
+        self.potential_coefficients = array(harmonic_oscillator_frequencies)**2
+    #@-node:gcross.20090902085220.2359:__init__
+    #@+node:gcross.20090902085220.2360:accumulate_potential
+    def accumulate_potential(self,x,xij2,U,gradU2):
+        vpif.harmonic_oscillator.accumulate_potential(
+            x,
+            self.potential_coefficients,
+            U,
+            gradU2
+        )
+    #@-node:gcross.20090902085220.2360:accumulate_potential
+    #@-others
+#@-node:gcross.20090902085220.2356:class HarmonicOscillatorPotentialFunction
+#@+node:gcross.20100920135525.1725:class HarmonicOscillatorTrialFunction
+class HarmonicOscillatorTrialFunction(TrialFunction):
+    #@    @+others
+    #@+node:gcross.20100920135525.1727:__init__
+    def __init__(self,system,harmonic_oscillator_frequencies):
+        assert len(harmonic_oscillator_frequencies) == system.number_of_dimensions
+        TrialFunction.__init__(self,system)
+        self.trial_coefficients = array(harmonic_oscillator_frequencies)
+    #@-node:gcross.20100920135525.1727:__init__
+    #@+node:gcross.20100920135525.1729:compute_trial_weight
+    def compute_trial_weight(self,x,xij2):
+        return vpif.harmonic_oscillator.compute_trial_weight(
+            x,
+            self.trial_coefficients
+        )
+    #@-node:gcross.20100920135525.1729:compute_trial_weight
+    #@+node:gcross.20100920135525.1730:accumulate_trial_derivatives
+    def accumulate_trial_derivatives(self,
+            x,xij2,
+            gradient_of_log_trial_fn,laplacian_of_log_trial_fn
+        ):
+        vpif.harmonic_oscillator.accumulate_trial_derivatives(
+            x,self.trial_coefficients,
+            gradient_of_log_trial_fn,laplacian_of_log_trial_fn
+        )
+    #@-node:gcross.20100920135525.1730:accumulate_trial_derivatives
+    #@-others
+#@-node:gcross.20100920135525.1725:class HarmonicOscillatorTrialFunction
+#@+node:gcross.20100920135525.1741:class HarmonicOscillator
+class HarmonicOscillator(HarmonicOscillatorPotentialFunction,HarmonicOscillatorTrialFunction):
+    #@    @+others
+    #@+node:gcross.20100920135525.1743:__init__
+    def __init__(self,system,harmonic_oscillator_frequencies):
+        HarmonicOscillatorPotentialFunction.__init__(self,system,harmonic_oscillator_frequencies)
+        HarmonicOscillatorTrialFunction.__init__(self,system,harmonic_oscillator_frequencies)
+    #@-node:gcross.20100920135525.1743:__init__
+    #@-others
+#@-node:gcross.20100920135525.1741:class HarmonicOscillator
+#@-node:gcross.20100920135525.1718:Harmonic Oscillator
+#@+node:gcross.20100920135525.1744:Hard Sphere Interaction
+#@+node:gcross.20090902085220.2368:class HardSphereInteractionPotentialFunction
+class HardSphereInteractionPotentialFunction(PhysicalPotentialFunction,GreensFunction):
+    #@    @+others
+    #@+node:gcross.20090902085220.2369:__init__
+    def __init__(self,system,hard_sphere_radius):
+        PhysicalPotentialFunction.__init__(self,system)
+        GreensFunction.__init__(self,system)
+        self.hard_sphere_radius = hard_sphere_radius
+        self.hard_sphere_radius_squared = hard_sphere_radius ** 2
+    #@-node:gcross.20090902085220.2369:__init__
+    #@+node:gcross.20090902085220.2370:accumulate_potential
+    def accumulate_potential(self,x,xij2,U,gradU):
+        if vpif.hard_sphere_interaction.has_collision(
+            xij2, self.hard_sphere_radius_squared
+        ): raise MoveRejected
+    #@-node:gcross.20090902085220.2370:accumulate_potential
+    #@+node:gcross.20090902085220.2384:compute_greens_function
+    def compute_greens_function(self,
+            x,xij2,
+            U,gradU2,
+            lam,dt,
+            slice_start,slice_end,
+            particle_number
+        ): return \
+            vpif.hard_sphere_interaction.compute_greens_function(
+                xij2,dt,
+                self.hard_sphere_radius,
+                slice_start,slice_end,particle_number
+            )
+    #@-node:gcross.20090902085220.2384:compute_greens_function
+    #@-others
+#@-node:gcross.20090902085220.2368:class HardSphereInteractionPotentialFunction
+#@+node:gcross.20100920135525.1764:class HardSphereInteractionTrialFunction
+class HardSphereInteractionTrialFunction(TrialFunction):
+    #@    @+others
+    #@+node:gcross.20100920135525.1766:__init__
+    def __init__(self,system,hard_sphere_radius):
+        TrialFunction.__init__(self,system)
+        self.hard_sphere_radius = hard_sphere_radius
+        self.hard_sphere_radius_squared = hard_sphere_radius ** 2
+    #@-node:gcross.20100920135525.1766:__init__
+    #@+node:gcross.20100920135525.1770:accumulate_trial_derivatives
+    def accumulate_trial_derivatives(self,x,xij2,gradient_of_log_trial_fn,laplacian_of_log_trial_fn):
+        vpif.hard_sphere_interaction.accumulate_trial_derivatives(
+            x,xij2,self.hard_sphere_radius,
+            gradient_of_log_trial_fn,laplacian_of_log_trial_fn
+        )
+    #@-node:gcross.20100920135525.1770:accumulate_trial_derivatives
+    #@+node:gcross.20100920135525.1772:compute_trial_weight
+    def compute_trial_weight(self,x,xij2):
+        weight, reject_flag = \
+            vpif.hard_sphere_interaction.compute_trial_weight(
+                xij2,
+                self.hard_sphere_radius
+            )
+        if reject_flag: raise MoveRejected
+        return weight
+    #@-node:gcross.20100920135525.1772:compute_trial_weight
+    #@-others
+#@-node:gcross.20100920135525.1764:class HardSphereInteractionTrialFunction
+#@+node:gcross.20100920135525.1751:class HardSphereInteraction
+class HardSphereInteraction(HardSphereInteractionPotentialFunction,HardSphereInteractionTrialFunction):
+  #@  @+others
+  #@+node:gcross.20100920135525.1752:__init__
+  def __init__(self,system,hard_sphere_radius):
+      HardSphereInteractionPotentialFunction.__init__(self,system,hard_sphere_radius)
+      HardSphereInteractionTrialFunction.__init__(self,system,hard_sphere_radius)
+  #@-node:gcross.20100920135525.1752:__init__
   #@-others
-#@-node:gcross.20090902085220.2368:class HardSphereInteraction
+#@-node:gcross.20100920135525.1751:class HardSphereInteraction
+#@-node:gcross.20100920135525.1744:Hard Sphere Interaction
+#@+node:gcross.20100920135525.1773:Greens Functions
 #@+node:gcross.20090902085220.2373:class SecondOrderGreensFunction
-class SecondOrderGreensFunction(Physics):
+class SecondOrderGreensFunction(GreensFunction):
   #@  @+others
   #@+node:gcross.20100106123346.1702:__init__
   def __init__(self,system):
-      Physics.__init__(self,system)
+      GreensFunction.__init__(self,system)
       self.weights = vpif.gfn.initialize_2nd_order_weights(system.number_of_slices)
   #@-node:gcross.20100106123346.1702:__init__
-  #@+node:gcross.20090902085220.2381:hooks
-  hooks = ["greens_functions"]
-  #@-node:gcross.20090902085220.2381:hooks
   #@+node:gcross.20090902085220.2382:compute_greens_function
   def compute_greens_function(
           self,
@@ -1105,16 +1231,13 @@ class SecondOrderGreensFunction(Physics):
   #@-others
 #@-node:gcross.20090902085220.2373:class SecondOrderGreensFunction
 #@+node:gcross.20091220132355.1699:class FourthOrderGreensFunction
-class FourthOrderGreensFunction(Physics):
+class FourthOrderGreensFunction(GreensFunction):
   #@  @+others
   #@+node:gcross.20091220132355.1703:__init__
   def __init__(self,system):
-      Physics.__init__(self,system)
+      GreensFunction.__init__(self,system)
       self.weights = vpif.gfn.initialize_4th_order_weights(system.number_of_slices)
   #@-node:gcross.20091220132355.1703:__init__
-  #@+node:gcross.20091220132355.1700:hooks
-  hooks = ["greens_functions"]
-  #@-node:gcross.20091220132355.1700:hooks
   #@+node:gcross.20091220132355.1701:compute_greens_function
   def compute_greens_function(
           self,
@@ -1127,18 +1250,67 @@ class FourthOrderGreensFunction(Physics):
   #@-node:gcross.20091220132355.1701:compute_greens_function
   #@-others
 #@-node:gcross.20091220132355.1699:class FourthOrderGreensFunction
+#@-node:gcross.20100920135525.1773:Greens Functions
 #@-node:gcross.20090902085220.2355:Physics classes
 #@+node:gcross.20090902085220.2288:class System
 class System(object):
     #@    @+others
+    #@+node:gcross.20100920232137.1737:__slots__
+    __slots__ = [
+        "number_of_slices",
+        "number_of_particles",
+        "number_of_dimensions",
+        "center_slice_number",
+        "lambda_",
+        "initial_particle_distribution_size",
+        "total_number_of_observations",
+        "number_of_prethermalization_steps",
+        "dM",
+        "move_type_probabilities",
+        "move_type_differentials",
+        "low_swap_dimension",
+        "high_swap_dimension",
+        "x",
+        "xij2",
+        "U",
+        "gradU2",
+        "slice_move_attempted_counts",
+        "slice_move_accepted_counts",
+        "move_type_attempted_counts",
+        "move_type_accepted_counts",
+        "number_of_observations",
+        "total_number_of_observations",
+        "number_of_thermalizations_per_observation",
+        "observables",
+        "physical_potentials",
+        "effective_potentials",
+        "trial_functions",
+        "greens_functions",
+        ]
+    #@-node:gcross.20100920232137.1737:__slots__
     #@+node:gcross.20090902085220.2333:Initialization
     #@+node:gcross.20090902085220.2303:__init__
-    def __init__(self,**keywords):
-        self.__dict__.update(keywords)
-
-        number_of_slices = self.number_of_slices
-        number_of_particles = self.number_of_particles
-        number_of_dimensions = self.number_of_dimensions
+    def __init__(
+            self,
+            number_of_slices,number_of_particles,number_of_dimensions,
+            lambda_,initial_particle_distribution_size,
+            total_number_of_observations,number_of_prethermalization_steps,
+            dM,
+            move_type_probabilities,move_type_differentials,
+            low_swap_dimension,high_swap_dimension,
+        ):
+        self.number_of_slices = number_of_slices
+        self.number_of_particles = number_of_particles
+        self.number_of_dimensions = number_of_dimensions
+        self.lambda_ = lambda_
+        self.initial_particle_distribution_size = initial_particle_distribution_size
+        self.total_number_of_observations = total_number_of_observations
+        self.number_of_prethermalization_steps = number_of_prethermalization_steps
+        self.dM = dM
+        self.move_type_probabilities = move_type_probabilities
+        self.move_type_differentials = move_type_differentials
+        self.low_swap_dimension = low_swap_dimension
+        self.high_swap_dimension = high_swap_dimension
 
         vpif.rand_utils.init_seed(my_rank)
 
@@ -1197,10 +1369,6 @@ class System(object):
     #@-node:gcross.20090911091023.2450:reset_observables
     #@-node:gcross.20090902085220.2300:Observable management
     #@+node:gcross.20090902085220.2334:Physics
-    #@+node:gcross.20090902085220.2354:add_physics
-    def add_physics(self,physics):
-        physics(self)
-    #@-node:gcross.20090902085220.2354:add_physics
     #@+node:gcross.20090902085220.2342:Potential
     #@+node:gcross.20090902085220.2335:compute_potential
     def compute_potential(self,x,xij2):
@@ -1311,6 +1479,17 @@ class System(object):
         observables = self.observables
         #@nonl
         #@-node:gcross.20090902085220.2305:<< Stash properties into local variables >>
+        #@nl
+        #@    << Ensure system is in valid state >>
+        #@+node:gcross.20100920232137.1738:<< Ensure system is in valid state >>
+        number_of_initialization_attempts = 1
+        while self.compute_potential(x,xij2)[-1] and number_of_initialization_attempts < 1000:
+            self.reinitialize_lattice()
+            x = self.x
+            xij2 = self.xij2
+        if number_of_initialization_attempts == 1000:
+            raise FailureToContructValidSystemException("Failed in 1000 attempts to construct a system which was not rejected by the potential function.")
+        #@-node:gcross.20100920232137.1738:<< Ensure system is in valid state >>
         #@nl
         #@    << Prethermalize the system >>
         #@+node:gcross.20090902085220.2306:<< Prethermalize the system >>

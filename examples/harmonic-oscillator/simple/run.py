@@ -36,33 +36,33 @@ except IndexError:
 #@+others
 #@-others
 
-#@<< System Configuration >>
-#@+node:gcross.20100311125034.2366:<< System Configuration >>
-configuration = {
+#@<< System configuration >>
+#@+node:gcross.20100311125034.2366:<< System configuration >>
+system = System(
     # System parameters
-    "number_of_dimensions": 3,
-    "number_of_particles": 10,
-    "number_of_slices": 54,
-    "lambda_": 0.5, # --> hbar/2m
-    "initial_particle_distribution_size": 1,
-    # Physics parameters
-    "harmonic_oscillator_frequencies": [1,1,1],
+    number_of_dimensions = 3,
+    number_of_particles = 10,
+    number_of_slices = 54,
+    lambda_ = 0.5, # --> hbar/2m
+    initial_particle_distribution_size = 1,
     # Run parameters
-    "total_number_of_observations": 10000,
-    "number_of_prethermalization_steps": 1000,
+    total_number_of_observations = 10000,
+    number_of_prethermalization_steps = 1000,
     # Move parameters 
     # First move type is bridge, second is rigid, third is swap (unused).
-    "dM": 20, # --> length of the path to move during a bridge move
-    "move_type_probabilities": [0.9,0.1,0],
-    "move_type_differentials": [0.1,1,0],
-    "low_swap_dimension": 1,
-    "high_swap_dimension": 3,
-}
+    dM = 20, # --> length of the path to move during a bridge move
+    move_type_probabilities = [0.9,0.1,0],
+    move_type_differentials = [0.1,1,0],
+    low_swap_dimension = 1,
+    high_swap_dimension = 3,
+)
+HarmonicOscillator(system,harmonic_oscillator_frequencies = [1,1,1])
+FourthOrderGreensFunction(system)
 #@nonl
-#@-node:gcross.20100311125034.2366:<< System Configuration >>
+#@-node:gcross.20100311125034.2366:<< System configuration >>
 #@nl
-#@<< Histogram Configuration >>
-#@+node:gcross.20100311125034.2367:<< Histogram Configuration >>
+#@<< Histogram configuration >>
+#@+node:gcross.20100311125034.2367:<< Histogram configuration >>
 _1d_density_histogram_left  = -2
 _1d_density_histogram_right = +2
 _1d_density_histogram_bin_count = 51
@@ -75,18 +75,7 @@ angular_densities_histogram_bin_count = 51
 particle_separation_histogram_maximum_length = 2
 particle_separation_histogram_bin_count = 51
 #@nonl
-#@-node:gcross.20100311125034.2367:<< Histogram Configuration >>
-#@nl
-#@<< Run simulation >>
-#@+node:gcross.20100311125034.2369:<< Run simulation >>
-system = System(**configuration)
-#@<< Initialize physics >>
-#@+node:gcross.20100311125034.2371:<< Initialize physics >>
-for physics in [
-    HarmonicOscillator,
-    FourthOrderGreensFunction,
-    ]: system.add_physics(physics)
-#@-node:gcross.20100311125034.2371:<< Initialize physics >>
+#@-node:gcross.20100311125034.2367:<< Histogram configuration >>
 #@nl
 #@<< Initialize observables >>
 #@+node:gcross.20100311125034.2372:<< Initialize observables >>
@@ -95,8 +84,8 @@ for slice_name, slice_number in [("leftmost-path-slice",0),("center-path-slice",
     for observable in [
             PositionDensity1DHistogram(
                 slice_number,
-                [_1d_density_histogram_left]*configuration["number_of_dimensions"],
-                [_1d_density_histogram_right]*configuration["number_of_dimensions"],
+                [_1d_density_histogram_left]*system.number_of_dimensions,
+                [_1d_density_histogram_right]*system.number_of_dimensions,
                 _1d_density_histogram_bin_count,
                 [density_slice_subdirectory + "/1d-densities/" + label for label in ["x","y","z","w"][:system.number_of_dimensions]]
             ),
@@ -134,6 +123,8 @@ for observable in [
     ]: system.add_observable(observable)
 #@-node:gcross.20100311125034.2372:<< Initialize observables >>
 #@nl
+#@<< Run simulation >>
+#@+node:gcross.20100311125034.2369:<< Run simulation >>
 system.run()
 system.total_and_write_observables()
 del system.observables
