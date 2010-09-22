@@ -136,11 +136,14 @@ end interface
 !@@c
   integer :: i, move_type, move_start, move_end, particle_number
   double precision :: old_weight, new_weight, dtau
-  logical :: reject_flag
+  logical :: reject_flag, system_is_periodic, some_particles_are_off_diagonal
   double precision, dimension(n_dimensions,n_particles,n_slices) :: q_trial
   double precision, dimension(n_particles,n_particles,n_slices) :: xij2_trial
   double precision, dimension(n_particles,n_slices) :: U_trial
   double precision, dimension(n_slices) :: gradU2_trial
+
+  system_is_periodic = present(pbc_period_length) .and. pbc_period_length > 0
+  some_particles_are_off_diagonal = present(off_diagonal_particle_number) .and. off_diagonal_particle_number > 0
 
   !@  << Initialize trial functions >>
   !@+node:gcross.20090805153643.1848:<< Initialize trial functions >>
@@ -158,7 +161,7 @@ end interface
   do i = 1, n_trials
     !@    << Randomly choose a move to make and apply it to the system >>
     !@+node:gcross.20090626112946.1688:<< Randomly choose a move to make and apply it to the system >>
-    if( present(off_diagonal_particle_number) ) then
+    if( some_particles_are_off_diagonal ) then
       call sample_scheme1(q, q_trial, move_start, move_end, &
           move_type_probabilities, move_type_differentials, &
           dM, lambda, &
@@ -186,7 +189,7 @@ end interface
 
     !@<< Impose periodic boundary conditions >>
     !@+node:gcross.20090626112946.1691:<< Impose periodic boundary conditions >>
-    if( present(pbc_period_length) ) then
+    if( system_is_periodic ) then
       q_trial(:,:,move_start:move_end) = wrap_around(x=q_trial(:,:,move_start:move_end),period_length=pbc_period_length)
     end if
     !@-node:gcross.20090626112946.1691:<< Impose periodic boundary conditions >>
@@ -201,7 +204,7 @@ end interface
 
     !@<< Update the displacement matrix >>
     !@+node:gcross.20090626112946.1689:<< Update the displacement matrix >>
-    if( present(pbc_period_length) ) then
+    if( system_is_periodic ) then
       call compute_xij_pbc( &
         q_trial(:,:,move_start:move_end), &
         pbc_period_length, (move_end-move_start+1), n_particles, n_dimensions, &
@@ -415,7 +418,6 @@ end interface
   !@-others
 
 end subroutine thermalize_path
-!@nonl
 !@-node:gcross.20090626112946.1694:thermalize_path
 !@-others
 
