@@ -205,14 +205,14 @@ end interface
     !@<< Update the displacement matrix >>
     !@+node:gcross.20090626112946.1689:<< Update the displacement matrix >>
     if( system_is_periodic ) then
-      call compute_xij_pbc( &
-        q_trial(:,:,move_start:move_end), &
+      call update_xij_pbc( &
+        q_trial(:,:,move_start:move_end), particle_number, &
         pbc_period_length, (move_end-move_start+1), n_particles, n_dimensions, &
         xij2_trial(:,:,move_start:move_end) &
         )
     else
-      call compute_xij( &
-        q_trial(:,:,move_start:move_end), &
+      call update_xij( &
+        q_trial(:,:,move_start:move_end), particle_number, &
         (move_end-move_start+1), n_particles, n_dimensions, &
         xij2_trial(:,:,move_start:move_end) &
         )

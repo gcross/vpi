@@ -37,7 +37,27 @@ pure subroutine compute_xij( x, n_slices, n_particles, n_dimensions, xij2 )
 
 end subroutine compute_xij
 !@-node:gcross.20090805093617.1833:compute_xij
-!@+node:gcross.20090805093617.1834:compute_xij_pbc
+!@+node:gcross.20100922161207.1723:update_xij
+pure subroutine update_xij( x, particle, n_slices, n_particles, n_dimensions, xij2)
+  integer, intent(in) :: n_slices, n_particles, n_dimensions, particle
+  double precision, dimension (n_dimensions,n_particles,n_slices), intent(in) :: x
+  double precision, dimension (n_particles,n_particles,n_slices), intent(out) :: xij2
+
+  integer :: slice, particle_1, particle_2
+  double precision :: p1x(n_dimensions), r_sq
+  particle_1 = particle
+  do slice = 1, n_slices
+    p1x = x(:,particle_1,slice)
+    do particle_2 = particle_1+1, n_particles
+        r_sq = sum( (p1x - x(:,particle_2,slice))**2 )
+        xij2(particle_2,particle_1,slice) = r_sq
+        xij2(particle_1,particle_2,slice) = r_sq
+    end do
+  end do
+
+end subroutine update_xij
+!@-node:gcross.20100922161207.1723:update_xij
+!@+node:gcross.20100922161207.1727:compute_xij_pbc
 pure subroutine compute_xij_pbc( x, period_length, n_slices, n_particles, n_dimensions, xij2 )
   integer, intent(in) :: n_slices, n_particles, n_dimensions
   double precision, dimension (n_dimensions,n_particles,n_slices), intent(in) :: x
@@ -68,7 +88,37 @@ contains
   end function
 
 end subroutine compute_xij_pbc
-!@-node:gcross.20090805093617.1834:compute_xij_pbc
+!@-node:gcross.20100922161207.1727:compute_xij_pbc
+!@+node:gcross.20090805093617.1834:update_xij_pbc
+pure subroutine update_xij_pbc( x, particle, period_length, n_slices, n_particles, n_dimensions, xij2 )
+  integer, intent(in) :: n_slices, n_particles, n_dimensions, particle
+  double precision, dimension (n_dimensions,n_particles,n_slices), intent(in) :: x
+  double precision, dimension (n_particles,n_particles,n_slices), intent(out) :: xij2
+  double precision, intent(in) :: period_length
+
+  integer :: slice, particle_1, particle_2
+  double precision :: p1x(n_dimensions), r_sq
+  particle_1 = particle
+  do slice = 1, n_slices
+    p1x = x(:,particle_1,slice)
+    do particle_2 = particle_1+1, n_particles
+        r_sq = sum(wrap_around(p1x - x(:,particle_2,slice),period_length)**2)
+        xij2(particle_2,particle_1,slice) = r_sq
+        xij2(particle_1,particle_2,slice) = r_sq
+    end do
+  end do
+
+contains
+
+  ! The stupid gfortran inliner will not inline this function unless it is nested...
+  elemental function wrap_around(x,period_length)
+    double precision, intent(in) :: x, period_length
+    double precision :: wrap_around
+    wrap_around = x - period_length*(floor(x/period_length - 0.5D0) + 1.0D0)
+  end function
+
+end subroutine update_xij_pbc
+!@-node:gcross.20090805093617.1834:update_xij_pbc
 !@-others
 
 end module xij
