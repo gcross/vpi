@@ -88,31 +88,6 @@ class gfn4_sp(unittest.TestCase):
     #@-node:gcross.20090812093015.1752:test_correctness
     #@-others
 #@-node:gcross.20090812093015.1747:gfn4_sp
-#@+node:gcross.20090828095451.1459:gfn_hard_wall_contribution
-class gfn_hard_wall_contribution(unittest.TestCase):
-
-    @with_checker
-    def test_finite(self,
-            n_slices = irange(1,10),
-            n_particles = irange(1,5),
-            n_dimensions = irange(1,5),
-            lambda_ = float,
-            dt = float
-        ):
-        q = rand(n_slices,n_particles,n_dimensions)
-        hard_wall_locations = rand(n_dimensions)
-        slice_start = randint(1,n_slices)
-        slice_end = randint(slice_start,n_slices)
-        particle_number = randint(1,n_particles)
-        vpif.gfn.gfn_hard_wall_contribution(
-            q,
-            hard_wall_locations,
-            lambda_, dt,
-            slice_start, slice_end,
-            particle_number
-        )
-#@nonl
-#@-node:gcross.20090828095451.1459:gfn_hard_wall_contribution
 #@+node:gcross.20090918120753.2604:compute_green_fn_from_distances
 #@@language python
 

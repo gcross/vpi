@@ -154,48 +154,6 @@ end function gfn4_sp
 !@nonl
 !@-node:gcross.20090812093015.1845:4th order
 !@-node:gcross.20100106123346.1700:4th order
-!@+node:gcross.20090828095451.1453:hard wall
-pure function gfn_hard_wall_contribution( &
-    q, &
-    hard_wall_locations, &
-    lambda, dt, &
-    slice_start, slice_end,  &
-    particle_number, &
-    n_slices, n_particles, n_dimensions &
-  ) result ( ln_gfn )
-  integer, intent(in) :: slice_start, slice_end, particle_number
-  integer, intent(in) :: n_slices, n_particles, n_dimensions
-  double precision, intent(in) :: dt, lambda
-  double precision, dimension ( n_slices, n_particles, n_dimensions ), intent(in) :: q
-  double precision, dimension ( n_dimensions ), intent(in) :: hard_wall_locations
-
-  double precision :: ln_gfn, tgfn
-
-  double precision :: x,x0,xr,d
-  integer :: i,j
-
-  ln_gfn = 0.0d0
-  tgfn = 0.0d0
-
-  do i = 1, n_dimensions
-    do j = slice_start+1, slice_end
-      x0 = q(j-1,particle_number,i)
-      x = q(j,particle_number,i)
-      d = (hard_wall_locations(i) - x)
-      xr = hard_wall_locations(i) + d
-      tgfn = exp(( -(xr-x0)**2  + (x-x0)**2)/(2.0d0*lambda*dt))
-      ln_gfn = ln_gfn + log(1.0d0 - tgfn)
-
-      d = (hard_wall_locations(i)+ x)
-      xr = -hard_wall_locations(i) - d
-      tgfn = exp(( -(xr-x0)**2  + (x-x0)**2)/(2.0d0*lambda*dt))
-      ln_gfn = ln_gfn + log(1.0d0 - tgfn)
-    end do
-  end do
-
-end function
-!@nonl
-!@-node:gcross.20090828095451.1453:hard wall
 !@+node:gcross.20090916153857.1828:compute_green_fn_from_distances
 ! image approximation
 pure function compute_green_fn_from_distances( &

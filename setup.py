@@ -18,7 +18,6 @@ sources = [
     "src/physics/angular_momentum.f95",
     "src/physics/hard_sphere_interaction.f95",
     "src/physics/harmonic_oscillator.f95",
-    "src/physics/lennard_jones_interaction.f95",
     "src/path-integral/lattice.f95",
     "src/path-integral/sample.f95",
     "src/path-integral/thermalize.f95",
